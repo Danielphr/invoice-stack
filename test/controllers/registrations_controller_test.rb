@@ -20,7 +20,7 @@ class RegistrationsControllerTest < ActionDispatch::IntegrationTest
       }
     end
 
-    assert_redirected_to root_url
+    assert_redirected_to onboarding_url
   end
 
   test "should not create user or company with invalid parameters" do

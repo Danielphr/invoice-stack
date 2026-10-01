@@ -30,4 +30,15 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to new_session_path
     assert_empty cookies[:session_id]
   end
+
+  test "should allow user with incomplete onboarding to sign out" do
+    sign_in_as users(:incomplete)
+
+    delete session_url
+
+    assert_redirected_to new_session_url
+
+    get root_url
+    assert_redirected_to new_session_url
+  end
 end

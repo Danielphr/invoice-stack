@@ -13,3 +13,10 @@ two:
   first_name: Jane
   last_name: Doe
   company: one
+
+incomplete:
+  email_address: incomplete@example.com
+  password_digest: <%= BCrypt::Password.create("password") %>
+  first_name: Incomplete
+  last_name: User
+  company: incomplete

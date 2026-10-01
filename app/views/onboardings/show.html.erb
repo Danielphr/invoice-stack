@@ -1,0 +1,14 @@
+<h1>Set up your company</h1>
+
+<p>Tell us about your company to finish setting up your account.</p>
+
+<%= form_with model: @company, url: onboarding_path do |form| %>
+  <div>
+    <%= form.label :name, "Company name" %>
+    <%= form.text_field :name, required: true, autofocus: true %>
+  </div>
+
+  <div>
+    <%= form.submit "Continue" %>
+  </div>
+<% end %>

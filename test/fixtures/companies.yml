@@ -2,3 +2,6 @@
 
 one:
   name: Acme Inc.
+
+incomplete:
+  name:
