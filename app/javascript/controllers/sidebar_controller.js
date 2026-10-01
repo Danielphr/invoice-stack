@@ -1,7 +1,8 @@
 import { Controller } from "@hotwired/stimulus"
 
-// Slides the sidebar in and out on small screens. On large screens the
-// sidebar is always visible and these classes have no effect.
+// Slides the sidebar in and out on small screens. While closed it is also
+// invisible, which keeps its links out of the keyboard tab order. On large
+// screens the sidebar is always visible and these classes have no effect.
 export default class extends Controller {
   static targets = [ "panel", "backdrop", "toggle" ]
 
@@ -15,6 +16,7 @@ export default class extends Controller {
 
   #setOpen(open) {
     this.panelTarget.classList.toggle("-translate-x-full", !open)
+    this.panelTarget.classList.toggle("max-lg:invisible", !open)
     this.backdropTarget.classList.toggle("hidden", !open)
     this.toggleTarget.setAttribute("aria-expanded", open)
   }
