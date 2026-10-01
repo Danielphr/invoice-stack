@@ -1,0 +1,39 @@
+{
+  "ignored_warnings": [
+    {
+      "warning_type": "Cross-Site Scripting",
+      "warning_code": 4,
+      "fingerprint": "833a6efc4bac465f8b75c45f9f3fee049500f87958b88ded6a9dceab570fd97f",
+      "check_name": "LinkToHref",
+      "message": "Potentially unsafe model attribute in `link_to` href",
+      "file": "app/views/clients/show.html.erb",
+      "line": 31,
+      "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
+      "code": "link_to(Current.user.company.clients.find(params.expect(:id)).website, Current.user.company.clients.find(params.expect(:id)).website, :class => \"link\", :target => \"_blank\", :rel => \"noopener noreferrer\")",
+      "render_path": [
+        {
+          "type": "controller",
+          "class": "ClientsController",
+          "method": "show",
+          "line": 9,
+          "file": "app/controllers/clients_controller.rb",
+          "rendered": {
+            "name": "clients/show",
+            "file": "app/views/clients/show.html.erb"
+          }
+        }
+      ],
+      "location": {
+        "type": "template",
+        "template": "clients/show"
+      },
+      "user_input": "Current.user.company.clients.find(params.expect(:id)).website",
+      "confidence": "Weak",
+      "cwe_id": [
+        79
+      ],
+      "note": "False positive. Client#website only accepts http/https URLs with a host (see Client#website_must_be_a_web_address), so the stored value cannot be a javascript: or data: URL."
+    }
+  ],
+  "brakeman_version": "8.1.0"
+}

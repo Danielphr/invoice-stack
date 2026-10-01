@@ -1,6 +1,8 @@
 module ApplicationHelper
+  # A link is active on its own page and on any page nested under it, so
+  # "Clients" stays highlighted on /clients/1/edit.
   def nav_link_to(name, path)
-    active = current_page?(path)
+    active = current_page?(path) || request.path.start_with?("#{path}/")
 
     link_to name, path,
       class: class_names(

@@ -18,6 +18,14 @@
     @apply flex cursor-pointer justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600;
   }
 
+  .btn-secondary {
+    @apply flex cursor-pointer justify-center rounded-md bg-white px-3 py-1.5 text-sm/6 font-semibold text-gray-900 shadow-xs ring-1 ring-gray-300 ring-inset hover:bg-gray-50;
+  }
+
+  .btn-danger {
+    @apply flex cursor-pointer justify-center rounded-md bg-red-600 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-xs hover:bg-red-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600;
+  }
+
   .link {
     @apply font-semibold text-indigo-600 hover:text-indigo-500;
   }
