@@ -5,6 +5,7 @@ class RegistrationsControllerTest < ActionDispatch::IntegrationTest
     get new_registration_url
 
     assert_response :success
+    assert_select "a[href=?]", new_session_path
   end
 
   test "should create user and company" do
@@ -37,5 +38,24 @@ class RegistrationsControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_response :unprocessable_entity
+    assert_select "[role=alert] li", "Email address can't be blank"
+    assert_select "input[name=?][value=?]", "user[first_name]", "John"
+  end
+
+  test "should show an error for an email address that is already taken" do
+    assert_no_difference [ "User.count", "Company.count" ] do
+      post registration_url, params: {
+        user: {
+          first_name: "John",
+          last_name: "Doe",
+          email_address: users(:one).email_address.upcase,
+          password: "password123",
+          password_confirmation: "password123"
+        }
+      }
+    end
+
+    assert_response :unprocessable_entity
+    assert_select "[role=alert] li", "Email address has already been taken"
   end
 end

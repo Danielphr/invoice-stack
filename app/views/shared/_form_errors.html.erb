@@ -1,0 +1,13 @@
+<% if model.errors.any? %>
+  <div role="alert" class="rounded-md bg-red-50 p-4">
+    <p class="text-sm font-medium text-red-800">
+      Please fix the following <%= "error".pluralize(model.errors.count) %>:
+    </p>
+
+    <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-red-700">
+      <% model.errors.full_messages.each do |message| %>
+        <li><%= message %></li>
+      <% end %>
+    </ul>
+  </div>
+<% end %>

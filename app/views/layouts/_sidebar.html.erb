@@ -1,0 +1,30 @@
+<div class="fixed inset-0 z-40 hidden bg-gray-900/80 lg:hidden"
+     data-sidebar-target="backdrop" data-action="click->sidebar#close"></div>
+
+<aside id="sidebar" data-sidebar-target="panel"
+       class="fixed inset-y-0 left-0 z-50 flex w-72 -translate-x-full flex-col bg-gray-900 px-6 transition-transform max-lg:invisible lg:translate-x-0">
+  <div class="flex h-16 shrink-0 items-center justify-between">
+    <%= link_to "InvoiceStack", root_path, class: "text-lg font-bold text-white" %>
+
+    <button type="button" class="-m-2.5 p-2.5 text-gray-400 hover:text-white lg:hidden" data-action="sidebar#close">
+      <span class="sr-only">Close menu</span>
+      <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+      </svg>
+    </button>
+  </div>
+
+  <nav aria-label="Main" class="flex-1">
+    <ul role="list" class="-mx-2 space-y-1">
+      <li><%= nav_link_to "Dashboard", root_path %></li>
+    </ul>
+  </nav>
+
+  <div class="-mx-6 border-t border-gray-800 px-6 py-4">
+    <p class="text-sm font-semibold text-white"><%= Current.user.first_name %> <%= Current.user.last_name %></p>
+    <p class="text-xs text-gray-400"><%= Current.user.company.name %></p>
+
+    <%= button_to "Log out", session_path, method: :delete,
+          class: "mt-3 text-sm font-semibold text-gray-400 hover:text-white" %>
+  </div>
+</aside>

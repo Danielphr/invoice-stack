@@ -1,4 +1,6 @@
 class OnboardingsController < ApplicationController
+  layout "auth"
+
   skip_before_action :require_completed_onboarding
   before_action :redirect_if_completed
 

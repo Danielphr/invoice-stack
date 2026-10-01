@@ -1,32 +1,38 @@
-<h1>Create your account</h1>
+<% content_for :title, "Create your account" %>
 
-<%= form_with model: @user, url: registration_path do |form| %>
-  <div>
-    <%= form.label :first_name %>
-    <%= form.text_field :first_name, required: true, autofocus: true %>
+<%= form_with model: @user, url: registration_path, class: "space-y-6" do |form| %>
+  <%= render "shared/form_errors", model: @user %>
+
+  <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+    <div>
+      <%= form.label :first_name, class: "label" %>
+      <%= form.text_field :first_name, required: true, autofocus: true, autocomplete: "given-name", class: "input mt-2" %>
+    </div>
+
+    <div>
+      <%= form.label :last_name, class: "label" %>
+      <%= form.text_field :last_name, required: true, autocomplete: "family-name", class: "input mt-2" %>
+    </div>
   </div>
 
   <div>
-    <%= form.label :last_name %>
-    <%= form.text_field :last_name, required: true %>
+    <%= form.label :email_address, class: "label" %>
+    <%= form.email_field :email_address, required: true, autocomplete: "email", class: "input mt-2" %>
   </div>
 
   <div>
-    <%= form.label :email_address %>
-    <%= form.email_field :email_address, required: true, autocomplete: "email" %>
+    <%= form.label :password, class: "label" %>
+    <%= render "shared/password_field", form: form, field: :password, autocomplete: "new-password" %>
   </div>
 
   <div>
-    <%= form.label :password %>
-    <%= form.password_field :password, required: true, autocomplete: "new-password" %>
+    <%= form.label :password_confirmation, class: "label" %>
+    <%= render "shared/password_field", form: form, field: :password_confirmation, autocomplete: "new-password" %>
   </div>
 
-  <div>
-    <%= form.label :password_confirmation %>
-    <%= form.password_field :password_confirmation, required: true, autocomplete: "new-password" %>
-  </div>
-
-  <div>
-    <%= form.submit "Create account" %>
-  </div>
+  <%= form.submit "Create account", class: "btn-primary w-full" %>
 <% end %>
+
+<p class="mt-10 text-center text-sm text-gray-500">
+  Already have an account? <%= link_to "Sign in", new_session_path, class: "link" %>
+</p>
