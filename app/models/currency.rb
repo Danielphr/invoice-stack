@@ -16,6 +16,8 @@ module Currency
     "UYU" => { name: "Uruguayan Peso", symbol: "$U", precision: 2 }
   }.freeze
 
+  DEFAULT = "USD"
+
   def self.codes
     ALL.keys
   end

@@ -3,6 +3,8 @@ class Invoice < ApplicationRecord
   belongs_to :client
   has_many :items, -> { order(:position) }, class_name: "InvoiceItem", dependent: :destroy, inverse_of: :invoice
 
+  accepts_nested_attributes_for :items, allow_destroy: true
+
   enum :status, %w[ draft sent paid cancelled ].index_by(&:itself), default: "draft", validate: true
   enum :billing_type, %w[ fixed hourly ].index_by(&:itself), default: "fixed", validate: true
 

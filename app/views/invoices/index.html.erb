@@ -1,6 +1,9 @@
 <% content_for :title, "Invoices" %>
 
-<h1 class="text-2xl font-semibold text-gray-900">Invoices</h1>
+<div class="flex items-center justify-between gap-4">
+  <h1 class="text-2xl font-semibold text-gray-900">Invoices</h1>
+  <%= link_to "New invoice", new_invoice_path, class: "btn-primary" %>
+</div>
 
 <% if @invoices.any? %>
   <div class="mt-8 overflow-x-auto rounded-lg bg-white shadow-sm ring-1 ring-gray-900/5">
@@ -32,6 +35,7 @@
 <% else %>
   <div class="mt-8 rounded-lg border-2 border-dashed border-gray-300 p-12 text-center">
     <h2 class="text-sm font-semibold text-gray-900">No invoices yet</h2>
-    <p class="mt-1 text-sm text-gray-500">Invoices you create will appear here.</p>
+    <p class="mt-1 text-sm text-gray-500">Create your first invoice to bill a client.</p>
+    <%= link_to "New invoice", new_invoice_path, class: "btn-primary mt-6 inline-flex" %>
   </div>
 <% end %>

@@ -7,7 +7,7 @@ Rails.application.routes.draw do
   resource :onboarding, only: %i[show update]
 
   resources :clients
-  resources :invoices, only: %i[ index show destroy ]
+  resources :invoices
 
   get "up" => "rails/health#show", as: :rails_health_check
 end

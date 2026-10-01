@@ -36,6 +36,10 @@ en:
         state: "State / Province"
       company:
         name: "Company name"
+      invoice/items:
+        description: "Item description"
+        quantity: "Item quantity"
+        unit_price: "Item price"
   date:
     formats:
       medium: "%b %-d, %Y"

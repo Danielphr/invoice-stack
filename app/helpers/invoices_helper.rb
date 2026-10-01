@@ -25,11 +25,16 @@ module InvoicesHelper
     tag.span status.humanize, class: [ "inline-flex rounded-md px-2 py-1 text-xs font-medium", STATUS_BADGE_CLASSES.fetch(status) ]
   end
 
+  ITEM_LABELS = {
+    "fixed" => { quantity: "Quantity", unit_price: "Price" },
+    "hourly" => { quantity: "Hours", unit_price: "Rate" }
+  }.freeze
+
   def quantity_label(invoice)
-    invoice.hourly? ? "Hours" : "Quantity"
+    ITEM_LABELS.fetch(invoice.billing_type)[:quantity]
   end
 
   def unit_price_label(invoice)
-    invoice.hourly? ? "Rate" : "Price"
+    ITEM_LABELS.fetch(invoice.billing_type)[:unit_price]
   end
 end

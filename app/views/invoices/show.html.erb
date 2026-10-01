@@ -9,8 +9,11 @@
     </div>
   </div>
 
-  <%= button_to "Delete", @invoice, method: :delete, class: "btn-danger",
-        form: { data: { turbo_confirm: "Delete invoice #{@invoice.number}? This cannot be undone." } } %>
+  <div class="flex gap-3">
+    <%= link_to "Edit", edit_invoice_path(@invoice), class: "btn-secondary" %>
+    <%= button_to "Delete", @invoice, method: :delete, class: "btn-danger",
+          form: { data: { turbo_confirm: "Delete invoice #{@invoice.number}? This cannot be undone." } } %>
+  </div>
 </div>
 
 <section class="mt-8 rounded-lg bg-white p-6 shadow-sm ring-1 ring-gray-900/5">
