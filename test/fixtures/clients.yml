@@ -1,0 +1,20 @@
+globex:
+  company: one
+  name: Globex Corporation
+  email: billing@globex.example
+  phone: +1 (555) 010-0100
+  website: https://globex.example
+  address_line1: 742 Evergreen Terrace
+  city: Springfield
+  state: Illinois
+  postal_code: "62701"
+  country: US
+  contact_first_name: Hank
+  contact_last_name: Scorpio
+  contact_email: hank@globex.example
+
+initech:
+  company: one
+  name: Initech
+  city: Montevideo
+  country: UY
