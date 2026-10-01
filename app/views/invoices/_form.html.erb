@@ -51,8 +51,8 @@
         <thead class="text-left font-medium text-gray-900">
           <tr>
             <th scope="col" class="pb-2 pr-2">Description</th>
-            <th scope="col" class="px-2 pb-2 text-right" data-invoice-form-target="quantityLabel"><%= quantity_label(invoice) %></th>
-            <th scope="col" class="px-2 pb-2 text-right" data-invoice-form-target="unitPriceLabel"><%= unit_price_label(invoice) %></th>
+            <th scope="col" class="px-2 pb-2" data-invoice-form-target="quantityLabel"><%= quantity_label(invoice) %></th>
+            <th scope="col" class="px-2 pb-2" data-invoice-form-target="unitPriceLabel"><%= unit_price_label(invoice) %></th>
             <th scope="col" class="px-2 pb-2 text-right">Amount</th>
             <th scope="col" class="pb-2 pl-2"><span class="sr-only">Remove</span></th>
           </tr>
@@ -84,7 +84,7 @@
       <div>
         <%= form.label :discount, class: "label" %>
         <%= form.number_field :discount, min: 0, step: 0.01,
-              data: { invoice_form_target: "discount", action: "invoice-form#recalculate" }, class: "input mt-2 text-right" %>
+              data: { invoice_form_target: "discount", action: "invoice-form#recalculate" }, class: "input mt-2" %>
       </div>
 
       <dl class="space-y-2 text-sm">
