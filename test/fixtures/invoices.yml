@@ -1,0 +1,16 @@
+globex_website:
+  company: one
+  client: globex
+  number: INV-001
+  status: sent
+  currency: USD
+  issue_date: 2026-09-01
+  due_date: 2026-09-30
+  discount: 50.00
+
+other_company_invoice:
+  company: other
+  client: other_company_client
+  number: INV-001
+  currency: EUR
+  issue_date: 2026-09-01
