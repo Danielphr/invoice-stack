@@ -26,6 +26,14 @@ class ClientsControllerTest < ActionDispatch::IntegrationTest
     assert_select "tbody", text: /Wayne Enterprises/, count: 0
   end
 
+  test "should order clients by name regardless of case" do
+    @user.company.clients.create!(name: "acme labs", city: "Austin", country: "US")
+
+    get clients_url
+
+    assert_equal [ "acme labs", "Globex Corporation", "Initech" ], css_select("tbody tr td:first-child").map { it.text.strip }
+  end
+
   test "should show an empty state when there are no clients" do
     @user.company.clients.destroy_all
 

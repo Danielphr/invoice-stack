@@ -16,7 +16,7 @@
 
     <div>
       <%= form.label :phone, class: "label" %>
-      <%= form.telephone_field :phone, placeholder: "+1 555 010 0100", class: "input mt-2" %>
+      <%= form.telephone_field :phone, maxlength: 30, placeholder: "+1 555 010 0100", class: "input mt-2" %>
     </div>
 
     <div class="sm:col-span-2">
@@ -80,7 +80,7 @@
 
     <div>
       <%= form.label :contact_phone, "Phone", class: "label" %>
-      <%= form.telephone_field :contact_phone, class: "input mt-2" %>
+      <%= form.telephone_field :contact_phone, maxlength: 30, class: "input mt-2" %>
     </div>
   </fieldset>
 

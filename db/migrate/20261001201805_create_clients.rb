@@ -23,7 +23,7 @@ class CreateClients < ActiveRecord::Migration[8.1]
       t.timestamps
     end
 
-    # Clients are always listed per company, ordered by name.
+    # Client queries are always scoped to a company.
     add_index :clients, [ :company_id, :name ]
   end
 end

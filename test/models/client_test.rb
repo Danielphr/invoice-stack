@@ -77,6 +77,13 @@ class ClientTest < ActiveSupport::TestCase
     end
   end
 
+  test "limits phone numbers to 30 characters" do
+    @client.phone = "1" + " " * 30 + "234567"
+
+    assert_not @client.valid?
+    assert_includes @client.errors[:phone], "is too long (maximum is 30 characters)"
+  end
+
   test "adds https to a website without a scheme" do
     assert_equal "https://acme.example", Client.new(website: "acme.example").website
     assert_equal "http://acme.example", Client.new(website: "http://acme.example").website

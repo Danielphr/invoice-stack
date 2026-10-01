@@ -2,7 +2,7 @@ class ClientsController < ApplicationController
   before_action :set_client, only: %i[ show edit update destroy ]
 
   def index
-    @clients = Current.user.company.clients.order(:name)
+    @clients = Current.user.company.clients.order(Client.arel_table[:name].lower)
   end
 
   def show

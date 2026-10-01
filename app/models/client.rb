@@ -22,7 +22,7 @@ class Client < ApplicationRecord
   validates :postal_code, length: { maximum: 20 }
   validates :notes, length: { maximum: 500 }
   validates :email, :contact_email, format: { with: URI::MailTo::EMAIL_REGEXP }, length: { maximum: 254 }, allow_nil: true
-  validates :phone, :contact_phone, format: { with: PHONE_FORMAT }, allow_nil: true
+  validates :phone, :contact_phone, format: { with: PHONE_FORMAT }, length: { maximum: 30 }, allow_nil: true
   validates :website, length: { maximum: 255 }
   validate :website_must_be_a_web_address
 
