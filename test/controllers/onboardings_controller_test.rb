@@ -39,6 +39,7 @@ class OnboardingsControllerTest < ActionDispatch::IntegrationTest
     }
 
     assert_response :unprocessable_entity
+    assert_select "[role=alert] li", "Company name can't be blank"
     assert_not @user.company.reload.onboarding_complete?
   end
 

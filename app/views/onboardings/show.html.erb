@@ -2,16 +2,16 @@
 
 <p class="text-center text-sm text-gray-600">Tell us about your company to finish setting up your account.</p>
 
-<%= form_with model: @company, url: onboarding_path, class: "mt-6" do |form| %>
+<%= form_with model: @company, url: onboarding_path, class: "mt-8 space-y-6" do |form| %>
+  <%= render "shared/form_errors", model: @company %>
+
   <div>
-    <%= form.label :name, "Company name" %>
-    <%= form.text_field :name, required: true, autofocus: true %>
+    <%= form.label :name, class: "label" %>
+    <%= form.text_field :name, required: true, autofocus: true, autocomplete: "organization", class: "input mt-2" %>
   </div>
 
-  <div class="mt-6">
-    <%= form.submit "Continue" %>
-  </div>
+  <%= form.submit "Continue", class: "btn-primary w-full" %>
 <% end %>
 
 <%= button_to "Log out", session_path, method: :delete,
-      class: "mt-6 text-sm font-semibold text-gray-600 hover:text-gray-900" %>
+      form_class: "mt-10 text-center", class: "link cursor-pointer text-sm" %>

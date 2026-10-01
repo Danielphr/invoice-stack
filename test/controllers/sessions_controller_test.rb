@@ -7,6 +7,8 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     get new_session_path
     assert_response :success
     assert_select "h1", "Sign in to your account"
+    assert_select "a[href=?]", new_registration_path
+    assert_select "a[href=?]", new_password_path
   end
 
   test "create with valid credentials" do
@@ -21,6 +23,9 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to new_session_path
     assert_nil cookies[:session_id]
+
+    follow_redirect!
+    assert_select "[role=alert]", /Try another email address or password/
   end
 
   test "destroy" do
