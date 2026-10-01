@@ -6,6 +6,7 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
   test "new" do
     get new_session_path
     assert_response :success
+    assert_select "title", "Sign in to your account · InvoiceStack"
     assert_select "h1", "Sign in to your account"
     assert_select "a[href=?]", new_registration_path
     assert_select "a[href=?]", new_password_path

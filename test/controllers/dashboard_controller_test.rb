@@ -10,6 +10,7 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     get root_url
 
     assert_response :success
+    assert_select "title", "InvoiceStack"
     assert_select "nav a[aria-current=page]", "Dashboard"
   end
 
