@@ -14,6 +14,7 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_select "nav a[aria-current=page]", count: 1
     assert_select "nav a[aria-current=page]", "Dashboard"
     assert_select "nav a[href=?]", clients_path, "Clients"
+    assert_select "nav a[href=?]", invoices_path, "Invoices"
   end
 
   test "should show current user, company and log out" do

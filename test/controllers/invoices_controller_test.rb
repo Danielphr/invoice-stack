@@ -16,6 +16,14 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to new_session_url
   end
 
+  test "should highlight Invoices in the navigation on invoice pages" do
+    [ invoices_url, new_invoice_url, invoice_url(@invoice), edit_invoice_url(@invoice) ].each do |url|
+      get url
+
+      assert_select "nav a[aria-current=page]", "Invoices"
+    end
+  end
+
   test "should list only the company's invoices" do
     get invoices_url
 
