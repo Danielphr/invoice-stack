@@ -7,12 +7,17 @@ export default class extends Controller {
     "discount", "subtotal", "total", "currency", "quantityLabel", "unitPriceLabel" ]
   static values = { labels: Object }
 
+  #nextIndex
+
   connect() {
+    // Rows rendered by the server use indexes 0, 1, 2…; added rows count up
+    // from the current timestamp so their field names never collide.
+    this.#nextIndex = Date.now()
     this.recalculate()
   }
 
   addItem() {
-    const html = this.templateTarget.innerHTML.replaceAll("NEW_ITEM", Date.now().toString())
+    const html = this.templateTarget.innerHTML.replaceAll("NEW_ITEM", (this.#nextIndex++).toString())
     this.itemsTarget.insertAdjacentHTML("beforeend", html)
     this.recalculate()
   }
