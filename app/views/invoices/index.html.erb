@@ -1,0 +1,37 @@
+<% content_for :title, "Invoices" %>
+
+<h1 class="text-2xl font-semibold text-gray-900">Invoices</h1>
+
+<% if @invoices.any? %>
+  <div class="mt-8 overflow-x-auto rounded-lg bg-white shadow-sm ring-1 ring-gray-900/5">
+    <table class="min-w-full divide-y divide-gray-200 text-sm">
+      <thead class="bg-gray-50 text-left font-semibold text-gray-900">
+        <tr>
+          <th scope="col" class="px-4 py-3">Number</th>
+          <th scope="col" class="px-4 py-3">Client</th>
+          <th scope="col" class="px-4 py-3">Issued</th>
+          <th scope="col" class="px-4 py-3">Due</th>
+          <th scope="col" class="px-4 py-3">Status</th>
+          <th scope="col" class="px-4 py-3 text-right">Total</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-200 text-gray-600">
+        <% @invoices.each do |invoice| %>
+          <tr>
+            <td class="px-4 py-3 font-medium text-gray-900"><%= link_to invoice.number, invoice, class: "hover:text-indigo-600" %></td>
+            <td class="px-4 py-3"><%= invoice.client.name %></td>
+            <td class="px-4 py-3 whitespace-nowrap"><%= l(invoice.issue_date, format: :medium) %></td>
+            <td class="px-4 py-3 whitespace-nowrap"><%= invoice.due_date ? l(invoice.due_date, format: :medium) : "—" %></td>
+            <td class="px-4 py-3"><%= invoice_status_badge(invoice) %></td>
+            <td class="px-4 py-3 text-right whitespace-nowrap text-gray-900"><%= format_money(invoice.total, invoice.currency) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% else %>
+  <div class="mt-8 rounded-lg border-2 border-dashed border-gray-300 p-12 text-center">
+    <h2 class="text-sm font-semibold text-gray-900">No invoices yet</h2>
+    <p class="mt-1 text-sm text-gray-500">Invoices you create will appear here.</p>
+  </div>
+<% end %>

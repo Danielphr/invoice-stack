@@ -36,3 +36,6 @@ en:
         state: "State / Province"
       company:
         name: "Company name"
+  date:
+    formats:
+      medium: "%b %-d, %Y"
