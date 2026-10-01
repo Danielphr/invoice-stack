@@ -101,4 +101,14 @@ class ClientTest < ActiveSupport::TestCase
   test "returns the country name" do
     assert_equal "United States", @client.country_name
   end
+
+  test "formats the address as lines, skipping blank parts" do
+    assert_equal [ "742 Evergreen Terrace", "Springfield, Illinois, 62701", "United States" ], @client.address_lines
+    assert_equal [ "Montevideo", "Uruguay" ], clients(:initech).address_lines
+  end
+
+  test "joins the contact name" do
+    assert_equal "Hank Scorpio", @client.contact_name
+    assert_nil clients(:initech).contact_name
+  end
 end

@@ -1,0 +1,96 @@
+<%= form_with model: client, html: { autocomplete: "off" }, class: "mt-8 max-w-2xl space-y-10" do |form| %>
+  <%= render "shared/form_errors", model: client %>
+
+  <fieldset class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+    <legend class="mb-4 text-base font-semibold text-gray-900">Client</legend>
+
+    <div class="sm:col-span-2">
+      <%= form.label :name, class: "label" %>
+      <%= form.text_field :name, required: true, autofocus: true, class: "input mt-2" %>
+    </div>
+
+    <div>
+      <%= form.label :email, class: "label" %>
+      <%= form.email_field :email, class: "input mt-2" %>
+    </div>
+
+    <div>
+      <%= form.label :phone, class: "label" %>
+      <%= form.telephone_field :phone, placeholder: "+1 555 010 0100", class: "input mt-2" %>
+    </div>
+
+    <div class="sm:col-span-2">
+      <%= form.label :website, class: "label" %>
+      <%= form.text_field :website, inputmode: "url", placeholder: "example.com", class: "input mt-2" %>
+    </div>
+  </fieldset>
+
+  <fieldset class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+    <legend class="mb-4 text-base font-semibold text-gray-900">Address</legend>
+
+    <div class="sm:col-span-2">
+      <%= form.label :address_line1, class: "label" %>
+      <%= form.text_field :address_line1, class: "input mt-2" %>
+    </div>
+
+    <div class="sm:col-span-2">
+      <%= form.label :address_line2, class: "label" %>
+      <%= form.text_field :address_line2, class: "input mt-2" %>
+    </div>
+
+    <div>
+      <%= form.label :city, class: "label" %>
+      <%= form.text_field :city, required: true, class: "input mt-2" %>
+    </div>
+
+    <div>
+      <%= form.label :state, class: "label" %>
+      <%= form.text_field :state, class: "input mt-2" %>
+    </div>
+
+    <div>
+      <%= form.label :postal_code, class: "label" %>
+      <%= form.text_field :postal_code, class: "input mt-2" %>
+    </div>
+
+    <div>
+      <%= form.label :country, class: "label" %>
+      <%= form.select :country, Country::NAMES.invert, { prompt: "Select a country" },
+            required: true, class: "input mt-2" %>
+    </div>
+  </fieldset>
+
+  <fieldset class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+    <legend class="mb-4 text-base font-semibold text-gray-900">Contact person</legend>
+
+    <div>
+      <%= form.label :contact_first_name, "First name", class: "label" %>
+      <%= form.text_field :contact_first_name, class: "input mt-2" %>
+    </div>
+
+    <div>
+      <%= form.label :contact_last_name, "Last name", class: "label" %>
+      <%= form.text_field :contact_last_name, class: "input mt-2" %>
+    </div>
+
+    <div>
+      <%= form.label :contact_email, "Email", class: "label" %>
+      <%= form.email_field :contact_email, class: "input mt-2" %>
+    </div>
+
+    <div>
+      <%= form.label :contact_phone, "Phone", class: "label" %>
+      <%= form.telephone_field :contact_phone, class: "input mt-2" %>
+    </div>
+  </fieldset>
+
+  <div>
+    <%= form.label :notes, class: "label" %>
+    <%= form.text_area :notes, rows: 4, maxlength: 500, class: "input mt-2" %>
+  </div>
+
+  <div class="flex justify-end gap-3">
+    <%= link_to "Cancel", client.persisted? ? client : clients_path, class: "btn-secondary" %>
+    <%= form.submit class: "btn-primary" %>
+  </div>
+<% end %>

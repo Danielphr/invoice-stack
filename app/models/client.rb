@@ -30,6 +30,19 @@ class Client < ApplicationRecord
     Country.name_for(country)
   end
 
+  def address_lines
+    [
+      address_line1,
+      address_line2,
+      [ city, state, postal_code ].compact.join(", "),
+      country_name
+    ].compact_blank
+  end
+
+  def contact_name
+    [ contact_first_name, contact_last_name ].compact.join(" ").presence
+  end
+
   private
     def website_must_be_a_web_address
       return if website.nil?

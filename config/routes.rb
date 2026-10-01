@@ -6,5 +6,7 @@ Rails.application.routes.draw do
   resources :passwords, param: :token
   resource :onboarding, only: %i[show update]
 
+  resources :clients
+
   get "up" => "rails/health#show", as: :rails_health_check
 end
