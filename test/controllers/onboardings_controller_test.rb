@@ -12,6 +12,13 @@ class OnboardingsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "should offer log out without app navigation" do
+    get onboarding_url
+
+    assert_select "form[action=?] button", session_path, "Log out"
+    assert_select "#sidebar", count: 0
+  end
+
   test "should update company and redirect to root" do
     patch onboarding_url, params: {
       company: {

@@ -1,29 +1,28 @@
 <!DOCTYPE html>
-<html>
+<html lang="en" class="h-full bg-gray-50">
   <head>
-    <title><%= content_for(:title) || "Invoice Stack" %></title>
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="application-name" content="Invoice Stack">
-    <meta name="mobile-web-app-capable" content="yes">
-    <%= csrf_meta_tags %>
-    <%= csp_meta_tag %>
-
-    <%= yield :head %>
-
-    <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
-    <%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
-
-    <link rel="icon" href="/icon.png" type="image/png">
-    <link rel="icon" href="/icon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="/icon.png">
-
-    <%# Includes the Tailwind build from app/assets/builds %>
-    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
-    <%= javascript_importmap_tags %>
+    <%= render "layouts/head" %>
   </head>
 
-  <body>
-    <%= yield %>
+  <body class="h-full" data-controller="sidebar" data-action="keydown.esc@window->sidebar#close">
+    <%= render "layouts/sidebar" %>
+
+    <div class="lg:pl-72">
+      <header class="sticky top-0 z-30 flex items-center gap-x-4 bg-gray-900 px-4 py-4 lg:hidden">
+        <button type="button" class="-m-2.5 p-2.5 text-gray-400 hover:text-white"
+                aria-controls="sidebar" aria-expanded="false"
+                data-sidebar-target="toggle" data-action="sidebar#open">
+          <span class="sr-only">Open menu</span>
+          <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+          </svg>
+        </button>
+        <span class="text-sm font-semibold text-white"><%= Current.user.company.name %></span>
+      </header>
+
+      <main class="px-4 py-10 sm:px-6 lg:px-8">
+        <%= yield %>
+      </main>
+    </div>
   </body>
 </html>

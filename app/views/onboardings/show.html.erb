@@ -1,14 +1,17 @@
-<h1>Set up your company</h1>
+<% content_for :title, "Set up your company" %>
 
-<p>Tell us about your company to finish setting up your account.</p>
+<p class="text-center text-sm text-gray-600">Tell us about your company to finish setting up your account.</p>
 
-<%= form_with model: @company, url: onboarding_path do |form| %>
+<%= form_with model: @company, url: onboarding_path, class: "mt-6" do |form| %>
   <div>
     <%= form.label :name, "Company name" %>
     <%= form.text_field :name, required: true, autofocus: true %>
   </div>
 
-  <div>
+  <div class="mt-6">
     <%= form.submit "Continue" %>
   </div>
 <% end %>
+
+<%= button_to "Log out", session_path, method: :delete,
+      class: "mt-6 text-sm font-semibold text-gray-600 hover:text-gray-900" %>
