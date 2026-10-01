@@ -4,7 +4,7 @@ class ClientsControllerTest < ActionDispatch::IntegrationTest
   setup do
     @user = users(:one)
     @client = clients(:globex)
-    @other_client = clients(:umbrella_client)
+    @other_client = clients(:other_company_client)
     sign_in_as @user
   end
 

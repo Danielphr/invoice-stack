@@ -19,7 +19,7 @@ initech:
   city: Montevideo
   country: UY
 
-umbrella_client:
+other_company_client:
   company: other
   name: Wayne Enterprises
   city: Gotham
