@@ -21,7 +21,10 @@ module InvoiceStack
     # These settings can be overridden in specific environments using the files
     # in config/environments, which are processed later.
     #
-    # config.time_zone = "Central Time (US & Canada)"
     # config.eager_load_paths << Rails.root.join("extras")
+
+    # Until each company can choose its own time zone, dates such as an
+    # invoice's default issue date and "overdue" use this zone.
+    config.time_zone = "Montevideo"
   end
 end
