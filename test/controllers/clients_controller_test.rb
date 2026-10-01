@@ -42,6 +42,14 @@ class ClientsControllerTest < ActionDispatch::IntegrationTest
     assert_select "h1", @client.name
   end
 
+  test "should highlight Clients in the navigation on client pages" do
+    [ clients_url, client_url(@client), edit_client_url(@client) ].each do |url|
+      get url
+
+      assert_select "nav a[aria-current=page]", "Clients"
+    end
+  end
+
   test "should get new" do
     get new_client_url
 
