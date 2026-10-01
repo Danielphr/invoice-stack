@@ -35,6 +35,7 @@ class ClientsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should show an empty state when there are no clients" do
+    @user.company.invoices.destroy_all
     @user.company.clients.destroy_all
 
     get clients_url
@@ -102,10 +103,20 @@ class ClientsControllerTest < ActionDispatch::IntegrationTest
 
   test "should destroy a client" do
     assert_difference "Client.count", -1 do
-      delete client_url(@client)
+      delete client_url(clients(:initech))
     end
 
     assert_redirected_to clients_url
+  end
+
+  test "should not destroy a client that has invoices" do
+    assert_no_difference "Client.count" do
+      delete client_url(@client)
+    end
+
+    assert_redirected_to client_url(@client)
+    follow_redirect!
+    assert_select "[role=alert]", /has invoices and can't be deleted/
   end
 
   test "should not expose another company's client" do

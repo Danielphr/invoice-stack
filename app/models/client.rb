@@ -4,6 +4,9 @@ class Client < ApplicationRecord
   PHONE_FORMAT = /\A\+?(?:[\s().-]*\d){7,15}[\s().-]*\z/
 
   belongs_to :company
+  has_many :invoices, dependent: :restrict_with_error
+
+  scope :by_name, -> { order(arel_table[:name].lower) }
 
   normalizes :name, :address_line1, :address_line2, :city, :state, :postal_code,
     :contact_first_name, :contact_last_name, :phone, :contact_phone, :notes,

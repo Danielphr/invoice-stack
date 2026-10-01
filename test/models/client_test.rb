@@ -118,4 +118,10 @@ class ClientTest < ActiveSupport::TestCase
     assert_equal "Hank Scorpio", @client.contact_name
     assert_nil clients(:initech).contact_name
   end
+
+  test "cannot be destroyed while it has invoices" do
+    assert_not @client.destroy
+    assert @client.reload
+    assert_includes @client.errors[:base], "Cannot delete record because dependent invoices exist"
+  end
 end

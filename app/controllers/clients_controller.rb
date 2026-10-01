@@ -2,7 +2,7 @@ class ClientsController < ApplicationController
   before_action :set_client, only: %i[ show edit update destroy ]
 
   def index
-    @clients = Current.user.company.clients.order(Client.arel_table[:name].lower)
+    @clients = Current.user.company.clients.by_name
   end
 
   def show
@@ -34,8 +34,11 @@ class ClientsController < ApplicationController
   end
 
   def destroy
-    @client.destroy!
-    redirect_to clients_path, notice: "Client deleted.", status: :see_other
+    if @client.destroy
+      redirect_to clients_path, notice: "Client deleted.", status: :see_other
+    else
+      redirect_to @client, alert: "This client has invoices and can't be deleted.", status: :see_other
+    end
   end
 
   private

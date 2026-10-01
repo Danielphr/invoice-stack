@@ -1,0 +1,107 @@
+<%= form_with model: invoice, class: "mt-8 max-w-4xl space-y-10",
+      data: { controller: "invoice-form", invoice_form_labels_value: InvoicesHelper::ITEM_LABELS.to_json } do |form| %>
+  <%= render "shared/form_errors", model: invoice %>
+
+  <fieldset class="grid grid-cols-1 gap-6 sm:grid-cols-3">
+    <legend class="mb-4 text-base font-semibold text-gray-900">Details</legend>
+
+    <div class="sm:col-span-2">
+      <%= form.label :client_id, "Client", class: "label" %>
+      <%= form.collection_select :client_id, clients, :id, :name, { prompt: "Select a client" }, required: true, class: "input mt-2" %>
+    </div>
+
+    <div>
+      <%= form.label :number, class: "label" %>
+      <%= form.text_field :number, required: true, maxlength: 50, placeholder: "INV-001", class: "input mt-2" %>
+    </div>
+
+    <div>
+      <%= form.label :issue_date, class: "label" %>
+      <%= form.date_field :issue_date, required: true, class: "input mt-2" %>
+    </div>
+
+    <div>
+      <%= form.label :due_date, class: "label" %>
+      <%= form.date_field :due_date, class: "input mt-2" %>
+    </div>
+
+    <div>
+      <%= form.label :status, class: "label" %>
+      <%= form.select :status, Invoice.statuses.keys.map { [ it.humanize, it ] }, {}, class: "input mt-2" %>
+    </div>
+
+    <div>
+      <%= form.label :billing_type, class: "label" %>
+      <%= form.select :billing_type, Invoice.billing_types.keys.map { [ it.humanize, it ] }, {},
+            data: { action: "invoice-form#updateLabels" }, class: "input mt-2" %>
+    </div>
+
+    <div>
+      <%= form.label :currency, class: "label" %>
+      <%= form.select :currency, Currency::ALL.map { |code, details| [ "#{code} — #{details[:name]}", code ] }, {},
+            data: { invoice_form_target: "currency", action: "invoice-form#recalculate" }, class: "input mt-2" %>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend class="mb-4 text-base font-semibold text-gray-900">Items</legend>
+
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead class="text-left font-medium text-gray-900">
+          <tr>
+            <th scope="col" id="item-description-header" class="pb-2 pr-2">Description</th>
+            <th scope="col" id="item-quantity-header" class="px-2 pb-2" data-invoice-form-target="quantityLabel"><%= quantity_label(invoice) %></th>
+            <th scope="col" id="item-unit-price-header" class="px-2 pb-2" data-invoice-form-target="unitPriceLabel"><%= unit_price_label(invoice) %></th>
+            <th scope="col" class="px-2 pb-2 text-right">Amount</th>
+            <th scope="col" class="pb-2 pl-2"><span class="sr-only">Remove</span></th>
+          </tr>
+        </thead>
+        <tbody data-invoice-form-target="items">
+          <%= form.fields_for :items, include_id: false do |item_form| %>
+            <%= render "item_fields", form: item_form %>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+
+    <template data-invoice-form-target="template">
+      <%= form.fields_for :items, InvoiceItem.new, child_index: "NEW_ITEM", include_id: false do |item_form| %>
+        <%= render "item_fields", form: item_form %>
+      <% end %>
+    </template>
+
+    <button type="button" class="link mt-4 cursor-pointer text-sm" data-action="invoice-form#addItem">+ Add item</button>
+  </fieldset>
+
+  <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+    <div>
+      <%= form.label :notes, class: "label" %>
+      <%= form.text_area :notes, rows: 4, maxlength: 500, class: "input mt-2" %>
+    </div>
+
+    <div class="space-y-4 sm:pl-12">
+      <div>
+        <%= form.label :discount, class: "label" %>
+        <%= form.number_field :discount, min: 0, step: 0.01,
+              data: { invoice_form_target: "discount", action: "invoice-form#recalculate" }, class: "input mt-2" %>
+      </div>
+
+      <dl class="space-y-2 text-sm">
+        <div class="flex justify-between">
+          <dt class="text-gray-500">Subtotal</dt>
+          <dd class="text-gray-900" data-invoice-form-target="subtotal"></dd>
+        </div>
+        <div class="flex justify-between border-t border-gray-200 pt-2 font-semibold">
+          <dt class="text-gray-900">Total</dt>
+          <dd class="text-gray-900" data-invoice-form-target="total"></dd>
+        </div>
+      </dl>
+    </div>
+  </div>
+
+  <div class="flex justify-end gap-3">
+    <%= link_to "Cancel", invoice.persisted? ? invoice : invoices_path, class: "btn-secondary" %>
+    <%= form.submit class: "btn-primary" %>
+  </div>
+<% end %>

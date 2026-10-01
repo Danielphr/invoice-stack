@@ -1,0 +1,25 @@
+<%# locals: (form:) %>
+<%= tag.tr hidden: form.object.marked_for_destruction?, data: { invoice_form_target: "item" } do %>
+  <td class="py-2 pr-2 align-top">
+    <%= form.hidden_field :id %>
+    <%= form.hidden_field :_destroy, data: { invoice_form_target: "destroy" } %>
+    <%= form.text_field :description, required: true, maxlength: 255, aria: { labelledby: "item-description-header" }, class: "input" %>
+  </td>
+  <td class="w-28 px-2 py-2 align-top">
+    <%= form.number_field :quantity, required: true, min: 0.01, step: 0.01, aria: { labelledby: "item-quantity-header" },
+          data: { invoice_form_target: "quantity", action: "invoice-form#recalculate" }, class: "input" %>
+  </td>
+  <td class="w-36 px-2 py-2 align-top">
+    <%= form.number_field :unit_price, required: true, min: 0, step: 0.01, aria: { labelledby: "item-unit-price-header" },
+          data: { invoice_form_target: "unitPrice", action: "invoice-form#recalculate" }, class: "input" %>
+  </td>
+  <td class="w-32 px-2 py-2 pt-3.5 text-right align-top whitespace-nowrap text-gray-900" data-invoice-form-target="amount"></td>
+  <td class="w-10 py-2 pl-2 pt-2.5 align-top">
+    <button type="button" class="cursor-pointer text-gray-400 hover:text-red-600" data-action="invoice-form#removeItem">
+      <span class="sr-only">Remove item</span>
+      <svg class="size-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+      </svg>
+    </button>
+  </td>
+<% end %>

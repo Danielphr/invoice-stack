@@ -26,4 +26,14 @@ class CompanyTest < ActiveSupport::TestCase
     assert_not company.valid?
     assert_includes company.errors[:name], "can't be blank"
   end
+
+  test "destroying a company removes its invoices, clients and users" do
+    company = companies(:one)
+
+    company.destroy!
+
+    assert_empty Invoice.where(company: company)
+    assert_empty Client.where(company: company)
+    assert_empty User.where(company: company)
+  end
 end

@@ -1,0 +1,20 @@
+globex_design:
+  invoice: globex_website
+  description: Website design
+  quantity: 1
+  unit_price: 1200.00
+  position: 0
+
+globex_development:
+  invoice: globex_website
+  description: Development
+  quantity: 12.5
+  unit_price: 80.00
+  position: 1
+
+other_company_consulting:
+  invoice: other_company_invoice
+  description: Consulting
+  quantity: 2
+  unit_price: 500.00
+  position: 0
