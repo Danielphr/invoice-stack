@@ -3,14 +3,14 @@
   <td class="py-2 pr-2 align-top">
     <%= form.hidden_field :id %>
     <%= form.hidden_field :_destroy, data: { invoice_form_target: "destroy" } %>
-    <%= form.text_field :description, required: true, maxlength: 255, aria: { label: "Description" }, class: "input" %>
+    <%= form.text_field :description, required: true, maxlength: 255, aria: { labelledby: "item-description-header" }, class: "input" %>
   </td>
   <td class="w-28 px-2 py-2 align-top">
-    <%= form.number_field :quantity, required: true, min: 0.01, step: 0.01, aria: { label: "Quantity" },
+    <%= form.number_field :quantity, required: true, min: 0.01, step: 0.01, aria: { labelledby: "item-quantity-header" },
           data: { invoice_form_target: "quantity", action: "invoice-form#recalculate" }, class: "input" %>
   </td>
   <td class="w-36 px-2 py-2 align-top">
-    <%= form.number_field :unit_price, required: true, min: 0, step: 0.01, aria: { label: "Price" },
+    <%= form.number_field :unit_price, required: true, min: 0, step: 0.01, aria: { labelledby: "item-unit-price-header" },
           data: { invoice_form_target: "unitPrice", action: "invoice-form#recalculate" }, class: "input" %>
   </td>
   <td class="w-32 px-2 py-2 pt-3.5 text-right align-top whitespace-nowrap text-gray-900" data-invoice-form-target="amount"></td>

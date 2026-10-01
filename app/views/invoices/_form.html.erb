@@ -50,9 +50,9 @@
       <table class="min-w-full text-sm">
         <thead class="text-left font-medium text-gray-900">
           <tr>
-            <th scope="col" class="pb-2 pr-2">Description</th>
-            <th scope="col" class="px-2 pb-2" data-invoice-form-target="quantityLabel"><%= quantity_label(invoice) %></th>
-            <th scope="col" class="px-2 pb-2" data-invoice-form-target="unitPriceLabel"><%= unit_price_label(invoice) %></th>
+            <th scope="col" id="item-description-header" class="pb-2 pr-2">Description</th>
+            <th scope="col" id="item-quantity-header" class="px-2 pb-2" data-invoice-form-target="quantityLabel"><%= quantity_label(invoice) %></th>
+            <th scope="col" id="item-unit-price-header" class="px-2 pb-2" data-invoice-form-target="unitPriceLabel"><%= unit_price_label(invoice) %></th>
             <th scope="col" class="px-2 pb-2 text-right">Amount</th>
             <th scope="col" class="pb-2 pl-2"><span class="sr-only">Remove</span></th>
           </tr>

@@ -75,6 +75,17 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
     assert_select "select[name=?] option", "invoice[client_id]", text: "Wayne Enterprises", count: 0
   end
 
+  test "should label item inputs with their column headers" do
+    @invoice.update!(billing_type: "hourly")
+
+    get edit_invoice_url(@invoice)
+
+    assert_select "th#item-quantity-header", "Hours"
+    assert_select "th#item-unit-price-header", "Rate"
+    assert_select "tbody input[name$='[quantity]'][aria-labelledby=item-quantity-header]", 2
+    assert_select "tbody input[name$='[unit_price]'][aria-labelledby=item-unit-price-header]", 2
+  end
+
   test "should ask for a client first when the company has none" do
     @user.company.invoices.destroy_all
     @user.company.clients.destroy_all
