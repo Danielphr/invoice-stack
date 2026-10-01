@@ -9,6 +9,10 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     assert_select "h1", "Sign in to your account"
     assert_select "a[href=?]", new_registration_path
     assert_select "a[href=?]", new_password_path
+    assert_select "[data-controller=password-visibility]" do
+      assert_select "input[type=password][name=password][required]"
+      assert_select "button[type=button][aria-label=?]", "Show password"
+    end
   end
 
   test "create with valid credentials" do

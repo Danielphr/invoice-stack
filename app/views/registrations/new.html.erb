@@ -22,13 +22,12 @@
 
   <div>
     <%= form.label :password, class: "label" %>
-    <%= form.password_field :password, required: true, autocomplete: "new-password", maxlength: 72, class: "input mt-2" %>
+    <%= render "shared/password_field", form: form, field: :password, autocomplete: "new-password" %>
   </div>
 
   <div>
     <%= form.label :password_confirmation, class: "label" %>
-    <%= form.password_field :password_confirmation, required: true, autocomplete: "new-password", maxlength: 72,
-          class: "input mt-2" %>
+    <%= render "shared/password_field", form: form, field: :password_confirmation, autocomplete: "new-password" %>
   </div>
 
   <%= form.submit "Create account", class: "btn-primary w-full" %>

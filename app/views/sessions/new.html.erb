@@ -12,8 +12,7 @@
       <%= form.label :password, class: "label" %>
       <%= link_to "Forgot password?", new_password_path, class: "link text-sm" %>
     </div>
-    <%= form.password_field :password, required: true, autocomplete: "current-password", maxlength: 72,
-          class: "input mt-2" %>
+    <%= render "shared/password_field", form: form, field: :password, autocomplete: "current-password" %>
   </div>
 
   <%= form.submit "Sign in", class: "btn-primary w-full" %>
