@@ -43,13 +43,11 @@ class Company < ApplicationRecord
     format_invoice_number(sequence, date)
   end
 
-  # The number the next invoice would get, for display only; nothing is reserved.
   def preview_invoice_number(date)
     format_invoice_number(next_free_invoice_sequence(date), date)
   end
 
   private
-    # Skips numbers that were already used, e.g. typed in manually.
     def next_free_invoice_sequence(date)
       sequence = next_invoice_number
       sequence += 1 while invoices.exists?(number: format_invoice_number(sequence, date))

@@ -23,7 +23,6 @@ class CreateClients < ActiveRecord::Migration[8.1]
       t.timestamps
     end
 
-    # Client queries are always scoped to a company.
     add_index :clients, [ :company_id, :name ]
   end
 end

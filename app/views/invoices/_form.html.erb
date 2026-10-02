@@ -10,7 +10,6 @@
       <%= form.collection_select :client_id, clients, :id, :name, { prompt: "Select a client" }, required: true, class: "input mt-2" %>
     </div>
 
-    <%# The number stays locked unless the user chose to override it. %>
     <% number_locked = !invoice.number_changed? %>
     <div data-controller="field-override">
       <%= form.label :number, class: "label" %>
