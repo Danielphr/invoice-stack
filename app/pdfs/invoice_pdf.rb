@@ -78,9 +78,7 @@ class InvoicePdf
     end
 
     def items
-      columns = item_columns
-      item_row({ description: "Description", quantity: quantity_label(invoice), unit_price: unit_price_label(invoice), amount: "Amount" },
-        columns, style: :bold)
+      item_header
 
       invoice.items.each do |item|
         item_row({
@@ -88,22 +86,34 @@ class InvoicePdf
           quantity: number_with_precision(item.quantity, precision: 2, strip_insignificant_zeros: true),
           unit_price: format_money(item.unit_price, invoice.currency),
           amount: format_money(item.amount, invoice.currency)
-        }, columns)
+        })
       end
     end
 
-    def item_columns
-      numbers = { quantity: 60, unit_price: 110, amount: 110 }
-      { description: pdf.bounds.width - numbers.values.sum, **numbers }
+    def item_header
+      item_row({ description: "Description", quantity: quantity_label(invoice), unit_price: unit_price_label(invoice), amount: "Amount" },
+        header: true)
     end
 
-    def item_row(values, columns, style: :normal)
-      height = pdf.height_of(values[:description], width: columns[:description] - 8, style: style) + 12
-      pdf.start_new_page if pdf.cursor < height
-      top = pdf.cursor
+    def item_columns
+      @item_columns ||= begin
+        numbers = { quantity: 60, unit_price: 110, amount: 110 }
+        { description: pdf.bounds.width - numbers.values.sum, **numbers }
+      end
+    end
 
+    def item_row(values, header: false)
+      style = header ? :bold : :normal
+      height = pdf.height_of(values[:description], width: item_columns[:description] - 8, style: style) + 12
+
+      if pdf.cursor < height
+        pdf.start_new_page
+        item_header unless header
+      end
+
+      top = pdf.cursor
       x = 0
-      columns.each do |column, width|
+      item_columns.each do |column, width|
         pdf.text_box values[column], at: [ x, top - 6 ], width: column == :description ? width - 8 : width,
           style: style, align: column == :description ? :left : :right
         x += width

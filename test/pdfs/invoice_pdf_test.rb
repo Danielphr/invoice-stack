@@ -40,14 +40,16 @@ class InvoicePdfTest < ActiveSupport::TestCase
     assert_includes pdf_text(@invoice), "Łódź Sp. z o.o."
   end
 
-  test "continues long invoices on another page" do
+  test "continues long invoices on another page, repeating the item header" do
     40.times { |index| @invoice.items.build(description: "Extra item #{index}", quantity: 1, unit_price: 10) }
-    @invoice.save!
+    @invoice.update!(billing_type: "hourly")
 
     reader = PDF::Reader.new(StringIO.new(InvoicePdf.new(@invoice).render))
+    second_page = reader.pages.second.text
 
-    assert_operator reader.page_count, :>, 1
-    assert_includes reader.pages.last.text, "Page 2 of 2"
+    assert_equal 2, reader.page_count
+    assert_includes second_page, "Page 2 of 2"
+    assert_match(/Description\s+Hours\s+Rate\s+Amount/, second_page)
   end
 
   test "builds a file name that is safe on any system" do
