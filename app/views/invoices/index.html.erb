@@ -16,6 +16,7 @@
           <th scope="col" class="px-4 py-3">Due</th>
           <th scope="col" class="px-4 py-3">Status</th>
           <th scope="col" class="px-4 py-3 text-right">Total</th>
+          <th scope="col" class="px-4 py-3"><span class="sr-only">Actions</span></th>
         </tr>
       </thead>
       <tbody class="divide-y divide-gray-200 text-gray-600">
@@ -27,6 +28,11 @@
             <td class="px-4 py-3 whitespace-nowrap"><%= invoice.due_date ? l(invoice.due_date, format: :medium) : "—" %></td>
             <td class="px-4 py-3"><%= invoice_status_badge(invoice) %></td>
             <td class="px-4 py-3 text-right whitespace-nowrap text-gray-900"><%= format_money(invoice.total, invoice.currency) %></td>
+            <td class="px-4 py-3 text-right">
+              <%= link_to invoice_path(invoice, format: :pdf), target: "_blank", rel: "noopener", class: "link", data: { turbo: false } do %>
+                PDF<span class="sr-only">, <%= invoice.number %></span>
+              <% end %>
+            </td>
           </tr>
         <% end %>
       </tbody>
