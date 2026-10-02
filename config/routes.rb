@@ -8,7 +8,9 @@ Rails.application.routes.draw do
 
   resource :company, only: %i[ show update ]
   resources :clients
-  resources :invoices
+  resources :invoices do
+    resource :status, only: :update, module: :invoices
+  end
 
   get "up" => "rails/health#show", as: :rails_health_check
 end
