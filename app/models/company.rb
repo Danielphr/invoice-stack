@@ -3,6 +3,8 @@ class Company < ApplicationRecord
   # Characters that would break file names when invoices are exported.
   INVOICE_NUMBER_FORBIDDEN_CHARACTERS = %r{[\s/\\<>:"|?*]}
 
+  include HasAddress
+
   has_many :users, dependent: :destroy
   # Invoices are declared before clients so they are destroyed first.
   # A client that still has invoices cannot be destroyed.
@@ -10,8 +12,13 @@ class Company < ApplicationRecord
   has_many :clients, dependent: :destroy
 
   normalizes :invoice_number_pattern, with: ->(pattern) { pattern.strip }
+  normalizes :email, with: ->(email) { email.strip.downcase.presence }
 
   validates :name, presence: true, on: :update
+  validates :name, length: { maximum: 100 }
+  validates :email, format: { with: URI::MailTo::EMAIL_REGEXP }, length: { maximum: 254 }, allow_nil: true
+  validates :time_zone, inclusion: { in: ActiveSupport::TimeZone.all.map(&:name) }
+  validates :default_currency, inclusion: { in: Currency.codes }
   validates :invoice_number_pattern, presence: true, length: { maximum: 30 }
   validates :invoice_number_digits, numericality: { only_integer: true, in: 1..10 }
   validates :next_invoice_number, numericality: { only_integer: true, greater_than_or_equal_to: 1, less_than: 1_000_000_000 }

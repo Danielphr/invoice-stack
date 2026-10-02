@@ -36,6 +36,10 @@ en:
         state: "State / Province"
       company:
         name: "Company name"
+        address_line1: "Address line 1"
+        address_line2: "Address line 2"
+        state: "State / Province"
+        default_currency: "Default currency"
         invoice_number_pattern: "Number pattern"
         invoice_number_digits: "Minimum digits"
         next_invoice_number: "Next number"

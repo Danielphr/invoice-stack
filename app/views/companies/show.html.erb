@@ -1,9 +1,74 @@
 <% content_for :title, "Company" %>
 
-<h1 class="text-2xl font-semibold text-gray-900"><%= @company.name %></h1>
+<h1 class="text-2xl font-semibold text-gray-900"><%= @company.name_in_database %></h1>
 
-<%= form_with model: @company, url: company_path, method: :patch, class: "mt-8 max-w-2xl space-y-8" do |form| %>
+<%= form_with model: @company, url: company_path, method: :patch, class: "mt-8 max-w-2xl space-y-10" do |form| %>
   <%= render "shared/form_errors", model: @company %>
+
+  <fieldset class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+    <legend class="mb-4 text-base font-semibold text-gray-900">Details</legend>
+
+    <div>
+      <%= form.label :name, class: "label" %>
+      <%= form.text_field :name, required: true, maxlength: 100, autocomplete: "organization", class: "input mt-2" %>
+    </div>
+
+    <div>
+      <%= form.label :email, class: "label" %>
+      <%= form.email_field :email, autocomplete: "email", class: "input mt-2" %>
+    </div>
+  </fieldset>
+
+  <fieldset class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+    <legend class="mb-4 text-base font-semibold text-gray-900">Address</legend>
+
+    <div class="sm:col-span-2">
+      <%= form.label :address_line1, class: "label" %>
+      <%= form.text_field :address_line1, autocomplete: "address-line1", class: "input mt-2" %>
+    </div>
+
+    <div class="sm:col-span-2">
+      <%= form.label :address_line2, class: "label" %>
+      <%= form.text_field :address_line2, autocomplete: "address-line2", class: "input mt-2" %>
+    </div>
+
+    <div>
+      <%= form.label :city, class: "label" %>
+      <%= form.text_field :city, autocomplete: "address-level2", class: "input mt-2" %>
+    </div>
+
+    <div>
+      <%= form.label :state, class: "label" %>
+      <%= form.text_field :state, autocomplete: "address-level1", class: "input mt-2" %>
+    </div>
+
+    <div>
+      <%= form.label :postal_code, class: "label" %>
+      <%= form.text_field :postal_code, autocomplete: "postal-code", class: "input mt-2" %>
+    </div>
+
+    <div>
+      <%= form.label :country, class: "label" %>
+      <%= form.select :country, Country::NAMES.invert, { include_blank: "Select a country" }, class: "input mt-2" %>
+    </div>
+  </fieldset>
+
+  <fieldset class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+    <legend class="mb-4 text-base font-semibold text-gray-900">Preferences</legend>
+
+    <div>
+      <%= form.label :time_zone, class: "label" %>
+      <%= form.time_zone_select :time_zone, nil, {}, class: "input mt-2" %>
+      <p class="mt-2 text-xs text-gray-500">Used for invoice dates and when invoices become overdue.</p>
+    </div>
+
+    <div>
+      <%= form.label :default_currency, class: "label" %>
+      <%= form.select :default_currency, Currency::ALL.map { |code, details| [ "#{code} — #{details[:name]}", code ] }, {},
+            class: "input mt-2" %>
+      <p class="mt-2 text-xs text-gray-500">Preselected on new invoices.</p>
+    </div>
+  </fieldset>
 
   <fieldset class="space-y-6">
     <legend class="text-base font-semibold text-gray-900">Invoice numbers</legend>
