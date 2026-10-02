@@ -1,0 +1,44 @@
+<% content_for :title, "Company" %>
+
+<h1 class="text-2xl font-semibold text-gray-900"><%= @company.name %></h1>
+
+<%= form_with model: @company, url: company_path, method: :patch, class: "mt-8 max-w-2xl space-y-8" do |form| %>
+  <%= render "shared/form_errors", model: @company %>
+
+  <fieldset class="space-y-6">
+    <legend class="text-base font-semibold text-gray-900">Invoice numbers</legend>
+
+    <div>
+      <%= form.label :invoice_number_pattern, class: "label" %>
+      <%= form.text_field :invoice_number_pattern, required: true, maxlength: 30, class: "input mt-2" %>
+      <p class="mt-2 text-xs text-gray-500">
+        Use <code>{NUMBER}</code> exactly once. You can also add <code>{YEAR}</code> and <code>{MONTH}</code>,
+        taken from each invoice's issue date. Example: <code>INV-{YEAR}-{NUMBER}</code>.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+      <div>
+        <%= form.label :invoice_number_digits, class: "label" %>
+        <%= form.number_field :invoice_number_digits, required: true, min: 1, max: 10, class: "input mt-2" %>
+        <p class="mt-2 text-xs text-gray-500">Pads with zeros, e.g. 4 digits gives 0042.</p>
+      </div>
+
+      <div>
+        <%= form.label :next_invoice_number, class: "label" %>
+        <%= form.number_field :next_invoice_number, required: true, min: 1, class: "input mt-2" %>
+        <p class="mt-2 text-xs text-gray-500">Numbers that are already used are skipped automatically.</p>
+      </div>
+    </div>
+
+    <% if @next_invoice_number %>
+      <p class="rounded-md bg-gray-50 p-4 text-sm text-gray-700">
+        Next invoice will be <strong class="font-semibold text-gray-900"><%= @next_invoice_number %></strong>
+      </p>
+    <% end %>
+  </fieldset>
+
+  <div class="flex justify-end">
+    <%= form.submit "Save", class: "btn-primary" %>
+  </div>
+<% end %>

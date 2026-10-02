@@ -6,6 +6,7 @@ Rails.application.routes.draw do
   resources :passwords, param: :token
   resource :onboarding, only: %i[show update]
 
+  resource :company, only: %i[ show update ]
   resources :clients
   resources :invoices
 
