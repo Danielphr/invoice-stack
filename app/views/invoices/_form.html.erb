@@ -23,8 +23,7 @@
       <% if invoice.new_record? %>
         <p class="mt-2 text-xs text-gray-500">Assigned automatically when you save.</p>
       <% end %>
-      <%= tag.p "Manual numbers must be unique. The automatic sequence will skip any number you use.",
-            hidden: number_locked, class: "mt-2 text-xs text-amber-700", data: { field_override_target: "warning" } %>
+      <%= tag.p invoice_number_warning(invoice), hidden: number_locked, class: "mt-2 text-xs text-amber-700", data: { field_override_target: "warning" } %>
     </div>
 
     <div>

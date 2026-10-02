@@ -37,4 +37,34 @@ module InvoicesHelper
   def unit_price_label(invoice)
     ITEM_LABELS.fetch(invoice.billing_type)[:unit_price]
   end
+
+  def issued_invoice_warning(invoice)
+    status = issued_status(invoice)
+    return unless status
+
+    "This invoice has been #{status}. Your client may already have it, so any change alters a document you already issued."
+  end
+
+  def invoice_number_warning(invoice)
+    if (status = issued_status(invoice))
+      "This invoice has already been #{status}; changing its number can confuse your client and your records. " \
+        "Manual numbers must be unique."
+    else
+      "Manual numbers must be unique. The automatic sequence will skip any number you use."
+    end
+  end
+
+  def delete_invoice_confirmation(invoice)
+    return "Delete invoice #{invoice.number}? This cannot be undone." if invoice.draft?
+
+    message = "Invoice #{invoice.number} has been #{invoice.status}. " \
+      "Deleting it removes it permanently and leaves a gap in your numbering."
+    invoice.sent? ? "#{message} Consider cancelling it instead." : message
+  end
+
+  private
+    def issued_status(invoice)
+      status = invoice.status_in_database
+      status if invoice.persisted? && status != "draft"
+    end
 end

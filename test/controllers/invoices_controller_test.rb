@@ -211,6 +211,21 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
     assert_select "input[name=?]", "invoice[paid_on]", count: 0
   end
 
+  test "should warn when editing an invoice that was already sent" do
+    get edit_invoice_url(@invoice)
+    assert_select "[role=note]", /This invoice has been sent/
+
+    @invoice.update!(status: "draft")
+    get edit_invoice_url(@invoice)
+    assert_select "[role=note]", count: 0
+  end
+
+  test "should ask for a stronger confirmation before deleting a sent invoice" do
+    get invoice_url(@invoice)
+
+    assert_select "form[data-turbo-confirm*=?]", "Consider cancelling it instead."
+  end
+
   test "should not update an invoice with invalid data" do
     patch invoice_url(@invoice), params: { invoice: { due_date: @invoice.issue_date - 1 } }
 

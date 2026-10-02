@@ -23,6 +23,42 @@ class InvoicesHelperTest < ActionView::TestCase
       invoice_status_badge(invoice)
   end
 
+  test "warns only when an existing invoice is no longer a draft" do
+    invoice = invoices(:globex_website)
+    assert_match "This invoice has been sent.", issued_invoice_warning(invoice)
+
+    invoice.update!(status: "draft")
+    assert_nil issued_invoice_warning(invoice)
+
+    assert_nil issued_invoice_warning(Invoice.new(status: "sent"))
+  end
+
+  test "bases warnings on the saved status, not the one being edited" do
+    invoice = invoices(:globex_website)
+    invoice.status = "draft"
+
+    assert_match "This invoice has been sent.", issued_invoice_warning(invoice)
+  end
+
+  test "uses a stronger number warning for issued invoices" do
+    assert_match "changing its number can confuse your client", invoice_number_warning(invoices(:globex_website))
+    assert_equal "Manual numbers must be unique. The automatic sequence will skip any number you use.",
+      invoice_number_warning(Invoice.new)
+  end
+
+  test "asks for a stronger delete confirmation once an invoice is issued" do
+    invoice = invoices(:globex_website)
+
+    assert_equal "Invoice INV-001 has been sent. Deleting it removes it permanently and leaves a gap in your numbering. " \
+      "Consider cancelling it instead.", delete_invoice_confirmation(invoice)
+
+    invoice.status = "paid"
+    assert_no_match "Consider cancelling", delete_invoice_confirmation(invoice)
+
+    invoice.status = "draft"
+    assert_equal "Delete invoice INV-001? This cannot be undone.", delete_invoice_confirmation(invoice)
+  end
+
   test "labels item columns by billing type" do
     invoice = Invoice.new(billing_type: "hourly")
 
