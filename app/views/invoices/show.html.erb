@@ -9,10 +9,11 @@
     </div>
   </div>
 
-  <div class="flex gap-3">
+  <div class="flex flex-wrap gap-3">
+    <%= render "status_actions", invoice: @invoice %>
     <%= link_to "Edit", edit_invoice_path(@invoice), class: "btn-secondary" %>
     <%= button_to "Delete", @invoice, method: :delete, class: "btn-danger",
-          form: { data: { turbo_confirm: "Delete invoice #{@invoice.number}? This cannot be undone." } } %>
+          form: { data: { turbo_confirm: delete_invoice_confirmation(@invoice) } } %>
   </div>
 </div>
 
@@ -30,6 +31,12 @@
       <dt class="text-gray-500">Due</dt>
       <dd class="mt-1 text-gray-900"><%= @invoice.due_date ? l(@invoice.due_date, format: :medium) : "—" %></dd>
     </div>
+    <% if @invoice.paid? %>
+      <div>
+        <dt class="text-gray-500">Paid</dt>
+        <dd class="mt-1 text-gray-900"><%= l(@invoice.paid_on, format: :medium) %></dd>
+      </div>
+    <% end %>
     <div>
       <dt class="text-gray-500">Currency</dt>
       <dd class="mt-1 text-gray-900"><%= @invoice.currency %></dd>

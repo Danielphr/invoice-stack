@@ -69,7 +69,7 @@ class InvoicesController < ApplicationController
 
     def invoice_params
       params.expect(invoice: [
-        :client_id, :number, :status, :billing_type, :currency, :issue_date, :due_date, :discount, :notes,
+        :client_id, :number, :status, :billing_type, :currency, :issue_date, :due_date, :paid_on, :discount, :notes,
         items_attributes: [ [ :id, :description, :quantity, :unit_price, :_destroy ] ]
       ])
     end

@@ -12,6 +12,7 @@ class Invoice < ApplicationRecord
   normalizes :notes, with: ->(notes) { notes.strip.presence }
 
   before_validation :position_items
+  before_validation :sync_paid_on
   before_create :assign_number, if: -> { number.blank? }
 
   # A new invoice without a number gets the company's next one when it is saved.
@@ -45,6 +46,14 @@ class Invoice < ApplicationRecord
 
     def position_items
       active_items.each_with_index { |item, index| item.position = index }
+    end
+
+    def sync_paid_on
+      if paid?
+        self.paid_on ||= Date.current
+      else
+        self.paid_on = nil
+      end
     end
 
     def assign_number
