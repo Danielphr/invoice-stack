@@ -23,8 +23,7 @@ module InvoiceStack
     #
     # config.eager_load_paths << Rails.root.join("extras")
 
-    # Until each company can choose its own time zone, dates such as an
-    # invoice's default issue date and "overdue" use this zone.
-    config.time_zone = "Montevideo"
+    # Signed-in requests use the company's time zone; this applies everywhere else.
+    config.time_zone = "UTC"
   end
 end

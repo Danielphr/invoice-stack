@@ -2,6 +2,7 @@ class ApplicationController < ActionController::Base
   include Authentication
 
   before_action :require_completed_onboarding
+  around_action :use_company_time_zone, if: -> { Current.user }
 
   # Only allow modern browsers supporting webp images, web push, badges, import maps, CSS nesting, and CSS :has.
   allow_browser versions: :modern
@@ -15,5 +16,9 @@ class ApplicationController < ActionController::Base
       return if Current.user.company.onboarding_complete?
 
       redirect_to onboarding_path
+    end
+
+    def use_company_time_zone(&)
+      Time.use_zone(Current.user.company.time_zone, &)
     end
 end

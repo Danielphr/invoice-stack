@@ -12,7 +12,7 @@ class Invoices::StatusesControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to invoice_url(@invoice)
     @invoice.reload
     assert @invoice.paid?
-    assert_equal Date.current, @invoice.paid_on
+    assert_equal Time.find_zone(@invoice.company.time_zone).today, @invoice.paid_on
 
     follow_redirect!
     assert_select "[role=status]", "Invoice marked as paid."

@@ -17,7 +17,7 @@ class InvoicesController < ApplicationController
   end
 
   def new
-    @invoice = Current.user.company.invoices.new(issue_date: Date.current, currency: Currency::DEFAULT)
+    @invoice = Current.user.company.invoices.new(issue_date: Date.current, currency: Current.user.company.default_currency)
     @invoice.items.build
     set_number_preview
   end
