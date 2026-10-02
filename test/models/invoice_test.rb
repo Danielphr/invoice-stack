@@ -164,6 +164,31 @@ class InvoiceTest < ActiveSupport::TestCase
     assert_equal [ 0, 1 ], invoice.items.map(&:position)
   end
 
+  test "records today as the payment date when marked as paid" do
+    @invoice.update!(status: "paid")
+
+    assert_equal Date.current, @invoice.paid_on
+  end
+
+  test "keeps a payment date that was entered" do
+    @invoice.update!(status: "paid", paid_on: Date.new(2026, 9, 15))
+
+    assert_equal Date.new(2026, 9, 15), @invoice.reload.paid_on
+  end
+
+  test "clears the payment date when no longer paid" do
+    @invoice.update!(status: "paid")
+    @invoice.update!(status: "sent")
+
+    assert_nil @invoice.reload.paid_on
+  end
+
+  test "database requires a payment date exactly when paid" do
+    assert_raises ActiveRecord::StatementInvalid do
+      @invoice.update_column(:status, "paid")
+    end
+  end
+
   test "is overdue when sent and past its due date" do
     @invoice.due_date = Date.current - 1
     assert @invoice.overdue?

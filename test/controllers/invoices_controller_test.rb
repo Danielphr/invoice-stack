@@ -192,6 +192,25 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
     assert_not InvoiceItem.exists?(development.id)
   end
 
+  test "should show and edit the payment date of a paid invoice" do
+    @invoice.update!(status: "paid", paid_on: Date.new(2026, 9, 20))
+
+    get invoice_url(@invoice)
+    assert_select "dd", "Sep 20, 2026"
+
+    get edit_invoice_url(@invoice)
+    assert_select "input[name=?][value=?]", "invoice[paid_on]", "2026-09-20"
+
+    patch invoice_url(@invoice), params: { invoice: { paid_on: "2026-09-25" } }
+    assert_equal Date.new(2026, 9, 25), @invoice.reload.paid_on
+  end
+
+  test "should not show a payment date field for unpaid invoices" do
+    get edit_invoice_url(@invoice)
+
+    assert_select "input[name=?]", "invoice[paid_on]", count: 0
+  end
+
   test "should not update an invoice with invalid data" do
     patch invoice_url(@invoice), params: { invoice: { due_date: @invoice.issue_date - 1 } }
 

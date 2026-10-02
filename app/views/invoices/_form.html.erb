@@ -42,6 +42,13 @@
       <%= form.select :status, Invoice.statuses.keys.map { [ it.humanize, it ] }, {}, class: "input mt-2" %>
     </div>
 
+    <% if invoice.paid? %>
+      <div>
+        <%= form.label :paid_on, class: "label" %>
+        <%= form.date_field :paid_on, class: "input mt-2" %>
+      </div>
+    <% end %>
+
     <div>
       <%= form.label :billing_type, class: "label" %>
       <%= form.select :billing_type, Invoice.billing_types.keys.map { [ it.humanize, it ] }, {},
