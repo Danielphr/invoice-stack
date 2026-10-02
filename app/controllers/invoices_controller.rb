@@ -12,6 +12,7 @@ class InvoicesController < ApplicationController
   def new
     @invoice = Current.user.company.invoices.new(issue_date: Date.current, currency: Currency::DEFAULT)
     @invoice.items.build
+    set_number_preview
   end
 
   def create
@@ -20,8 +21,11 @@ class InvoicesController < ApplicationController
     if @invoice.save
       redirect_to @invoice, notice: "Invoice created."
     else
+      set_number_preview
       render :new, status: :unprocessable_entity
     end
+  rescue ActiveRecord::RecordNotUnique
+    reject_duplicate_number(:new)
   end
 
   def edit
@@ -33,6 +37,8 @@ class InvoicesController < ApplicationController
     else
       render :edit, status: :unprocessable_entity
     end
+  rescue ActiveRecord::RecordNotUnique
+    reject_duplicate_number(:edit)
   end
 
   def destroy
@@ -47,6 +53,18 @@ class InvoicesController < ApplicationController
 
     def set_clients
       @clients = Current.user.company.clients.by_name
+    end
+
+    def set_number_preview
+      @number_preview = Current.user.company.preview_invoice_number(@invoice.issue_date || Date.current)
+    end
+
+    # The uniqueness validation catches duplicates in normal use; the unique
+    # index only fires when two requests save the same number at the same time.
+    def reject_duplicate_number(template)
+      @invoice.errors.add(:number, :taken)
+      set_number_preview if @invoice.new_record?
+      render template, status: :unprocessable_entity
     end
 
     def invoice_params

@@ -10,9 +10,22 @@
       <%= form.collection_select :client_id, clients, :id, :name, { prompt: "Select a client" }, required: true, class: "input mt-2" %>
     </div>
 
-    <div>
+    <%# The number stays locked unless the user chose to override it. %>
+    <% number_locked = !invoice.number_changed? %>
+    <div data-controller="field-override">
       <%= form.label :number, class: "label" %>
-      <%= form.text_field :number, required: true, maxlength: 50, placeholder: "INV-001", class: "input mt-2" %>
+      <div class="mt-2 flex gap-2">
+        <%= form.text_field :number, maxlength: 50, readonly: number_locked, required: invoice.persisted?,
+              placeholder: @number_preview, data: { field_override_target: "input" },
+              class: "input read-only:bg-gray-50 read-only:text-gray-500" %>
+        <%= tag.button "Override", type: "button", hidden: !number_locked, class: "btn-secondary",
+              data: { field_override_target: "button", action: "field-override#unlock" } %>
+      </div>
+      <% if invoice.new_record? %>
+        <p class="mt-2 text-xs text-gray-500">Assigned automatically when you save.</p>
+      <% end %>
+      <%= tag.p "Manual numbers must be unique. The automatic sequence will skip any number you use.",
+            hidden: number_locked, class: "mt-2 text-xs text-amber-700", data: { field_override_target: "warning" } %>
     </div>
 
     <div>
