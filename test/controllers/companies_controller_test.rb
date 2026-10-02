@@ -47,6 +47,13 @@ class CompaniesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "INV-{NUMBER}", @company.reload.invoice_number_pattern
   end
 
+  test "should reject a next number too large to store" do
+    patch company_url, params: { company: { next_invoice_number: "9999999999" } }
+
+    assert_response :unprocessable_entity
+    assert_select "[role=alert] li", "Next number must be less than 1000000000"
+  end
+
   test "should only change the current user's company" do
     other_company = companies(:other)
 

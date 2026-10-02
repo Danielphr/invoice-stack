@@ -26,7 +26,7 @@
 
       <div>
         <%= form.label :next_invoice_number, class: "label" %>
-        <%= form.number_field :next_invoice_number, required: true, min: 1, class: "input mt-2" %>
+        <%= form.number_field :next_invoice_number, required: true, min: 1, max: 999_999_999, class: "input mt-2" %>
         <p class="mt-2 text-xs text-gray-500">Numbers that are already used are skipped automatically.</p>
       </div>
     </div>

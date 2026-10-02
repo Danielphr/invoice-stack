@@ -106,6 +106,17 @@ class CompanyTest < ActiveSupport::TestCase
     end
   end
 
+  test "keeps the next invoice number within the integer column's range" do
+    company = companies(:one)
+
+    company.next_invoice_number = 999_999_999
+    assert company.valid?
+
+    company.next_invoice_number = 9_999_999_999
+    assert_not company.valid?
+    assert_includes company.errors[:next_invoice_number], "must be less than 1000000000"
+  end
+
   test "database rejects a pattern without {NUMBER}" do
     assert_raises ActiveRecord::StatementInvalid do
       companies(:one).update_column(:invoice_number_pattern, "INV-{YEAR}")

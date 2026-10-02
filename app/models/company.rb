@@ -14,7 +14,7 @@ class Company < ApplicationRecord
   validates :name, presence: true, on: :update
   validates :invoice_number_pattern, presence: true, length: { maximum: 30 }
   validates :invoice_number_digits, numericality: { only_integer: true, in: 1..10 }
-  validates :next_invoice_number, numericality: { only_integer: true, greater_than_or_equal_to: 1 }
+  validates :next_invoice_number, numericality: { only_integer: true, greater_than_or_equal_to: 1, less_than: 1_000_000_000 }
   validate :invoice_number_pattern_must_be_valid
 
   def onboarding_complete?
