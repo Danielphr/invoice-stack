@@ -56,6 +56,33 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
     assert_select "dd", "$2,150.00 USD"
   end
 
+  test "should render an invoice as a PDF" do
+    get invoice_url(@invoice, format: :pdf)
+
+    assert_response :success
+    assert_equal "application/pdf", response.media_type
+    assert_match(/\Ainline; filename="INV-001.pdf"/, response.headers["Content-Disposition"])
+    assert response.body.start_with?("%PDF")
+  end
+
+  test "should link to each invoice's PDF from the list" do
+    get invoices_url
+
+    assert_select "tbody a[href=?][target=_blank]", invoice_path(@invoice, format: :pdf), text: /PDF/
+  end
+
+  test "should link to the PDF from the invoice page" do
+    get invoice_url(@invoice)
+
+    assert_select "a[href=?][target=_blank]", invoice_path(@invoice, format: :pdf), "PDF"
+  end
+
+  test "should not render another company's invoice as a PDF" do
+    get invoice_url(@other_invoice, format: :pdf)
+
+    assert_response :not_found
+  end
+
   test "should label item columns for hourly invoices" do
     @invoice.update!(billing_type: "hourly")
 
