@@ -36,6 +36,9 @@ en:
         state: "State / Province"
       company:
         name: "Company name"
+        invoice_number_pattern: "Number pattern"
+        invoice_number_digits: "Minimum digits"
+        next_invoice_number: "Next number"
       invoice/items:
         description: "Item description"
         quantity: "Item quantity"

@@ -17,13 +17,66 @@ class InvoiceTest < ActiveSupport::TestCase
     assert invoice.fixed?
   end
 
-  test "requires a number, issue date and supported currency" do
-    invoice = Invoice.new(company: companies(:one), client: clients(:globex), number: " ", currency: "XYZ")
+  test "requires an issue date and supported currency" do
+    invoice = Invoice.new(company: companies(:one), client: clients(:globex), currency: "XYZ")
 
     assert_not invoice.valid?
-    assert_includes invoice.errors[:number], "can't be blank"
     assert_includes invoice.errors[:issue_date], "can't be blank"
     assert_includes invoice.errors[:currency], "is not included in the list"
+  end
+
+  test "requires a number once the invoice exists" do
+    @invoice.number = " "
+
+    assert_not @invoice.valid?
+    assert_includes @invoice.errors[:number], "can't be blank"
+  end
+
+  test "assigns the company's next number when saved without one" do
+    company = companies(:one)
+
+    first = create_invoice(company)
+    second = create_invoice(company)
+
+    assert_equal [ "INV-1", "INV-2" ], [ first.number, second.number ]
+    assert_equal 3, company.reload.next_invoice_number
+  end
+
+  test "builds the number from the pattern and the issue date" do
+    company = companies(:one)
+    company.update!(invoice_number_pattern: "YP-{YEAR}-{NUMBER}", invoice_number_digits: 4)
+
+    invoice = create_invoice(company, issue_date: Date.new(2025, 12, 31))
+
+    assert_equal "YP-2025-0001", invoice.number
+  end
+
+  test "keeps a manually entered number without advancing the counter" do
+    company = companies(:one)
+
+    invoice = create_invoice(company, number: "SPECIAL-7")
+
+    assert_equal "SPECIAL-7", invoice.number
+    assert_equal 1, company.reload.next_invoice_number
+  end
+
+  test "skips numbers that were already used manually" do
+    company = companies(:one)
+    create_invoice(company, number: "INV-1")
+    create_invoice(company, number: "INV-2")
+
+    invoice = create_invoice(company)
+
+    assert_equal "INV-3", invoice.number
+    assert_equal 4, company.reload.next_invoice_number
+  end
+
+  test "previews the next number without reserving it" do
+    company = companies(:one)
+
+    assert_equal "INV-1", company.preview_invoice_number(Date.current)
+    assert_equal "INV-1", company.preview_invoice_number(Date.current)
+    assert_equal 1, company.reload.next_invoice_number
   end
 
   test "rejects unknown statuses and billing types" do
@@ -124,4 +177,12 @@ class InvoiceTest < ActiveSupport::TestCase
       @invoice.destroy!
     end
   end
+
+  private
+    def create_invoice(company, **attributes)
+      invoice = company.invoices.new(client: clients(:globex), currency: "USD", issue_date: Date.current, **attributes)
+      invoice.items.build(description: "Work", quantity: 1, unit_price: 100)
+      invoice.save!
+      invoice
+    end
 end

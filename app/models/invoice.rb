@@ -11,9 +11,12 @@ class Invoice < ApplicationRecord
   normalizes :number, with: ->(number) { number.strip.presence }
   normalizes :notes, with: ->(notes) { notes.strip.presence }
 
-  before_validation :number_items
+  before_validation :position_items
+  before_create :assign_number, if: -> { number.blank? }
 
-  validates :number, presence: true, length: { maximum: 50 }, uniqueness: { scope: :company_id }
+  # A new invoice without a number gets the company's next one when it is saved.
+  validates :number, presence: true, on: :update
+  validates :number, length: { maximum: 50 }, uniqueness: { scope: :company_id }, allow_blank: true
   validates :issue_date, presence: true
   validates :currency, inclusion: { in: Currency.codes }
   validates :discount, numericality: { greater_than_or_equal_to: 0, less_than: 10_000_000_000 }
@@ -40,8 +43,12 @@ class Invoice < ApplicationRecord
       items.reject(&:marked_for_destruction?)
     end
 
-    def number_items
+    def position_items
       active_items.each_with_index { |item, index| item.position = index }
+    end
+
+    def assign_number
+      self.number = company.reserve_invoice_number(issue_date)
     end
 
     def client_must_belong_to_company
