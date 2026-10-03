@@ -78,6 +78,16 @@ class InvoiceTest < ActiveSupport::TestCase
     assert_equal Date.new(2026, 9, 20), draft.issue_date
   end
 
+  test "keeps both dates when the due date is changed while sending" do
+    draft = invoices(:globex_draft)
+
+    travel_to Date.new(2026, 10, 3) do
+      draft.update!(status: "sent", due_date: Date.new(2026, 10, 15))
+    end
+
+    assert_equal [ Date.new(2026, 9, 15), Date.new(2026, 10, 15) ], [ draft.issue_date, draft.due_date ]
+  end
+
   test "keeps a later issue date and no due date when sent" do
     draft = invoices(:globex_draft)
     draft.update!(issue_date: Date.new(2026, 10, 10))

@@ -104,7 +104,7 @@ class Invoice < ApplicationRecord
     end
 
     def issue
-      reschedule(issue_date_when_sent) unless issue_date_changed?
+      reschedule(issue_date_when_sent) unless issue_date_changed? || due_date_changed?
       self.sequence = company.reserve_invoice_sequence
       self.number = company.format_invoice_number(sequence, issue_date)
     end
