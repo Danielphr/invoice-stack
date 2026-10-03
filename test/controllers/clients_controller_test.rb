@@ -31,7 +31,49 @@ class ClientsControllerTest < ActionDispatch::IntegrationTest
 
     get clients_url
 
-    assert_equal [ "acme labs", "Globex Corporation", "Initech" ], css_select("tbody tr td:first-child").map { it.text.strip }
+    assert_equal [ "acme labs", "Globex Corporation", "Initech" ], css_select("tbody tr td:first-child a").map { it.text.strip }
+  end
+
+  test "should show each client's invoice count, amount outstanding and overdue invoices" do
+    travel_to Date.new(2026, 10, 15) do
+      get clients_url
+    end
+
+    assert_select "p", "2 clients"
+    assert_select "tbody tr", text: /GC\s+Globex Corporation\s+billing@globex.example\s+Springfield, United States\s+2\s+\$2,150.00 USD\s+1 overdue/
+    assert_select "tbody tr", text: /Initech\s+—\s+Montevideo, Uruguay\s+0\s+—/
+    assert_select "tbody tr a[href=?]", client_path(@client), "Globex Corporation"
+    assert_select "tbody tr a[href=?]", "mailto:billing@globex.example"
+  end
+
+  test "should offer edit for every client and delete only for clients without invoices" do
+    get clients_url
+
+    assert_select "tbody a[href=?]", edit_client_path(@client), /Edit/
+    assert_select "tbody a[href=?]", edit_client_path(clients(:initech)), /Edit/
+    assert_select "tbody form[action=?]", client_path(@client), count: 0
+    assert_select "tbody form[action=?][data-confirm-destructive=true] button", client_path(clients(:initech)), /Delete/
+  end
+
+  test "should sort clients by invoice count and link to the opposite direction" do
+    get clients_url(sort: "invoices", direction: "desc")
+
+    assert_equal [ "Globex Corporation", "Initech" ], css_select("tbody tr td:first-child a").map { it.text.strip }
+    assert_select "th[aria-sort=descending]", /Invoices/
+    assert_select "th a[href=?]", clients_path(sort: "invoices", direction: "asc")
+  end
+
+  test "should paginate clients, ten per page" do
+    11.times { |index| @user.company.clients.create!(name: "Client #{index.to_s.rjust(2, "0")}", city: "Austin", country: "US") }
+
+    get clients_url
+
+    assert_select "p", "13 clients"
+    assert_select "tbody tr", 10
+    assert_select "nav.pagy a[rel=next]"
+
+    get clients_url(page: 9)
+    assert_redirected_to clients_url(page: 2)
   end
 
   test "should show an empty state when there are no clients" do

@@ -1,33 +1,83 @@
 <% content_for :title, "Clients" %>
 
 <div class="flex items-center justify-between gap-4">
-  <h1 class="text-2xl font-semibold text-gray-900">Clients</h1>
+  <div>
+    <h1 class="text-2xl font-semibold text-gray-900">Clients</h1>
+    <% if @clients.any? %>
+      <p class="mt-1 text-sm text-gray-500"><%= pluralize(@pagy.count, "client") %></p>
+    <% end %>
+  </div>
   <%= link_to "New client", new_client_path, class: "btn-primary" %>
 </div>
 
 <% if @clients.any? %>
-  <div class="mt-8 overflow-x-auto rounded-lg bg-white shadow-sm ring-1 ring-gray-900/5">
+  <div class="mt-8 overflow-x-auto rounded-2xl bg-white shadow-sm ring-1 ring-gray-900/5">
     <table class="min-w-full divide-y divide-gray-200 text-sm">
       <thead class="bg-gray-50 text-left font-semibold text-gray-900">
         <tr>
-          <th scope="col" class="px-4 py-3">Name</th>
+          <%= sort_header "Client", "name" %>
           <th scope="col" class="px-4 py-3">Email</th>
-          <th scope="col" class="px-4 py-3">Location</th>
+          <%= sort_header "Location", "location" %>
+          <%= sort_header "Invoices", "invoices", align: :right %>
+          <th scope="col" class="px-4 py-3 text-right">Outstanding</th>
+          <th scope="col" class="px-4 py-3"><span class="sr-only">Actions</span></th>
         </tr>
       </thead>
-      <tbody class="divide-y divide-gray-200 text-gray-600">
+      <tbody class="divide-y divide-gray-100 text-gray-600">
         <% @clients.each do |client| %>
-          <tr>
-            <td class="px-4 py-3 font-medium text-gray-900"><%= link_to client.name, client, class: "hover:text-brand-600" %></td>
-            <td class="px-4 py-3"><%= client.email %></td>
-            <td class="px-4 py-3"><%= client.city %>, <%= client.country_name %></td>
+          <% stats = @stats.fetch(client.id) %>
+          <tr class="relative hover:bg-gray-50">
+            <td class="px-4 py-3">
+              <div class="flex items-center gap-3">
+                <span class="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-semibold text-brand-700" aria-hidden="true">
+                  <%= client.initials %>
+                </span>
+                <%# The link stretches over the whole row, so any part of it opens the client; the email and actions sit above it. %>
+                <%= link_to client.name, client, class: "font-medium whitespace-nowrap text-gray-900 after:absolute after:inset-0" %>
+              </div>
+            </td>
+            <td class="px-4 py-3">
+              <%= client.email ? mail_to(client.email, class: "relative hover:text-brand-600") : tag.span("—", class: "text-gray-400") %>
+            </td>
+            <td class="px-4 py-3 whitespace-nowrap"><%= client.city %>, <%= client.country_name %></td>
+            <td class="px-4 py-3 text-right tabular-nums"><%= stats.invoices_count %></td>
+            <td class="px-4 py-3 text-right whitespace-nowrap">
+              <% if stats.outstanding.any? %>
+                <% stats.outstanding.each do |currency, amount| %>
+                  <p class="font-medium tabular-nums text-gray-900"><%= format_money(amount, currency) %></p>
+                <% end %>
+              <% else %>
+                <span class="text-gray-400">—</span>
+              <% end %>
+              <% if stats.overdue_count.positive? %>
+                <span class="mt-1 inline-block rounded-md bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700"><%= stats.overdue_count %> overdue</span>
+              <% end %>
+            </td>
+            <td class="px-4 py-3">
+              <div class="relative flex justify-end gap-4 whitespace-nowrap">
+                <%= link_to edit_client_path(client), class: "link" do %>
+                  Edit<span class="sr-only">, <%= client.name %></span>
+                <% end %>
+                <% if stats.invoices_count.zero? %>
+                  <%= button_to client, method: :delete, class: "cursor-pointer font-semibold text-red-600 hover:text-red-500",
+                        form: { data: { turbo_confirm: "Delete #{client.name}? This cannot be undone.", confirm_title: "Delete client",
+                          confirm_button: "Delete", confirm_destructive: true } } do %>
+                    Delete<span class="sr-only">, <%= client.name %></span>
+                  <% end %>
+                <% end %>
+              </div>
+            </td>
           </tr>
         <% end %>
       </tbody>
     </table>
   </div>
+
+  <% if @pagy.last > 1 %>
+    <div class="mt-6 flex justify-center"><%== @pagy.series_nav %></div>
+  <% end %>
 <% else %>
-  <div class="mt-8 rounded-lg border-2 border-dashed border-gray-300 p-12 text-center">
+  <div class="mt-8 rounded-2xl border-2 border-dashed border-gray-300 p-12 text-center">
     <h2 class="text-sm font-semibold text-gray-900">No clients yet</h2>
     <p class="mt-1 text-sm text-gray-500">Add your first client to start sending invoices.</p>
     <%= link_to "New client", new_client_path, class: "btn-primary mt-6 inline-flex" %>

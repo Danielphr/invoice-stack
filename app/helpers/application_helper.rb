@@ -30,6 +30,19 @@ module ApplicationHelper
     end
   end
 
+  # A sortable column header for the current list; the controller provides sort_column and sort_direction.
+  def sort_header(label, column, align: :left)
+    active = column == sort_column
+    ascending = active && sort_direction == "asc"
+    aria_sort = (ascending ? "ascending" : "descending" if active)
+
+    tag.th scope: "col", class: [ "px-4 py-3", ("text-right" if align == :right) ], aria: { sort: aria_sort } do
+      link_to url_for(sort: column, direction: ascending ? "desc" : "asc"), class: "inline-flex items-center gap-1 hover:text-brand-600" do
+        safe_join([ label, (tag.span(ascending ? "▲" : "▼", aria: { hidden: true }) if active) ].compact)
+      end
+    end
+  end
+
   # Icons are decorative, so screen readers skip them; the text next to them carries the meaning.
   def heroicon(name, **options)
     tag.svg(**options, fill: "none", viewBox: "0 0 24 24", "stroke-width": "1.5", stroke: "currentColor", aria: { hidden: true }) do

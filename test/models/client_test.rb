@@ -124,4 +124,35 @@ class ClientTest < ActiveSupport::TestCase
     assert @client.reload
     assert_includes @client.errors[:base], "Cannot delete record because dependent invoices exist"
   end
+
+  test "sorts by name, location or invoice count" do
+    company = companies(:one)
+    acme = company.clients.create!(name: "acme labs", city: "Zurich", country: "CH")
+    scope = company.clients.where(id: [ acme, clients(:globex), clients(:initech) ])
+
+    assert_equal [ acme, clients(:globex), clients(:initech) ], scope.sorted_by("name", "asc").to_a
+    assert_equal [ clients(:initech), clients(:globex), acme ], scope.sorted_by("location", "asc").to_a
+    assert_equal clients(:globex), scope.sorted_by("invoices", "desc").first
+  end
+
+  test "summarizes invoices for a list of clients" do
+    travel_to Date.new(2026, 10, 15)
+    company = companies(:one)
+    company.invoices.create!(client: clients(:globex), currency: "EUR", status: "sent", issue_date: Date.current, due_date: Date.current,
+      items_attributes: [ { description: "Work", quantity: 1, unit_price: 100 } ])
+
+    stats = Client.invoice_stats(company.clients.where(id: [ clients(:globex), clients(:initech) ]))
+
+    assert_equal 3, stats[clients(:globex).id].invoices_count
+    assert_equal 1, stats[clients(:globex).id].overdue_count
+    assert_equal({ "EUR" => 100, "USD" => 2150 }, stats[clients(:globex).id].outstanding)
+    assert_equal [ 0, 0, {} ], stats[clients(:initech).id].to_h.values
+  end
+
+  test "builds initials from the first two words of the name, skipping symbols" do
+    assert_equal "GC", clients(:globex).initials
+    assert_equal "I", clients(:initech).initials
+    assert_equal "HP", Client.new(name: "Harbor & Pine").initials
+    assert_equal "ÉM", Client.new(name: "études Montaña").initials
+  end
 end

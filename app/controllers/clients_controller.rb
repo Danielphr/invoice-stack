@@ -1,8 +1,13 @@
 class ClientsController < ApplicationController
   before_action :set_client, only: %i[ show edit update destroy ]
+  helper_method :sort_column, :sort_direction
 
   def index
-    @clients = Current.user.company.clients.by_name
+    clients = Current.user.company.clients.sorted_by(sort_column, sort_direction)
+    @pagy, @clients = pagy(:offset, clients, limit: 10, raise_range_error: true)
+    @stats = Client.invoice_stats(@clients)
+  rescue Pagy::RangeError => error
+    redirect_to error.pagy.page_url(:last)
   end
 
   def show
@@ -42,6 +47,14 @@ class ClientsController < ApplicationController
   end
 
   private
+    def sort_column
+      params[:sort].presence_in(Client::SORTS) || "name"
+    end
+
+    def sort_direction
+      params[:direction].presence_in(%w[ asc desc ]) || "asc"
+    end
+
     def set_client
       @client = Current.user.company.clients.find(params.expect(:id))
     end
