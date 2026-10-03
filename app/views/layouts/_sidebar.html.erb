@@ -25,6 +25,12 @@
     </ul>
   </nav>
 
+  <nav aria-label="Account" class="pb-4">
+    <ul role="list" class="-mx-2 space-y-1">
+      <li><%= nav_link_to "Settings", settings_path, icon: :cog %></li>
+    </ul>
+  </nav>
+
   <div class="-mx-6 border-t border-navy-800 px-6 py-4">
     <p class="text-sm font-semibold text-white"><%= Current.user.first_name %> <%= Current.user.last_name %></p>
     <p class="text-xs text-navy-300"><%= Current.user.company.name %></p>

@@ -14,6 +14,7 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "h1", "Settings"
+    assert_select "nav a[aria-current=page]", "Settings"
     assert_select "form[action=?]", settings_profile_path do
       assert_select "input[name=?][value=?]", "user[first_name]", "John"
       assert_select "input[name=?][value=?]", "user[email_address]", "one@example.com"
