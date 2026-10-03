@@ -41,8 +41,9 @@ gem "thruster", require: false
 
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
 gem "image_processing", "~> 2.2"
-# image_processing 2.x no longer installs an image library; Rails uses libvips by default
-gem "ruby-vips", "~> 2.3"
+# image_processing 2.x no longer depends on an image library, so ruby-vips is listed explicitly.
+# Active Storage requires it and tolerates a missing libvips; Bundler's require would fail the boot.
+gem "ruby-vips", "~> 2.3", require: false
 
 # Generate invoice PDFs [https://github.com/prawnpdf/prawn]
 gem "prawn", "~> 2.5"
