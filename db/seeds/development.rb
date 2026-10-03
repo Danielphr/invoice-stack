@@ -1,4 +1,4 @@
-# Demo data for local development. Sign in as demo@example.com / password.
+# Demo data for local development. Sign in as demo@example.com / invoicestack-demo.
 # Reload from scratch with: bin/rails db:seed:replant
 
 return if User.exists?(email_address: "demo@example.com")
@@ -11,7 +11,8 @@ ActiveRecord::Base.transaction do
     invoice_number_pattern: "NW-{YEAR}-{NUMBER}", invoice_number_digits: 3
   )
 
-  company.users.create!(first_name: "Demo", last_name: "User", email_address: "demo@example.com", password: "password")
+  company.users.create!(first_name: "Demo", last_name: "User", email_address: "demo@example.com",
+    password: "invoicestack-demo")
 
   clients = [
     company.clients.create!(name: "Lumen Labs", email: "accounts@lumenlabs.example", city: "Austin", state: "Texas",

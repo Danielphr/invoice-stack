@@ -34,6 +34,8 @@ en:
     state: "State / Province"
   activerecord:
     attributes:
+      user:
+        password_challenge: "Current password"
       company:
         name: "Company name"
         default_currency: "Default currency"

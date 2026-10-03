@@ -12,7 +12,7 @@ You need Ruby 4.0.7, PostgreSQL and libvips.
 bin/setup
 ```
 
-This installs the gems, creates the database with demo data and starts the app at http://localhost:3000. Sign in as `demo@example.com` with the password `password`.
+This installs the gems, creates the database with demo data and starts the app at http://localhost:3000. Sign in as `demo@example.com` with the password `invoicestack-demo`.
 
 To start over with fresh demo data:
 

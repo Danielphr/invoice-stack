@@ -15,8 +15,8 @@ class RegistrationsControllerTest < ActionDispatch::IntegrationTest
           first_name: "John",
           last_name: "Doe",
           email_address: "john@example.com",
-          password: "password123",
-          password_confirmation: "password123"
+          password: "correct-horse-battery",
+          password_confirmation: "correct-horse-battery"
         }
       }
     end
@@ -31,8 +31,8 @@ class RegistrationsControllerTest < ActionDispatch::IntegrationTest
           first_name: "John",
           last_name: "Doe",
           email_address: "",
-          password: "password123",
-          password_confirmation: "password123"
+          password: "correct-horse-battery",
+          password_confirmation: "correct-horse-battery"
         }
       }
     end
@@ -49,8 +49,8 @@ class RegistrationsControllerTest < ActionDispatch::IntegrationTest
           first_name: "John",
           last_name: "Doe",
           email_address: users(:one).email_address.upcase,
-          password: "password123",
-          password_confirmation: "password123"
+          password: "correct-horse-battery",
+          password_confirmation: "correct-horse-battery"
         }
       }
     end

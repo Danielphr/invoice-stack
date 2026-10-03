@@ -6,7 +6,7 @@
 <%= form_with model: @company, url: company_path, method: :patch, class: "mt-8 max-w-5xl space-y-10" do |form| %>
   <%= render "shared/form_errors", model: @company %>
 
-  <%= render layout: "settings_section", locals: { title: "Profile", description: "How your company appears on invoices." } do %>
+  <%= render layout: "shared/settings_section", locals: { title: "Profile", description: "How your company appears on invoices." } do %>
     <div>
       <%= form.label :name, class: "label" do %>
         <%= Company.human_attribute_name(:name) %> <span class="text-red-500" aria-hidden="true">*</span>
@@ -59,7 +59,7 @@
     </div>
   <% end %>
 
-  <%= render layout: "settings_section", locals: { title: "Address", description: "Printed under your company name on invoices." } do %>
+  <%= render layout: "shared/settings_section", locals: { title: "Address", description: "Printed under your company name on invoices." } do %>
     <div>
       <%= form.label :address_line1, class: "label" %>
       <%= form.text_field :address_line1, autocomplete: "address-line1", class: "input mt-2" %>
@@ -93,7 +93,7 @@
     </div>
   <% end %>
 
-  <%= render layout: "settings_section", locals: { title: "Preferences", description: "Defaults used across the app." } do %>
+  <%= render layout: "shared/settings_section", locals: { title: "Preferences", description: "Defaults used across the app." } do %>
     <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
       <div>
         <%= form.label :time_zone, class: "label" %>
@@ -110,7 +110,7 @@
     </div>
   <% end %>
 
-  <%= render layout: "settings_section", locals: { title: "Invoice numbers", description: "How new invoices are numbered." } do %>
+  <%= render layout: "shared/settings_section", locals: { title: "Invoice numbers", description: "How new invoices are numbered." } do %>
     <div>
       <%= form.label :invoice_number_pattern, class: "label" do %>
         <%= Company.human_attribute_name(:invoice_number_pattern) %> <span class="text-red-500" aria-hidden="true">*</span>
