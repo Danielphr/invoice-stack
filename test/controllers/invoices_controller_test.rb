@@ -35,6 +35,15 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
     assert_select "tbody", text: /Wayne Enterprises/, count: 0
   end
 
+  test "should show each invoice's billing type in the list" do
+    @invoice.update!(billing_type: "hourly")
+
+    get invoices_url
+
+    assert_select "thead th", "Billing"
+    assert_select "tbody td", "Hourly"
+  end
+
   test "should show an empty state when there are no invoices" do
     @user.company.invoices.destroy_all
 
