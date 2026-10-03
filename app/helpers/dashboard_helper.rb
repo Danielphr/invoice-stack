@@ -14,6 +14,17 @@ module DashboardHelper
     [ "#ec4899", "bg-[#ec4899]" ], [ "#58148f", "bg-[#58148f]" ], [ "#0ea5e9", "bg-[#0ea5e9]" ], [ "#ef4444", "bg-[#ef4444]" ]
   ].freeze
 
+  def due_badge(invoice)
+    days = (invoice.due_date - Date.current).to_i
+
+    if days.negative?
+      tag.span "#{pluralize(-days, "day")} overdue", class: "rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700"
+    else
+      label = days.zero? ? "Due today" : "Due in #{pluralize(days, "day")}"
+      tag.span label, class: "rounded-md bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700"
+    end
+  end
+
   def dashboard_period_label(period)
     PERIOD_LABELS.fetch(period)
   end

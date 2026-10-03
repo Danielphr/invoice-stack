@@ -99,11 +99,21 @@ class DashboardTest < ActiveSupport::TestCase
     assert_equal [ "Initech" ], Dashboard.new(@company).top_clients(limit: 1).map(&:client_name)
   end
 
-  test "lists the most recent payments first" do
-    older = paid(100, paid_on: Date.new(2026, 9, 1))
-    newer = paid(200, paid_on: Date.new(2026, 10, 1))
+  test "lists overdue invoices, longest overdue first, whatever the period" do
+    older = create_invoice(100, status: "sent", issue_date: Date.new(2025, 1, 1), due_date: Date.new(2025, 1, 31))
+    create_invoice(100, status: "sent", issue_date: Date.new(2026, 10, 1), due_date: Date.new(2026, 10, 20))
 
-    assert_equal [ newer, older ], Dashboard.new(@company).recent_payments.to_a
+    assert_equal [ older, invoices(:globex_website) ], Dashboard.new(@company, period: "month").overdue_invoices.to_a
+  end
+
+  test "lists sent invoices due within two weeks, soonest first" do
+    today = create_invoice(100, status: "sent", issue_date: Date.new(2026, 10, 1), due_date: Date.new(2026, 10, 15))
+    later = create_invoice(100, status: "sent", issue_date: Date.new(2026, 10, 1), due_date: Date.new(2026, 10, 29))
+    create_invoice(100, status: "sent", issue_date: Date.new(2026, 10, 1), due_date: Date.new(2026, 10, 30))
+    paid(100, issue_date: Date.new(2026, 10, 1), paid_on: Date.new(2026, 10, 2), due_date: Date.new(2026, 10, 20))
+    create_invoice(100, status: "sent", issue_date: Date.new(2026, 10, 1), due_date: Date.new(2026, 10, 20), currency: "EUR")
+
+    assert_equal [ today, later ], Dashboard.new(@company).due_soon_invoices.to_a
   end
 
   test "only counts the company's own invoices" do

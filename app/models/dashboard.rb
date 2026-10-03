@@ -53,8 +53,16 @@ class Dashboard
       .max_by(limit, &:amount)
   end
 
-  def recent_payments(limit: 5)
-    @invoices.paid.includes(:client, :items).order(paid_on: :desc, id: :desc).limit(limit)
+  DUE_SOON_DAYS = 14
+
+  # Overdue invoices, longest overdue first. Unlike the totals, these ignore the period: urgency is about today.
+  def overdue_invoices
+    @invoices.overdue.includes(:client, :items).order(:due_date, :id)
+  end
+
+  # Sent invoices due between today and the next two weeks, soonest first.
+  def due_soon_invoices
+    @invoices.sent.where(due_date: Date.current..(Date.current + DUE_SOON_DAYS)).includes(:client, :items).order(:due_date, :id)
   end
 
   private

@@ -100,6 +100,44 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "should list overdue and soon-due invoices that need attention" do
+    due_soon = nil
+    travel_to Date.new(2026, 10, 15) do
+      due_soon = @user.company.invoices.create!(client: clients(:initech), currency: "USD", status: "sent", issue_date: Date.current,
+        due_date: Date.current + 3, items_attributes: [ { description: "Work", quantity: 1, unit_price: 100 } ])
+
+      get root_url
+    end
+
+    assert_select "section[aria-labelledby=attention-heading]" do
+      assert_select "h3", /Overdue\s+· 1/
+      assert_select "li", text: /INV-001\s+Globex Corporation\s+\$2,150.00 USD\s+15 days overdue/
+      assert_select "li a[href=?]", invoice_path(due_soon), due_soon.number
+      assert_select "li span.text-amber-700", "Due in 3 days"
+    end
+  end
+
+  test "should link to the rest when more than five invoices need attention" do
+    travel_to Date.new(2026, 10, 15) do
+      6.times do
+        @user.company.invoices.create!(client: clients(:globex), currency: "USD", status: "sent", issue_date: Date.current,
+          due_date: Date.current, items_attributes: [ { description: "Work", quantity: 1, unit_price: 10 } ])
+      end
+
+      get root_url
+    end
+
+    assert_select "section[aria-labelledby=attention-heading] a[href=?]", invoices_path(sort: "due", direction: "asc"), "+1 more"
+  end
+
+  test "should say when nothing needs attention" do
+    remove_invoices(@user.company)
+
+    get root_url
+
+    assert_select "section[aria-labelledby=attention-heading] p", "Nothing needs attention. All sent invoices are on time."
+  end
+
   test "should say when there is nothing to chart" do
     get root_url
 
