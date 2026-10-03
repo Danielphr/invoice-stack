@@ -4,7 +4,10 @@ class InvoicesController < ApplicationController
   helper_method :sort_column, :sort_direction
 
   def index
-    @invoices = Current.user.company.invoices.includes(:client, :items).sorted_by(sort_column, sort_direction)
+    invoices = Current.user.company.invoices.includes(:client, :items).sorted_by(sort_column, sort_direction)
+    @pagy, @invoices = pagy(:offset, invoices, limit: 10, raise_range_error: true)
+  rescue Pagy::RangeError => error
+    redirect_to error.pagy.page_url(:last)
   end
 
   def show
@@ -51,7 +54,8 @@ class InvoicesController < ApplicationController
 
   def destroy
     @invoice.destroy!
-    redirect_to invoices_path, notice: "Invoice deleted.", status: :see_other
+    redirect_to invoices_path(sort: params[:sort], direction: params[:direction], page: params[:page]),
+      notice: "Invoice deleted.", status: :see_other
   end
 
   private

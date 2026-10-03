@@ -45,6 +45,9 @@ gem "image_processing", "~> 2.2"
 # Active Storage requires it and tolerates a missing libvips; Bundler's require would fail the boot.
 gem "ruby-vips", "~> 2.3", require: false
 
+# Paginate lists [https://github.com/ddnexus/pagy]
+gem "pagy", "~> 43.7"
+
 # Generate invoice PDFs [https://github.com/prawnpdf/prawn]
 gem "prawn", "~> 2.5"
 # The released ttfunk requires bigdecimal 3.x; pinned to the merged fix until a release ships

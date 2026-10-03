@@ -80,6 +80,37 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
     assert_select "th[aria-sort=descending]", /Number/
   end
 
+  test "should show 10 invoices per page with links that keep the sort" do
+    create_invoices(11)
+
+    get invoices_url(sort: "client", direction: "asc")
+
+    assert_select "tbody tr", 10
+    assert_select "nav.pagy a[aria-current=page]", "1"
+    next_url = URI(css_select("nav.pagy a[rel=next]").first["href"])
+    assert_equal "/invoices", next_url.path
+    assert_equal({ "sort" => "client", "direction" => "asc", "page" => "2" }, Rack::Utils.parse_query(next_url.query))
+
+    get invoices_url(sort: "client", direction: "asc", page: 2)
+
+    assert_select "tbody tr", 2
+    assert_select "nav.pagy a[aria-current=page]", "2"
+  end
+
+  test "should not show pagination for a single page" do
+    get invoices_url
+
+    assert_select "nav.pagy", count: 0
+  end
+
+  test "should redirect a page past the end to the last page" do
+    create_invoices(11)
+
+    get invoices_url(sort: "client", page: 99)
+
+    assert_redirected_to invoices_url(page: 2, sort: "client")
+  end
+
   test "should show an empty state when there are no invoices" do
     @user.company.invoices.destroy_all
 
@@ -390,6 +421,17 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to invoices_url
   end
 
+  test "should return to the same page and sort after deleting from the list" do
+    create_invoices(11)
+
+    get invoices_url(sort: "client", direction: "asc", page: 2)
+    assert_select "tbody form input[type=hidden][name=page][value='2']"
+
+    delete invoice_url(@invoice), params: { sort: "client", direction: "asc", page: "2" }
+
+    assert_redirected_to invoices_url(direction: "asc", page: "2", sort: "client")
+  end
+
   test "should not expose or delete another company's invoice" do
     get invoice_url(@other_invoice)
     assert_response :not_found
@@ -401,6 +443,13 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
   end
 
   private
+    def create_invoices(count)
+      count.times do
+        @user.company.invoices.create!(client: clients(:initech), currency: "USD", issue_date: Date.current,
+          items_attributes: [ { description: "Support", quantity: 1, unit_price: 100 } ])
+      end
+    end
+
     def invoice_params(**overrides)
       { client_id: clients(:globex).id, currency: "USD", issue_date: "2026-10-01" }.merge(overrides)
     end
