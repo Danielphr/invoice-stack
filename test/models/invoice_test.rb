@@ -25,21 +25,14 @@ class InvoiceTest < ActiveSupport::TestCase
     assert_includes invoice.errors[:currency], "is not included in the list"
   end
 
-  test "requires a number once the invoice exists" do
-    @invoice.number = " "
-
-    assert_not @invoice.valid?
-    assert_includes @invoice.errors[:number], "can't be blank"
-  end
-
   test "assigns the company's next number when saved without one" do
     company = companies(:one)
 
     first = create_invoice(company)
     second = create_invoice(company)
 
-    assert_equal [ "INV-1", "INV-2" ], [ first.number, second.number ]
-    assert_equal 3, company.reload.next_invoice_number
+    assert_equal [ [ 2, "INV-2" ], [ 3, "INV-3" ] ], [ [ first.sequence, first.number ], [ second.sequence, second.number ] ]
+    assert_equal 4, company.reload.next_invoice_number
   end
 
   test "builds the number from the pattern and the issue date" do
@@ -48,35 +41,27 @@ class InvoiceTest < ActiveSupport::TestCase
 
     invoice = create_invoice(company, issue_date: Date.new(2025, 12, 31))
 
-    assert_equal "YP-2025-0001", invoice.number
+    assert_equal "YP-2025-0002", invoice.number
   end
 
-  test "keeps a manually entered number without advancing the counter" do
-    company = companies(:one)
+  test "ignores a number set before saving" do
+    invoice = create_invoice(companies(:one), number: "SPECIAL-7")
 
-    invoice = create_invoice(company, number: "SPECIAL-7")
-
-    assert_equal "SPECIAL-7", invoice.number
-    assert_equal 1, company.reload.next_invoice_number
+    assert_equal "INV-2", invoice.number
   end
 
-  test "skips numbers that were already used manually" do
-    company = companies(:one)
-    create_invoice(company, number: "INV-1")
-    create_invoice(company, number: "INV-2")
-
-    invoice = create_invoice(company)
-
-    assert_equal "INV-3", invoice.number
-    assert_equal 4, company.reload.next_invoice_number
+  test "database rejects a sequence used twice in the same company" do
+    assert_raises ActiveRecord::RecordNotUnique do
+      create_invoice(companies(:one)).update_column(:sequence, 1)
+    end
   end
 
   test "previews the next number without reserving it" do
     company = companies(:one)
 
-    assert_equal "INV-1", company.preview_invoice_number(Date.current)
-    assert_equal "INV-1", company.preview_invoice_number(Date.current)
-    assert_equal 1, company.reload.next_invoice_number
+    assert_equal "INV-2", company.preview_invoice_number(Date.current)
+    assert_equal "INV-2", company.preview_invoice_number(Date.current)
+    assert_equal 2, company.reload.next_invoice_number
   end
 
   test "rejects unknown statuses and billing types" do
@@ -88,12 +73,10 @@ class InvoiceTest < ActiveSupport::TestCase
     assert_includes @invoice.errors[:billing_type], "is not included in the list"
   end
 
-  test "requires a number that is unique within the company" do
-    duplicate = companies(:one).invoices.new(@invoice.attributes.slice("client_id", "currency", "issue_date", "number"))
-    duplicate.items.build(description: "Work", quantity: 1, unit_price: 10)
-
-    assert_not duplicate.valid?
-    assert_includes duplicate.errors[:number], "has already been taken"
+  test "database rejects a number used twice in the same company" do
+    assert_raises ActiveRecord::RecordNotUnique do
+      create_invoice(companies(:one)).update_column(:number, "INV-001")
+    end
   end
 
   test "allows the same number in different companies" do

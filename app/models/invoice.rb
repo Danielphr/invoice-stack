@@ -8,16 +8,12 @@ class Invoice < ApplicationRecord
   enum :status, %w[ draft sent paid cancelled ].index_by(&:itself), default: "draft", validate: true
   enum :billing_type, %w[ fixed hourly ].index_by(&:itself), default: "fixed", validate: true
 
-  normalizes :number, with: ->(number) { number.strip.presence }
   normalizes :notes, with: ->(notes) { notes.strip.presence }
 
   before_validation :position_items
   before_validation :sync_paid_on
-  before_create :assign_number, if: -> { number.blank? }
+  before_create :assign_number
 
-  # A new invoice without a number gets the company's next one when it is saved.
-  validates :number, presence: true, on: :update
-  validates :number, length: { maximum: 50 }, uniqueness: { scope: :company_id }, allow_blank: true
   validates :issue_date, presence: true
   validates :currency, inclusion: { in: Currency.codes }
   validates :discount, numericality: { greater_than_or_equal_to: 0, less_than: 10_000_000_000 }
@@ -99,7 +95,8 @@ class Invoice < ApplicationRecord
     end
 
     def assign_number
-      self.number = company.reserve_invoice_number(issue_date)
+      self.sequence = company.reserve_invoice_sequence
+      self.number = company.format_invoice_number(sequence, issue_date)
     end
 
     def client_must_belong_to_company

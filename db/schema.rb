@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_03_011154) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_03_135650) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -115,12 +115,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_03_011154) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.date "paid_on"
+    t.integer "sequence", null: false
     t.index ["company_id", "client_id"], name: "index_invoices_on_company_id_and_client_id"
     t.index ["company_id", "number"], name: "index_invoices_on_company_id_and_number", unique: true
+    t.index ["company_id", "sequence"], name: "index_invoices_on_company_id_and_sequence", unique: true
     t.check_constraint "(status::text = 'paid'::text) = (paid_on IS NOT NULL)", name: "invoices_paid_on_check"
     t.check_constraint "billing_type::text = ANY (ARRAY['fixed'::character varying, 'hourly'::character varying]::text[])", name: "invoices_billing_type_check"
     t.check_constraint "discount >= 0::numeric", name: "invoices_discount_check"
     t.check_constraint "due_date IS NULL OR due_date >= issue_date", name: "invoices_due_date_check"
+    t.check_constraint "sequence > 0", name: "invoices_sequence_check"
     t.check_constraint "status::text = ANY (ARRAY['draft'::character varying, 'sent'::character varying, 'paid'::character varying, 'cancelled'::character varying]::text[])", name: "invoices_status_check"
   end
 

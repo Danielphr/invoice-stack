@@ -238,7 +238,7 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
   test "should show the next number in a disabled field on new" do
     get new_invoice_url
 
-    assert_select "input[name=?][disabled][placeholder=?]", "invoice[number]", "INV-1"
+    assert_select "input[name=?][disabled][placeholder=?]", "invoice[number]", "INV-2"
   end
 
   test "should show the current number in a disabled field on edit" do
@@ -279,7 +279,7 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
     invoice = Invoice.order(:created_at).last
     assert_redirected_to invoice_url(invoice)
     assert_equal @user.company, invoice.company
-    assert_equal "INV-1", invoice.number
+    assert_equal "INV-2", invoice.number
     assert_equal [ "Design", "Support" ], invoice.items.map(&:description)
     assert_equal BigDecimal("621.50"), invoice.total
   end
@@ -289,7 +289,7 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
       "0" => { description: "Design", quantity: "1", unit_price: "500" }
     }) }
 
-    assert_equal "INV-1", Invoice.order(:created_at).last.number
+    assert_equal "INV-2", Invoice.order(:created_at).last.number
   end
 
   test "should ignore a submitted number when updating an invoice" do

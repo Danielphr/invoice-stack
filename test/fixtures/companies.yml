@@ -2,9 +2,11 @@
 
 one:
   name: Acme Inc.
+  next_invoice_number: 2
 
 incomplete:
   name:
 
 other:
   name: Umbrella Corp
+  next_invoice_number: 2
