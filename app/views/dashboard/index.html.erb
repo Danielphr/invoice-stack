@@ -2,9 +2,12 @@
 
 <h1 class="text-2xl font-semibold text-gray-900">Dashboard</h1>
 
-<div class="mt-6">
-  <%= render "attention", overdue: @dashboard.overdue_invoices.to_a, due_soon: @dashboard.due_soon_invoices.to_a %>
-</div>
+<% overdue, due_soon = @dashboard.overdue_invoices.to_a, @dashboard.due_soon_invoices.to_a %>
+<% if overdue.any? || due_soon.any? %>
+  <div class="mt-6">
+    <%= render "attention", overdue:, due_soon: %>
+  </div>
+<% end %>
 
 <div class="mt-8 flex flex-wrap items-center gap-3">
   <% if @dashboard.currencies.many? %>

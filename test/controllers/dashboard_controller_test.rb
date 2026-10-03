@@ -136,13 +136,13 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_select "details a[href=?]", invoices_path(sort: "due", direction: "asc"), "+1 more"
   end
 
-  test "should say when nothing needs attention" do
+  test "should hide needs attention when nothing is overdue or due soon" do
     remove_invoices(@user.company)
 
     get root_url
 
     assert_select "details", count: 0
-    assert_select "section[aria-labelledby=attention-heading] p", "Nothing right now. All sent invoices are on time."
+    assert_select "h2", text: "Needs attention", count: 0
   end
 
   test "should say when there is nothing to chart" do
