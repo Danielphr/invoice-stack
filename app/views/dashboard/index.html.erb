@@ -25,14 +25,17 @@
   </nav>
 </div>
 
-<dl class="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
-  <%= render "stat", label: "Revenue · #{dashboard_period_label(@dashboard.period)}", icon: :currency, tone: "bg-brand-50 text-brand-600",
-        summary: @dashboard.revenue, currency: @dashboard.currency, empty: "No payments" %>
-  <%= render "stat", label: "Due soon", icon: :clock, tone: "bg-amber-50 text-amber-600",
-        summary: @dashboard.due_soon, currency: @dashboard.currency, empty: "Nothing due" %>
-  <%= render "stat", label: "Overdue", icon: :warning, tone: "bg-red-50 text-red-600",
-        summary: @dashboard.overdue, currency: @dashboard.currency, empty: "Nothing overdue" %>
-</dl>
+<%# Three cards side by side when there's room for all of them, otherwise one per row. %>
+<div class="@container mt-6">
+  <dl class="grid grid-cols-1 gap-5 @4xl:grid-cols-3">
+    <%= render "stat", label: "Revenue · #{dashboard_period_label(@dashboard.period)}", icon: :currency, tone: "bg-brand-50 text-brand-600",
+          summary: @dashboard.revenue, currency: @dashboard.currency, empty: "No payments" %>
+    <%= render "stat", label: "Due soon", icon: :clock, tone: "bg-amber-50 text-amber-600",
+          summary: @dashboard.due_soon, currency: @dashboard.currency, empty: "Nothing due" %>
+    <%= render "stat", label: "Overdue", icon: :warning, tone: "bg-red-50 text-red-600",
+          summary: @dashboard.overdue, currency: @dashboard.currency, empty: "Nothing overdue" %>
+  </dl>
+</div>
 
 <div class="mt-6">
   <%= render "revenue_chart", series: @dashboard.revenue_over_time, by_day: @dashboard.chart_by_day?, currency: @dashboard.currency %>
