@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_03_002344) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_03_011154) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -81,7 +81,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_03_002344) do
     t.string "country"
     t.string "time_zone", default: "UTC", null: false
     t.string "default_currency", default: "USD", null: false
+    t.string "accent_color", default: "#000000", null: false
     t.check_constraint "POSITION(('{NUMBER}'::text) IN (invoice_number_pattern)) > 0", name: "companies_invoice_number_pattern_check"
+    t.check_constraint "accent_color::text ~ '^#[0-9a-f]{6}$'::text", name: "companies_accent_color_check"
     t.check_constraint "invoice_number_digits >= 1 AND invoice_number_digits <= 10", name: "companies_invoice_number_digits_check"
     t.check_constraint "next_invoice_number >= 1", name: "companies_next_invoice_number_check"
   end

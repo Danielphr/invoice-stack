@@ -34,6 +34,13 @@
         <dt class="text-gray-500">Default currency</dt>
         <dd class="text-gray-900"><%= @company.default_currency %> — <%= Currency.find(@company.default_currency)[:name] %></dd>
       </div>
+      <div>
+        <dt class="text-gray-500">Accent color</dt>
+        <dd class="flex items-center gap-2 text-gray-900">
+          <%= tag.span class: "size-4 rounded-full ring-1 ring-gray-300", style: "background-color: #{@company.accent_color}" %>
+          <code><%= @company.accent_color %></code>
+        </dd>
+      </div>
     </dl>
   </section>
 

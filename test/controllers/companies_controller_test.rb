@@ -68,6 +68,17 @@ class CompaniesControllerTest < ActionDispatch::IntegrationTest
     assert_select "[role=note]", count: 0
   end
 
+  test "should update and show the accent color" do
+    patch company_url, params: { company: { accent_color: "#4F46E5" } }
+    assert_equal "#4f46e5", @company.reload.accent_color
+
+    get company_url
+    assert_select "dd code", "#4f46e5"
+
+    get edit_company_url
+    assert_select "input[type=color][name=?][value=?]", "company[accent_color]", "#4f46e5"
+  end
+
   test "should upload and show the logo" do
     patch company_url, params: { company: { logo: fixture_file_upload("logo.png", "image/png") } }
     assert_redirected_to company_url

@@ -27,7 +27,7 @@ class CompaniesController < ApplicationController
         :name, :email,
         :address_line1, :address_line2, :city, :state, :postal_code, :country,
         :time_zone, :default_currency,
-        :logo,
+        :logo, :accent_color,
         :invoice_number_pattern, :invoice_number_digits, :next_invoice_number
       ])
     end

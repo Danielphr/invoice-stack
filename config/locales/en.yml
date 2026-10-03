@@ -37,6 +37,7 @@ en:
       company:
         name: "Company name"
         default_currency: "Default currency"
+        accent_color: "Accent color"
         invoice_number_pattern: "Number pattern"
         invoice_number_digits: "Minimum digits"
         next_invoice_number: "Next number"
