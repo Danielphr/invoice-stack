@@ -17,6 +17,7 @@ class DashboardTest < ActiveSupport::TestCase
     assert_equal({ "EUR" => 50, "USD" => 300 }, revenue_for("year"))
     assert_equal({ "USD" => 300 }, revenue_for("last_year"))
     assert_equal({ "EUR" => 50, "USD" => 600 }, revenue_for("all"))
+    assert_equal 2, Dashboard.new(@company, period: "month").revenue.count
   end
 
   test "counts a payment in the month it was received, not the month it was issued" do
@@ -76,12 +77,12 @@ class DashboardTest < ActiveSupport::TestCase
   test "only counts the company's own invoices" do
     paid(700, paid_on: Date.new(2026, 10, 3), company: companies(:other), client: clients(:other_company_client))
 
-    assert_empty Dashboard.new(@company).revenue
+    assert_empty Dashboard.new(@company).revenue.totals
   end
 
   private
     def revenue_for(period)
-      Dashboard.new(@company, period:).revenue
+      Dashboard.new(@company, period:).revenue.totals
     end
 
     def paid(amount, paid_on:, issue_date: paid_on, **attributes)

@@ -14,7 +14,7 @@ class Dashboard
 
   # Revenue counts paid invoices by when they were paid, not when they were issued.
   def revenue
-    paid_in_period.total_by_currency
+    summarize(paid_in_period)
   end
 
   def outstanding

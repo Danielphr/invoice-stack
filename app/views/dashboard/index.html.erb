@@ -1,1 +1,31 @@
-<h1 class="text-2xl font-semibold text-gray-900">Dashboard</h1>
+<% content_for :title, "Dashboard" %>
+
+<div class="flex flex-wrap items-center justify-between gap-4">
+  <h1 class="text-2xl font-semibold text-gray-900">Dashboard</h1>
+
+  <nav aria-label="Period" class="flex flex-wrap gap-1 rounded-lg bg-white p-1 text-sm font-medium shadow-sm ring-1 ring-gray-900/5">
+    <% Dashboard::PERIODS.each do |period| %>
+      <% current = period == @dashboard.period %>
+      <%= link_to dashboard_period_label(period), root_path(period: (period unless period == "all")),
+            aria: { current: (current ? "true" : nil) },
+            class: [ "rounded-md px-3 py-1.5", current ? "bg-brand-600 text-white" : "text-gray-600 hover:bg-gray-100 hover:text-gray-900" ] %>
+    <% end %>
+  </nav>
+</div>
+
+<dl class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+  <%= render "stat", label: "Revenue · #{dashboard_period_label(@dashboard.period)}", totals: @dashboard.revenue.totals,
+        count: @dashboard.revenue.count, empty: "No payments" %>
+  <%= render "stat", label: "Outstanding", totals: @dashboard.outstanding.totals, count: @dashboard.outstanding.count,
+        empty: "Nothing due" %>
+  <%= render "stat", label: "Overdue", totals: @dashboard.overdue.totals, count: @dashboard.overdue.count,
+        empty: "Nothing overdue", alert: @dashboard.overdue.count.positive? %>
+
+  <div class="rounded-lg bg-white p-5 shadow-sm ring-1 ring-gray-900/5">
+    <dt class="text-sm font-medium text-gray-500">Drafts</dt>
+    <dd class="mt-2">
+      <p class="font-display text-2xl font-semibold tracking-tight text-gray-900"><%= @dashboard.drafts_count %></p>
+      <%= link_to "Review drafts", invoices_path(sort: "status", direction: "asc"), class: "link mt-1 inline-block text-sm" %>
+    </dd>
+  </div>
+</dl>
