@@ -2,8 +2,15 @@ class Company < ApplicationRecord
   INVOICE_NUMBER_TAG = /\{(NUMBER|YEAR|MONTH)\}/
   # Characters that would break file names when invoices are exported.
   INVOICE_NUMBER_FORBIDDEN_CHARACTERS = %r{[\s/\\<>:"|?*]}
+  LOGO_CONTENT_TYPES = %w[ image/png image/jpeg image/webp ].freeze
+  LOGO_MAX_SIZE = 5.megabytes
 
   include HasAddress
+
+  has_one_attached :logo do |attachable|
+    attachable.variant :document, resize_to_limit: [ 600, 300 ], format: :png
+  end
+  attribute :remove_logo, :boolean
 
   has_many :users, dependent: :destroy
   # Invoices are declared before clients so they are destroyed first.
@@ -23,6 +30,9 @@ class Company < ApplicationRecord
   validates :invoice_number_digits, numericality: { only_integer: true, in: 1..10 }
   validates :next_invoice_number, numericality: { only_integer: true, greater_than_or_equal_to: 1, less_than: 1_000_000_000 }
   validate :invoice_number_pattern_must_be_valid
+  validate :logo_must_be_a_supported_image
+
+  after_save_commit :purge_logo, if: -> { remove_logo && attachment_changes["logo"].nil? }
 
   def onboarding_complete?
     name.present?
@@ -59,6 +69,18 @@ class Company < ApplicationRecord
   end
 
   private
+    def logo_must_be_a_supported_image
+      return unless logo.attached?
+
+      errors.add(:logo, "must be a PNG, JPG or WebP image") unless logo.content_type.in?(LOGO_CONTENT_TYPES)
+      errors.add(:logo, "must be smaller than 5 MB") if logo.byte_size > LOGO_MAX_SIZE
+    end
+
+    def purge_logo
+      self.remove_logo = false
+      logo.purge
+    end
+
     def next_free_invoice_sequence(date)
       sequence = next_invoice_number
       sequence += 1 while invoices.exists?(number: format_invoice_number(sequence, date))

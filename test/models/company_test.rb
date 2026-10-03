@@ -62,6 +62,32 @@ class CompanyTest < ActiveSupport::TestCase
     assert_includes company.errors[:email], "is invalid"
   end
 
+  test "accepts a PNG logo and makes a document-sized PNG variant" do
+    company = companies(:one)
+    company.logo.attach(io: file_fixture("logo.png").open, filename: "logo.png")
+
+    assert company.valid?
+
+    variant = Vips::Image.new_from_buffer(company.logo.variant(:document).processed.download, "")
+    assert_equal [ 600, 200 ], [ variant.width, variant.height ]
+  end
+
+  test "rejects a logo that is not a PNG, JPG or WebP image, whatever its name" do
+    company = companies(:one)
+    company.logo.attach(io: file_fixture("logo.svg").open, filename: "logo.png")
+
+    assert_not company.valid?
+    assert_includes company.errors[:logo], "must be a PNG, JPG or WebP image"
+  end
+
+  test "rejects a logo larger than 5 MB" do
+    company = companies(:one)
+    company.logo.attach(io: StringIO.new("0" * (5.megabytes + 1)), filename: "huge.png")
+
+    assert_not company.valid?
+    assert_includes company.errors[:logo], "must be smaller than 5 MB"
+  end
+
   test "has a complete address with line 1, city and country" do
     company = Company.new(address_line1: "100 Example Street", city: "Springfield")
     assert_not company.address_complete?

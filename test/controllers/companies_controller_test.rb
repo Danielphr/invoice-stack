@@ -52,6 +52,37 @@ class CompaniesControllerTest < ActionDispatch::IntegrationTest
     assert_select "[role=note]", count: 0
   end
 
+  test "should upload, show and remove the logo" do
+    patch company_url, params: { company: { logo: fixture_file_upload("logo.png", "image/png") } }
+    assert_redirected_to company_url
+    assert @company.reload.logo.attached?
+
+    get company_url
+    assert_select "img[alt=?]", "Acme Inc. logo"
+
+    patch company_url, params: { company: { remove_logo: "1" } }
+    assert_not @company.reload.logo.attached?
+  end
+
+  test "should reject an unsupported logo and keep the current one" do
+    @company.logo.attach(io: file_fixture("logo.png").open, filename: "logo.png")
+
+    patch company_url, params: { company: { logo: fixture_file_upload("logo.svg", "image/svg+xml") } }
+
+    assert_response :unprocessable_entity
+    assert_select "[role=alert] li", "Logo must be a PNG, JPG or WebP image"
+    assert_equal "logo.png", @company.reload.logo.filename.to_s
+  end
+
+  test "should not remove the logo when the save fails" do
+    @company.logo.attach(io: file_fixture("logo.png").open, filename: "logo.png")
+
+    patch company_url, params: { company: { remove_logo: "1", name: "" } }
+
+    assert_response :unprocessable_entity
+    assert @company.reload.logo.attached?
+  end
+
   test "should keep the saved name in the heading when the new name is invalid" do
     patch company_url, params: { company: { name: "" } }
 
