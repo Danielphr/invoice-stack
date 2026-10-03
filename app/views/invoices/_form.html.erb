@@ -32,6 +32,9 @@
     <div>
       <%= form.label :status, class: "label" %>
       <%= form.select :status, invoice_status_options(invoice), {}, class: "input mt-2" %>
+      <% unless invoice.sequence_in_database %>
+        <p class="mt-2 text-xs text-gray-500">Changing the status from Draft assigns the invoice number.</p>
+      <% end %>
     </div>
 
     <% if invoice.paid? %>

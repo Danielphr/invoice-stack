@@ -39,6 +39,19 @@ class InvoicesHelperTest < ActionView::TestCase
     assert_match "This invoice has been sent.", issued_invoice_warning(invoice)
   end
 
+  test "confirms sending with the number and, when it changes, the date" do
+    draft = invoices(:globex_draft)
+
+    travel_to Date.new(2026, 10, 3) do
+      assert_equal "Send this invoice as INV-2? It will be dated October 3, 2026. " \
+        "Its number is final: it can be cancelled, but not deleted or turned back into a draft.", send_invoice_confirmation(draft)
+
+      draft.issue_date = Date.new(2026, 10, 3)
+      assert_equal "Send this invoice as INV-2? " \
+        "Its number is final: it can be cancelled, but not deleted or turned back into a draft.", send_invoice_confirmation(draft)
+    end
+  end
+
   test "titles an invoice by its number, or as a draft" do
     assert_equal "Invoice INV-001", invoice_title(invoices(:globex_website))
     assert_equal "Draft invoice", invoice_title(invoices(:globex_draft))

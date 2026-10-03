@@ -15,7 +15,7 @@ class Invoices::StatusesControllerTest < ActionDispatch::IntegrationTest
     assert_equal Time.find_zone(@invoice.company.time_zone).today, @invoice.paid_on
 
     follow_redirect!
-    assert_select "[role=status]", "Invoice marked as paid."
+    assert_select "[role=status]", "Invoice INV-001 marked as paid."
   end
 
   test "should mark a draft as sent and give it the next number" do
@@ -25,6 +25,14 @@ class Invoices::StatusesControllerTest < ActionDispatch::IntegrationTest
 
     assert draft.reload.sent?
     assert_equal "INV-2", draft.number
+    follow_redirect!
+    assert_select "[role=status]", "Invoice INV-2 marked as sent."
+  end
+
+  test "should confirm before sending a draft" do
+    get invoice_url(invoices(:globex_draft))
+
+    assert_select "form[action=?][data-turbo-confirm^=?]", invoice_status_path(invoices(:globex_draft)), "Send this invoice as INV-2?"
   end
 
   test "should cancel an invoice" do

@@ -131,9 +131,11 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
   test "should not offer draft as a status once the invoice is issued" do
     get edit_invoice_url(@invoice)
     assert_select "select[name=?] option[value=draft]", "invoice[status]", count: 0
+    assert_select "p", text: /assigns the invoice number/, count: 0
 
     get edit_invoice_url(invoices(:globex_draft))
     assert_select "select[name=?] option[value=draft]", "invoice[status]"
+    assert_select "p", "Changing the status from Draft assigns the invoice number."
   end
 
   test "should show an empty state when there are no invoices" do

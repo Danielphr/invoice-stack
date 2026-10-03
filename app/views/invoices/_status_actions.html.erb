@@ -1,6 +1,7 @@
 <%# locals: (invoice:) %>
 <% if invoice.draft? %>
-  <%= button_to "Mark as sent", invoice_status_path(invoice), method: :patch, params: { status: "sent" }, class: "btn-primary" %>
+  <%= button_to "Mark as sent", invoice_status_path(invoice), method: :patch, params: { status: "sent" }, class: "btn-primary",
+        form: { data: { turbo_confirm: send_invoice_confirmation(invoice) } } %>
 <% elsif invoice.sent? %>
   <%= button_to "Mark as paid", invoice_status_path(invoice), method: :patch, params: { status: "paid" }, class: "btn-primary" %>
   <%= button_to "Cancel invoice", invoice_status_path(invoice), method: :patch, params: { status: "cancelled" }, class: "btn-secondary",

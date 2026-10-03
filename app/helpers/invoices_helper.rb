@@ -27,6 +27,14 @@ module InvoicesHelper
     invoice.company.preview_invoice_number(invoice.issue_date_when_sent)
   end
 
+  def send_invoice_confirmation(invoice)
+    date = invoice.issue_date_when_sent
+    message = "Send this invoice as #{invoice_number_preview(invoice)}?"
+    message += " It will be dated #{l(date, format: :long)}." if date != invoice.issue_date
+
+    "#{message} Its number is final: it can be cancelled, but not deleted or turned back into a draft."
+  end
+
   def invoice_status_options(invoice)
     statuses = Invoice.statuses.keys
     statuses -= [ "draft" ] if invoice.sequence_in_database
