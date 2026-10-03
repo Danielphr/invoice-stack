@@ -424,6 +424,9 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
   test "should return to the same page and sort after deleting from the list" do
     create_invoices(11)
 
+    get invoices_url
+    assert_select "tbody form input[name=page]", count: 0
+
     get invoices_url(sort: "client", direction: "asc", page: 2)
     assert_select "tbody form input[type=hidden][name=page][value='2']"
 

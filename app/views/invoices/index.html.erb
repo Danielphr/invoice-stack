@@ -39,7 +39,7 @@
                   Edit<span class="sr-only">, <%= invoice.number %></span>
                 <% end %>
                 <%= button_to invoice, method: :delete, class: "link-danger",
-                      params: { sort: sort_column, direction: sort_direction, page: @pagy.page },
+                      params: request.query_parameters.slice("sort", "direction", "page"),
                       form: { data: { turbo_confirm: delete_invoice_confirmation(invoice) } } do %>
                   Delete<span class="sr-only">, <%= invoice.number %></span>
                 <% end %>
