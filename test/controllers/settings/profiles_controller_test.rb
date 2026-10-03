@@ -41,7 +41,8 @@ class Settings::ProfilesControllerTest < ActionDispatch::IntegrationTest
     patch settings_profile_url, params: { user: { first_name: "" } }
 
     assert_response :unprocessable_entity
-    assert_select "[role=alert] li", "First name can't be blank"
+    assert_select "form[action=?] [role=alert] li", settings_profile_path, "First name can't be blank"
+    assert_select "form[action=?] [role=alert]", settings_password_path, count: 0
     assert_select "#sidebar", /John Doe/
   end
 

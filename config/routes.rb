@@ -12,6 +12,7 @@ Rails.application.routes.draw do
   resource :settings, only: :show
   namespace :settings do
     resource :profile, only: :update
+    resource :password, only: :update
   end
   resources :clients
   resources :invoices do

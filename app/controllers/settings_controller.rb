@@ -1,5 +1,5 @@
 class SettingsController < ApplicationController
   def show
-    @user = Current.user
+    @user = @password_user = Current.user
   end
 end

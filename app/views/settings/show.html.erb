@@ -36,4 +36,32 @@
       </div>
     <% end %>
   <% end %>
+
+  <%= render layout: "shared/settings_section",
+        locals: { title: "Password", description: "Changing your password signs you out on your other devices." } do %>
+    <%= form_with model: @password_user, url: settings_password_path, method: :patch, namespace: "password", class: "space-y-6" do |form| %>
+      <%= render "shared/form_errors", model: @password_user %>
+
+      <div>
+        <%= form.label :password_challenge, class: "label" %>
+        <%= render "shared/password_field", form: form, field: :password_challenge, autocomplete: "current-password" %>
+      </div>
+
+      <div>
+        <%= form.label :password, "New password", class: "label" %>
+        <%= render "shared/password_field", form: form, field: :password, autocomplete: "new-password",
+              minlength: User::PASSWORD_MIN_LENGTH, aria: { describedby: "new-password-hint" } %>
+        <p id="new-password-hint" class="mt-2 text-xs text-gray-500">At least <%= User::PASSWORD_MIN_LENGTH %> characters.</p>
+      </div>
+
+      <div>
+        <%= form.label :password_confirmation, "Confirm new password", class: "label" %>
+        <%= render "shared/password_field", form: form, field: :password_confirmation, autocomplete: "new-password" %>
+      </div>
+
+      <div class="flex justify-end">
+        <%= form.submit "Change password", class: "btn-primary" %>
+      </div>
+    <% end %>
+  <% end %>
 </div>

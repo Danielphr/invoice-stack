@@ -11,6 +11,7 @@ class Settings::ProfilesController < ApplicationController
     if @user.save
       redirect_to settings_path, notice: "Profile updated."
     else
+      @password_user = Current.user
       render "settings/show", status: :unprocessable_entity
     end
   end
