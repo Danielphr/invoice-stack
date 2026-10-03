@@ -7,7 +7,7 @@ module ApplicationHelper
     link_to name, path,
       class: class_names(
         "block rounded-md px-3 py-2 text-sm font-semibold",
-        active ? "bg-gray-800 text-white" : "text-gray-400 hover:bg-gray-800 hover:text-white"
+        active ? "bg-navy-800 text-white" : "text-navy-300 hover:bg-navy-800 hover:text-white"
       ),
       aria: { current: ("page" if active) }
   end

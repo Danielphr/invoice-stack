@@ -41,8 +41,8 @@
 
         <label data-dropzone-target="zone"
                data-action="dragover->dropzone#highlight dragleave->dropzone#unhighlight drop->dropzone#drop"
-               class="flex flex-1 cursor-pointer flex-col items-center justify-center gap-1 rounded-md border-2 border-dashed border-gray-300 px-4 py-5 text-center hover:border-indigo-400 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-indigo-600">
-          <span class="text-sm text-gray-600"><span class="font-semibold text-indigo-600">Upload a file</span> or drag and drop</span>
+               class="flex flex-1 cursor-pointer flex-col items-center justify-center gap-1 rounded-md border-2 border-dashed border-gray-300 px-4 py-5 text-center hover:border-brand-400 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand-600">
+          <span class="text-sm text-gray-600"><span class="font-semibold text-brand-600">Upload a file</span> or drag and drop</span>
           <span class="text-xs text-gray-500">PNG, JPG or WebP, up to 5 MB</span>
           <%= form.file_field :logo, accept: Company::LOGO_CONTENT_TYPES.join(","), class: "sr-only",
                 data: { dropzone_target: "input", action: "dropzone#preview" } %>
