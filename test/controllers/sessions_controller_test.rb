@@ -9,6 +9,7 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     assert_select "title", "Sign in to your account · InvoiceStack"
     assert_select "img[alt=InvoiceStack][src*=logo]"
     assert_select "meta[name=theme-color][content=?]", "#011640"
+    assert_select "link[rel=preload][as=font][crossorigin][href*=inter-latin]"
     assert_select "h1", "Sign in to your account"
     assert_select "a[href=?]", new_registration_path
     assert_select "a[href=?]", new_password_path

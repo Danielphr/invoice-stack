@@ -16,6 +16,9 @@
 <link rel="icon" href="/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/icon.png">
 
+<%= preload_link_tag "inter-latin.woff2" %>
+<%= preload_link_tag "space-grotesk-latin.woff2" %>
+
 <%# Includes the Tailwind build from app/assets/builds %>
 <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
 <%= javascript_importmap_tags %>
