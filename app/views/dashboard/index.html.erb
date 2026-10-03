@@ -13,18 +13,21 @@
   </nav>
 </div>
 
-<dl class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-  <%= render "stat", label: "Revenue · #{dashboard_period_label(@dashboard.period)}", totals: @dashboard.revenue.totals,
-        count: @dashboard.revenue.count, empty: "No payments" %>
-  <%= render "stat", label: "Outstanding", totals: @dashboard.outstanding.totals, count: @dashboard.outstanding.count,
-        empty: "Nothing due" %>
-  <%= render "stat", label: "Overdue", totals: @dashboard.overdue.totals, count: @dashboard.overdue.count,
-        empty: "Nothing overdue", alert: @dashboard.overdue.count.positive? %>
+<dl class="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+  <%= render "stat", label: "Revenue · #{dashboard_period_label(@dashboard.period)}", icon: :currency, tone: "bg-brand-50 text-brand-600",
+        totals: @dashboard.revenue.totals, count: @dashboard.revenue.count, empty: "No payments" %>
+  <%= render "stat", label: "Outstanding", icon: :clock, tone: "bg-amber-50 text-amber-600",
+        totals: @dashboard.outstanding.totals, count: @dashboard.outstanding.count, empty: "Nothing due" %>
+  <%= render "stat", label: "Overdue", icon: :warning, tone: "bg-red-50 text-red-600",
+        totals: @dashboard.overdue.totals, count: @dashboard.overdue.count, empty: "Nothing overdue" %>
 
-  <div class="rounded-lg bg-white p-5 shadow-sm ring-1 ring-gray-900/5">
-    <dt class="text-sm font-medium text-gray-500">Drafts</dt>
-    <dd class="mt-2">
-      <p class="font-display text-2xl font-semibold tracking-tight text-gray-900"><%= @dashboard.drafts_count %></p>
+  <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-900/5 transition-shadow hover:shadow-md">
+    <dt class="flex items-center justify-between text-sm font-medium text-gray-500">
+      Drafts
+      <span class="rounded-xl bg-gray-100 p-2 text-gray-600"><%= heroicon(:document, class: "size-5") %></span>
+    </dt>
+    <dd class="mt-3">
+      <p class="text-2xl font-semibold tracking-tight tabular-nums text-gray-900"><%= @dashboard.drafts_count %></p>
       <%= link_to "Review drafts", invoices_path(sort: "status", direction: "asc"), class: "link mt-1 inline-block text-sm" %>
     </dd>
   </div>

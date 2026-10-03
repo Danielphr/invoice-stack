@@ -29,7 +29,8 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_select "dt", "Revenue · All time"
     assert_select "dl > div", text: /No payments/
     assert_select "dl > div", text: /Outstanding\s+\$2,150.00 USD\s+1 invoice/
-    assert_select "dl > div p.text-red-700", "$2,150.00 USD"
+    assert_select "dl > div", text: /Overdue\s+\$2,150.00 USD\s+1 invoice/
+    assert_select "dl dt svg[aria-hidden=true]", 4
     assert_select "dl > div", text: /Drafts\s+1/
     assert_select "a[href=?]", invoices_path(sort: "status", direction: "asc"), "Review drafts"
   end
