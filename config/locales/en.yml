@@ -48,3 +48,4 @@ en:
   date:
     formats:
       medium: "%b %-d, %Y"
+      long: "%B %-d, %Y"

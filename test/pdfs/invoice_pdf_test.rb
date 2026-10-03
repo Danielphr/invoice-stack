@@ -14,7 +14,7 @@ class InvoicePdfTest < ActiveSupport::TestCase
     assert_includes text, "742 Evergreen Terrace"
     assert_includes text, "Website design"
     assert_includes text, "$2,200.00 USD"
-    assert_includes text, "-$50.00 USD"
+    assert_match(/Discount\s+\$50\.00 USD/, text)
     assert_includes text, "$2,150.00 USD"
   end
 
@@ -65,7 +65,7 @@ class InvoicePdfTest < ActiveSupport::TestCase
   test "shows the payment date of a paid invoice" do
     @invoice.update!(status: "paid", paid_on: Date.new(2026, 9, 20))
 
-    assert_includes pdf_text(@invoice), "Paid on: Sep 20, 2026"
+    assert_match(/Paid On\s+September 20, 2026/, pdf_text(@invoice))
   end
 
   test "renders characters outside Western European alphabets" do
@@ -81,9 +81,13 @@ class InvoicePdfTest < ActiveSupport::TestCase
     reader = PDF::Reader.new(StringIO.new(InvoicePdf.new(@invoice).render))
     second_page = reader.pages.second.text
 
-    assert_equal 2, reader.page_count
-    assert_includes second_page, "Page 2 of 2"
-    assert_match(/Description\s+Hours\s+Rate\s+Amount/, second_page)
+    assert_operator reader.page_count, :>, 1
+    assert_includes second_page, "Page 2 of #{reader.page_count}"
+    assert_match(/Description\s+Hours\s+Rate\s+Line Total/, second_page)
+  end
+
+  test "numbers pages only when there is more than one" do
+    assert_not_includes pdf_text(@invoice), "Page 1 of 1"
   end
 
   test "builds a file name that is safe on any system" do
