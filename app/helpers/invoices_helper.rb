@@ -24,7 +24,7 @@ module InvoicesHelper
   end
 
   def invoice_number_preview(invoice)
-    invoice.company.preview_invoice_number(invoice.issue_date || Date.current)
+    invoice.company.preview_invoice_number(invoice.issue_date_when_sent)
   end
 
   def invoice_status_options(invoice)

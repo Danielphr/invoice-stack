@@ -12,7 +12,7 @@ class Invoice < ApplicationRecord
 
   before_validation :position_items
   before_validation :sync_paid_on
-  before_save :assign_number, if: -> { sequence.nil? && !draft? }
+  before_save :issue, if: -> { sequence.nil? && !draft? }
   # Issued invoices are cancelled instead, so their numbers are never lost or reused.
   before_destroy :ensure_draft, prepend: true, unless: :destroyed_by_association
 
@@ -77,6 +77,11 @@ class Invoice < ApplicationRecord
     subtotal - discount.to_d
   end
 
+  # Drafts are issued with today's date, unless they are already dated later.
+  def issue_date_when_sent
+    [ issue_date || Date.current, Date.current ].max
+  end
+
   def overdue?
     sent? && due_date.present? && due_date < Date.current
   end
@@ -98,9 +103,17 @@ class Invoice < ApplicationRecord
       end
     end
 
-    def assign_number
+    def issue
+      reschedule(issue_date_when_sent) unless issue_date_changed?
       self.sequence = company.reserve_invoice_sequence
       self.number = company.format_invoice_number(sequence, issue_date)
+    end
+
+    # Keeps the payment term: due 3 days after issue stays due 3 days after the new date.
+    def reschedule(date)
+      term = due_date - issue_date if due_date
+      self.issue_date = date
+      self.due_date = date + term if term
     end
 
     def ensure_draft

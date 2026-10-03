@@ -54,6 +54,42 @@ class InvoiceTest < ActiveSupport::TestCase
     assert_equal 3, draft.company.reload.next_invoice_number
   end
 
+  test "dates a draft today when it is sent, keeping its payment term" do
+    draft = invoices(:globex_draft)
+    draft.update!(due_date: Date.new(2026, 9, 30))
+    draft.company.update!(invoice_number_pattern: "INV-{YEAR}{MONTH}-{NUMBER}")
+
+    travel_to Date.new(2026, 10, 3) do
+      draft.update!(status: "sent")
+    end
+
+    assert_equal Date.new(2026, 10, 3), draft.issue_date
+    assert_equal Date.new(2026, 10, 18), draft.due_date
+    assert_equal "INV-202610-2", draft.number
+  end
+
+  test "keeps an issue date that is changed while sending" do
+    draft = invoices(:globex_draft)
+
+    travel_to Date.new(2026, 10, 3) do
+      draft.update!(status: "sent", issue_date: Date.new(2026, 9, 20))
+    end
+
+    assert_equal Date.new(2026, 9, 20), draft.issue_date
+  end
+
+  test "keeps a later issue date and no due date when sent" do
+    draft = invoices(:globex_draft)
+    draft.update!(issue_date: Date.new(2026, 10, 10))
+
+    travel_to Date.new(2026, 10, 3) do
+      draft.update!(status: "sent")
+    end
+
+    assert_equal Date.new(2026, 10, 10), draft.issue_date
+    assert_nil draft.due_date
+  end
+
   test "keeps its number when cancelled and reopened" do
     @invoice.update!(status: "cancelled")
     @invoice.update!(status: "sent")

@@ -120,8 +120,11 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
     get invoice_url(draft)
     assert_select "h1", "Draft invoice"
 
-    get edit_invoice_url(draft)
-    assert_select "input[name=?][disabled][placeholder=?]", "invoice[number]", "INV-2"
+    @user.company.update!(invoice_number_pattern: "INV-{YEAR}-{NUMBER}")
+    travel_to Date.new(2027, 1, 4) do
+      get edit_invoice_url(draft)
+    end
+    assert_select "input[name=?][disabled][placeholder=?]", "invoice[number]", "INV-2027-2"
     assert_select "p", "Assigned when the invoice is sent."
   end
 
