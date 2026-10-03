@@ -1,9 +1,10 @@
 class InvoicesController < ApplicationController
   before_action :set_invoice, only: %i[ show edit update destroy ]
   before_action :set_clients, only: %i[ new create edit update ]
+  helper_method :sort_column, :sort_direction
 
   def index
-    @invoices = Current.user.company.invoices.includes(:client, :items).order(issue_date: :desc, id: :desc)
+    @invoices = Current.user.company.invoices.includes(:client, :items).sorted_by(sort_column, sort_direction)
   end
 
   def show
@@ -54,6 +55,14 @@ class InvoicesController < ApplicationController
   end
 
   private
+    def sort_column
+      params[:sort].presence_in(Invoice::SORTS) || "number"
+    end
+
+    def sort_direction
+      params[:direction].presence_in(%w[ asc desc ]) || "desc"
+    end
+
     def set_invoice
       @invoice = Current.user.company.invoices.includes(:client, :items).find(params.expect(:id))
     end

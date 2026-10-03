@@ -44,6 +44,42 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
     assert_select "tbody td", "Hourly"
   end
 
+  test "should sort by number, newest first, by default" do
+    newer = @user.company.invoices.create!(client: clients(:initech), currency: "USD", issue_date: Date.new(2026, 8, 1),
+      items_attributes: [ { description: "Support", quantity: 1, unit_price: 100 } ])
+
+    get invoices_url
+
+    assert_select "th[aria-sort=descending]", /Number/
+    assert_select "th[aria-sort]", 1
+    assert_select "tbody tr:first-child", /#{newer.number}/
+    assert_select "th a[href=?]", invoices_path(sort: "number", direction: "asc")
+  end
+
+  test "should sort by the chosen column and link to the opposite direction" do
+    get invoices_url(sort: "client", direction: "asc")
+
+    assert_response :success
+    assert_select "th[aria-sort=ascending]", /Client/
+    assert_select "th a[href=?]", invoices_path(sort: "client", direction: "desc")
+    assert_select "th a[href=?]", invoices_path(sort: "issued", direction: "asc")
+  end
+
+  test "should sort by total" do
+    get invoices_url(sort: "total", direction: "desc")
+
+    assert_response :success
+    assert_select "th.text-right[aria-sort=descending]", /Total/
+    assert_select "tbody tr", /\$2,150.00 USD/
+  end
+
+  test "should fall back to the default sort for unknown parameters" do
+    get invoices_url(sort: "number; DROP TABLE invoices", direction: "sideways")
+
+    assert_response :success
+    assert_select "th[aria-sort=descending]", /Number/
+  end
+
   test "should show an empty state when there are no invoices" do
     @user.company.invoices.destroy_all
 

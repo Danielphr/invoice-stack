@@ -10,13 +10,13 @@
     <table class="min-w-full divide-y divide-gray-200 text-sm">
       <thead class="bg-gray-50 text-left font-semibold text-gray-900">
         <tr>
-          <th scope="col" class="px-4 py-3">Number</th>
-          <th scope="col" class="px-4 py-3">Client</th>
-          <th scope="col" class="px-4 py-3">Issued</th>
-          <th scope="col" class="px-4 py-3">Due</th>
-          <th scope="col" class="px-4 py-3">Billing</th>
-          <th scope="col" class="px-4 py-3">Status</th>
-          <th scope="col" class="px-4 py-3 text-right">Total</th>
+          <%= invoice_sort_header "Number", "number" %>
+          <%= invoice_sort_header "Client", "client" %>
+          <%= invoice_sort_header "Issued", "issued" %>
+          <%= invoice_sort_header "Due", "due" %>
+          <%= invoice_sort_header "Billing", "billing" %>
+          <%= invoice_sort_header "Status", "status" %>
+          <%= invoice_sort_header "Total", "total", align: :right %>
           <th scope="col" class="px-4 py-3"><span class="sr-only">Actions</span></th>
         </tr>
       </thead>
