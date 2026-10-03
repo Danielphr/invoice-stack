@@ -89,6 +89,20 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
     assert_select "tbody a[href=?][target=_blank]", invoice_path(@invoice, format: :pdf), text: /PDF/
   end
 
+  test "should offer to edit and delete each invoice from the list" do
+    @invoice.update!(status: "sent")
+
+    get invoices_url
+
+    assert_select "tbody a[href=?]", edit_invoice_path(@invoice), text: /Edit/
+    assert_select "tbody form[action=?][data-turbo-confirm=?]", invoice_path(@invoice),
+      "Invoice INV-001 has been sent. Deleting it removes it permanently and leaves a gap in your numbering. " \
+      "Consider cancelling it instead." do
+      assert_select "input[name=_method][value=delete]"
+      assert_select "button", /Delete/
+    end
+  end
+
   test "should link to the PDF from the invoice page" do
     get invoice_url(@invoice)
 
