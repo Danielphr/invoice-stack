@@ -1,0 +1,20 @@
+<%# Replaces the browser's confirm() for data-turbo-confirm; see confirm_dialog.js. %>
+<dialog id="confirm-dialog" aria-labelledby="confirm-dialog-title" aria-describedby="confirm-dialog-message"
+        class="m-auto w-full max-w-md rounded-2xl bg-white p-6 shadow-xl backdrop:bg-navy-950/60">
+  <form method="dialog">
+    <div class="flex items-start gap-4">
+      <span data-confirm-icon class="flex size-10 shrink-0 items-center justify-center rounded-full">
+        <%= heroicon(:warning, class: "size-5") %>
+      </span>
+      <div class="min-w-0">
+        <h2 id="confirm-dialog-title" class="text-base font-semibold text-gray-900"></h2>
+        <p id="confirm-dialog-message" class="mt-2 text-sm text-gray-600"></p>
+      </div>
+    </div>
+
+    <div class="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+      <button type="submit" value="cancel" autofocus data-confirm-dismiss class="btn-secondary"></button>
+      <button type="submit" value="confirm" data-confirm-accept></button>
+    </div>
+  </form>
+</dialog>

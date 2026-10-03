@@ -97,7 +97,7 @@ class CompaniesControllerTest < ActionDispatch::IntegrationTest
     @company.logo.attach(io: file_fixture("logo.png").open, filename: "logo.png")
     get edit_company_url
     assert_select "button[form=remove-logo]"
-    assert_select "form#remove-logo[action=?][data-turbo-confirm]", company_logo_path
+    assert_select "form#remove-logo[action=?][data-turbo-confirm][data-confirm-destructive=true]", company_logo_path
   end
 
   test "should remove the logo" do

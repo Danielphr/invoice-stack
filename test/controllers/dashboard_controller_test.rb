@@ -152,6 +152,15 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-controller=chart]", count: 0
   end
 
+  test "should render the confirmation dialog in the app layout" do
+    get root_url
+
+    assert_select "dialog#confirm-dialog[aria-labelledby=confirm-dialog-title]" do
+      assert_select "form[method=dialog] button[value=cancel][autofocus]"
+      assert_select "form[method=dialog] button[value=confirm]"
+    end
+  end
+
   test "should not preload Chart.js on every page" do
     get clients_url
 

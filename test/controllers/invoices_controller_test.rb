@@ -392,7 +392,8 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
 
     draft = invoices(:globex_draft)
     get invoice_url(draft)
-    assert_select "form[action=?][data-turbo-confirm=?]", invoice_path(draft), "Delete this draft? This cannot be undone."
+    assert_select "form[action=?][data-turbo-confirm=?][data-confirm-title=?][data-confirm-button=Delete][data-confirm-destructive=true]",
+      invoice_path(draft), "Delete this draft? This cannot be undone.", "Delete draft"
   end
 
   test "should not update an invoice with invalid data" do

@@ -32,7 +32,8 @@ class Invoices::StatusesControllerTest < ActionDispatch::IntegrationTest
   test "should confirm before sending a draft" do
     get invoice_url(invoices(:globex_draft))
 
-    assert_select "form[action=?][data-turbo-confirm^=?]", invoice_status_path(invoices(:globex_draft)), "Send this invoice as INV-2?"
+    assert_select "form[action=?][data-turbo-confirm^=?][data-confirm-title=?]:not([data-confirm-destructive])",
+      invoice_status_path(invoices(:globex_draft)), "Send this invoice as INV-2?", "Send invoice"
   end
 
   test "should cancel an invoice" do

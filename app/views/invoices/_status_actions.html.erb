@@ -1,11 +1,12 @@
 <%# locals: (invoice:) %>
 <% if invoice.draft? %>
   <%= button_to "Mark as sent", invoice_status_path(invoice), method: :patch, params: { status: "sent" }, class: "btn-primary",
-        form: { data: { turbo_confirm: send_invoice_confirmation(invoice) } } %>
+        form: { data: { turbo_confirm: send_invoice_confirmation(invoice), confirm_title: "Send invoice", confirm_button: "Mark as sent" } } %>
 <% elsif invoice.sent? %>
   <%= button_to "Mark as paid", invoice_status_path(invoice), method: :patch, params: { status: "paid" }, class: "btn-primary" %>
   <%= button_to "Cancel invoice", invoice_status_path(invoice), method: :patch, params: { status: "cancelled" }, class: "btn-secondary",
-        form: { data: { turbo_confirm: "Cancel invoice #{invoice.number}?" } } %>
+        form: { data: { turbo_confirm: "Cancel invoice #{invoice.number}? It keeps its number and can be reopened later.",
+          confirm_title: "Cancel invoice", confirm_button: "Cancel invoice", confirm_dismiss: "Keep invoice", confirm_destructive: true } } %>
 <% else %>
   <% confirmation = if invoice.paid?
        "Reopen invoice #{invoice.number}? It will be marked as sent and its payment date removed."
@@ -13,5 +14,5 @@
        "Reopen invoice #{invoice.number}? It will be marked as sent."
      end %>
   <%= button_to "Reopen", invoice_status_path(invoice), method: :patch, params: { status: "sent" }, class: "btn-secondary",
-        form: { data: { turbo_confirm: confirmation } } %>
+        form: { data: { turbo_confirm: confirmation, confirm_title: "Reopen invoice", confirm_button: "Reopen" } } %>
 <% end %>

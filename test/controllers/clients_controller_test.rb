@@ -49,6 +49,7 @@ class ClientsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "h1", @client.name
+    assert_select "form[action=?][data-turbo-confirm][data-confirm-title=?][data-confirm-destructive=true]", client_path(@client), "Delete client"
   end
 
   test "should highlight Clients in the navigation on client pages" do
