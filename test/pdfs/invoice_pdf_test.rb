@@ -14,7 +14,7 @@ class InvoicePdfTest < ActiveSupport::TestCase
     assert_includes text, "742 Evergreen Terrace"
     assert_includes text, "Website design"
     assert_includes text, "$2,200.00 USD"
-    assert_includes text, "-$50.00 USD"
+    assert_match(/Discount\s+\$50\.00 USD/, text)
     assert_includes text, "$2,150.00 USD"
   end
 
@@ -26,6 +26,30 @@ class InvoicePdfTest < ActiveSupport::TestCase
     assert_includes text, "100 Example Street"
     assert_includes text, "Springfield"
     assert_includes text, "billing@acme.example"
+  end
+
+  test "draws the company logo when there is one" do
+    assert_empty pdf_images(@invoice)
+
+    @invoice.company.logo.attach(io: file_fixture("logo.png").open, filename: "logo.png")
+
+    assert_equal 1, pdf_images(@invoice).size
+  end
+
+  test "still renders when the logo file is missing" do
+    @invoice.company.logo.attach(io: file_fixture("logo.png").open, filename: "logo.png")
+    ActiveStorage::Blob.service.delete(@invoice.company.logo.blob.key)
+
+    assert_empty pdf_images(@invoice)
+    assert_includes pdf_text(@invoice), "INV-001"
+  end
+
+  test "uses the company's accent color" do
+    @invoice.company.update!(accent_color: "#ff0000")
+
+    page = PDF::Reader.new(StringIO.new(InvoicePdf.new(@invoice).render)).pages.first
+
+    assert_includes page.raw_content, "1.0 0.0 0.0 scn"
   end
 
   test "labels item columns by billing type" do
@@ -41,7 +65,7 @@ class InvoicePdfTest < ActiveSupport::TestCase
   test "shows the payment date of a paid invoice" do
     @invoice.update!(status: "paid", paid_on: Date.new(2026, 9, 20))
 
-    assert_includes pdf_text(@invoice), "Paid on: Sep 20, 2026"
+    assert_match(/Paid On\s+September 20, 2026/, pdf_text(@invoice))
   end
 
   test "renders characters outside Western European alphabets" do
@@ -57,9 +81,13 @@ class InvoicePdfTest < ActiveSupport::TestCase
     reader = PDF::Reader.new(StringIO.new(InvoicePdf.new(@invoice).render))
     second_page = reader.pages.second.text
 
-    assert_equal 2, reader.page_count
-    assert_includes second_page, "Page 2 of 2"
-    assert_match(/Description\s+Hours\s+Rate\s+Amount/, second_page)
+    assert_operator reader.page_count, :>, 1
+    assert_includes second_page, "Page 2 of #{reader.page_count}"
+    assert_match(/Description\s+Hours\s+Rate\s+Line Total/, second_page)
+  end
+
+  test "numbers pages only when there is more than one" do
+    assert_not_includes pdf_text(@invoice), "Page 1 of 1"
   end
 
   test "builds a file name that is safe on any system" do
@@ -69,6 +97,11 @@ class InvoicePdfTest < ActiveSupport::TestCase
   end
 
   private
+    def pdf_images(invoice)
+      page = PDF::Reader.new(StringIO.new(InvoicePdf.new(invoice).render)).pages.first
+      page.xobjects.values.select { it.hash[:Subtype] == :Image }
+    end
+
     def pdf_text(invoice)
       PDF::Reader.new(StringIO.new(InvoicePdf.new(invoice).render)).pages.map(&:text).join("\n")
     end

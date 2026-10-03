@@ -2,8 +2,14 @@ class Company < ApplicationRecord
   INVOICE_NUMBER_TAG = /\{(NUMBER|YEAR|MONTH)\}/
   # Characters that would break file names when invoices are exported.
   INVOICE_NUMBER_FORBIDDEN_CHARACTERS = %r{[\s/\\<>:"|?*]}
+  LOGO_CONTENT_TYPES = %w[ image/png image/jpeg image/webp ].freeze
+  LOGO_MAX_SIZE = 5.megabytes
 
   include HasAddress
+
+  has_one_attached :logo do |attachable|
+    attachable.variant :document, resize_to_limit: [ 600, 300 ], format: :png
+  end
 
   has_many :users, dependent: :destroy
   # Invoices are declared before clients so they are destroyed first.
@@ -13,16 +19,19 @@ class Company < ApplicationRecord
 
   normalizes :invoice_number_pattern, with: ->(pattern) { pattern.strip }
   normalizes :email, with: ->(email) { email.strip.downcase.presence }
+  normalizes :accent_color, with: ->(color) { color.strip.downcase }
 
   validates :name, presence: true, on: :update
   validates :name, length: { maximum: 100 }
   validates :email, format: { with: URI::MailTo::EMAIL_REGEXP }, length: { maximum: 254 }, allow_nil: true
   validates :time_zone, inclusion: { in: ActiveSupport::TimeZone.all.map(&:name) }
   validates :default_currency, inclusion: { in: Currency.codes }
+  validates :accent_color, format: { with: /\A#\h{6}\z/, message: "must be a hex color like #4f46e5" }
   validates :invoice_number_pattern, presence: true, length: { maximum: 30 }
   validates :invoice_number_digits, numericality: { only_integer: true, in: 1..10 }
   validates :next_invoice_number, numericality: { only_integer: true, greater_than_or_equal_to: 1, less_than: 1_000_000_000 }
   validate :invoice_number_pattern_must_be_valid
+  validate :logo_must_be_a_supported_image
 
   def onboarding_complete?
     name.present?
@@ -59,6 +68,13 @@ class Company < ApplicationRecord
   end
 
   private
+    def logo_must_be_a_supported_image
+      return unless logo.attached?
+
+      errors.add(:logo, "must be a PNG, JPG or WebP image") unless logo.content_type.in?(LOGO_CONTENT_TYPES)
+      errors.add(:logo, "must be smaller than 5 MB") if logo.byte_size > LOGO_MAX_SIZE
+    end
+
     def next_free_invoice_sequence(date)
       sequence = next_invoice_number
       sequence += 1 while invoices.exists?(number: format_invoice_number(sequence, date))

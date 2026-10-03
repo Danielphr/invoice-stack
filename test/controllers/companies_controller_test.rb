@@ -15,14 +15,30 @@ class CompaniesControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to new_session_url
   end
 
-  test "should show the invoice number settings and the next number" do
-    @company.update!(invoice_number_pattern: "YP-{NUMBER}", invoice_number_digits: 4, next_invoice_number: 42)
+  test "should show the company's details with a link to edit them" do
+    @company.update!(email: "billing@acme.example", invoice_number_pattern: "YP-{NUMBER}", invoice_number_digits: 4,
+      next_invoice_number: 42)
 
     get company_url
 
     assert_response :success
-    assert_select "h1", @company.name
+    assert_select "h1", "Acme Inc."
+    assert_select "dd", "billing@acme.example"
+    assert_select "dd", "YP-0042"
+    assert_select "a[href=?]", edit_company_path, "Edit"
+    assert_select "form[action=?]", company_path, count: 0
+    assert_select "nav a[aria-current=page]", "Company"
+  end
+
+  test "should edit the company in a form with the logo drop zone" do
+    @company.update!(invoice_number_pattern: "YP-{NUMBER}", invoice_number_digits: 4, next_invoice_number: 42)
+
+    get edit_company_url
+
+    assert_response :success
+    assert_select "input[name=?][value=?]", "company[name]", "Acme Inc."
     assert_select "input[name=?][value=?]", "company[invoice_number_pattern]", "YP-{NUMBER}"
+    assert_select "[data-controller=dropzone] input[type=file][name=?]", "company[logo]"
     assert_select "p", /Next invoice will be YP-0042/
     assert_select "nav a[aria-current=page]", "Company"
   end
@@ -52,11 +68,60 @@ class CompaniesControllerTest < ActionDispatch::IntegrationTest
     assert_select "[role=note]", count: 0
   end
 
-  test "should keep the saved name in the heading when the new name is invalid" do
+  test "should update and show the accent color" do
+    patch company_url, params: { company: { accent_color: "#4F46E5" } }
+    assert_equal "#4f46e5", @company.reload.accent_color
+
+    get company_url
+    assert_select "dd code", "#4f46e5"
+
+    get edit_company_url
+    assert_select "input[type=color][name=?][value=?]", "company[accent_color]", "#4f46e5"
+  end
+
+  test "should upload and show the logo" do
+    patch company_url, params: { company: { logo: fixture_file_upload("logo.png", "image/png") } }
+    assert_redirected_to company_url
+    assert @company.reload.logo.attached?
+
+    get company_url
+    assert_select "img[alt=?]", "Acme Inc. logo"
+  end
+
+  test "should offer to remove the logo only when there is one" do
+    get edit_company_url
+    assert_select "button[form=remove-logo]", count: 0
+
+    @company.logo.attach(io: file_fixture("logo.png").open, filename: "logo.png")
+    get edit_company_url
+    assert_select "button[form=remove-logo]"
+    assert_select "form#remove-logo[action=?][data-turbo-confirm]", company_logo_path
+  end
+
+  test "should remove the logo" do
+    @company.logo.attach(io: file_fixture("logo.png").open, filename: "logo.png")
+
+    delete company_logo_url
+
+    assert_redirected_to edit_company_url
+    assert_not @company.reload.logo.attached?
+  end
+
+  test "should reject an unsupported logo and keep the current one" do
+    @company.logo.attach(io: file_fixture("logo.png").open, filename: "logo.png")
+
+    patch company_url, params: { company: { logo: fixture_file_upload("logo.svg", "image/svg+xml") } }
+
+    assert_response :unprocessable_entity
+    assert_select "[role=alert] li", "Logo must be a PNG, JPG or WebP image"
+    assert_equal "logo.png", @company.reload.logo.filename.to_s
+  end
+
+  test "should show the edit form again when the name is invalid" do
     patch company_url, params: { company: { name: "" } }
 
     assert_response :unprocessable_entity
-    assert_select "h1", "Acme Inc."
+    assert_select "h1", "Edit company"
     assert_select "[role=alert] li", "Company name can't be blank"
   end
 

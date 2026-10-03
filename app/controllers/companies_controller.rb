@@ -5,11 +5,15 @@ class CompaniesController < ApplicationController
     @next_invoice_number = @company.preview_invoice_number(Date.current)
   end
 
+  def edit
+    @next_invoice_number = @company.preview_invoice_number(Date.current)
+  end
+
   def update
     if @company.update(company_params)
       redirect_to company_path, notice: "Company updated."
     else
-      render :show, status: :unprocessable_entity
+      render :edit, status: :unprocessable_entity
     end
   end
 
@@ -23,6 +27,7 @@ class CompaniesController < ApplicationController
         :name, :email,
         :address_line1, :address_line2, :city, :state, :postal_code, :country,
         :time_zone, :default_currency,
+        :logo, :accent_color,
         :invoice_number_pattern, :invoice_number_digits, :next_invoice_number
       ])
     end
