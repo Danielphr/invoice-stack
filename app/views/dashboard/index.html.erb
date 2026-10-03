@@ -1,1 +1,47 @@
+<% content_for :title, "Dashboard" %>
+
 <h1 class="text-2xl font-semibold text-gray-900">Dashboard</h1>
+
+<% overdue, due_soon = @dashboard.overdue_invoices.to_a, @dashboard.due_soon_invoices.to_a %>
+<% if overdue.any? || due_soon.any? %>
+  <div class="mt-6">
+    <%= render "attention", overdue:, due_soon: %>
+  </div>
+<% end %>
+
+<div class="mt-8 flex flex-wrap items-center gap-3">
+  <% if @dashboard.currencies.many? %>
+    <nav aria-label="Currency" class="flex gap-1 rounded-lg bg-white p-1 text-sm font-medium shadow-sm ring-1 ring-gray-900/5">
+      <% @dashboard.currencies.each do |currency| %>
+        <%= dashboard_filter_link @dashboard, currency, currency: %>
+      <% end %>
+    </nav>
+  <% end %>
+
+  <nav aria-label="Period" class="ml-auto flex flex-wrap gap-1 rounded-lg bg-white p-1 text-sm font-medium shadow-sm ring-1 ring-gray-900/5">
+    <% Dashboard::PERIODS.each do |period| %>
+      <%= dashboard_filter_link @dashboard, dashboard_period_label(period), period: %>
+    <% end %>
+  </nav>
+</div>
+
+<%# Three cards side by side when there's room for all of them, otherwise one per row. %>
+<div class="@container mt-6">
+  <dl class="grid grid-cols-1 gap-5 @4xl:grid-cols-3">
+    <%= render "stat", label: "Revenue · #{dashboard_period_label(@dashboard.period)}", icon: :currency, tone: "bg-brand-50 text-brand-600",
+          summary: @dashboard.revenue, currency: @dashboard.currency, empty: "No payments" %>
+    <%= render "stat", label: "Due soon", icon: :clock, tone: "bg-amber-50 text-amber-600",
+          summary: @dashboard.due_soon, currency: @dashboard.currency, empty: "Nothing due" %>
+    <%= render "stat", label: "Overdue", icon: :warning, tone: "bg-red-50 text-red-600",
+          summary: @dashboard.overdue, currency: @dashboard.currency, empty: "Nothing overdue" %>
+  </dl>
+</div>
+
+<div class="mt-6">
+  <%= render "revenue_chart", series: @dashboard.revenue_over_time, by_day: @dashboard.chart_by_day?, currency: @dashboard.currency %>
+</div>
+
+<div class="mt-6">
+  <%= render "client_revenue", clients: @dashboard.top_clients, period_label: dashboard_period_label(@dashboard.period),
+        currency: @dashboard.currency %>
+</div>

@@ -1,0 +1,44 @@
+<%# locals: (overdue:, due_soon:) %>
+<%= tag.details class: [ "group rounded-2xl border bg-white shadow-sm", overdue.any? ? "border-red-200" : "border-amber-200" ] do %>
+  <summary class="flex cursor-pointer list-none flex-wrap items-center gap-3 px-6 py-4 [&::-webkit-details-marker]:hidden">
+    <h2 class="text-base font-semibold text-gray-900">Needs attention</h2>
+    <% if overdue.any? %>
+      <span class="rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700"><%= overdue.size %> overdue</span>
+    <% end %>
+    <% if due_soon.any? %>
+      <span class="rounded-md bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700"><%= due_soon.size %> due soon</span>
+    <% end %>
+    <%= heroicon(:chevron_down, class: "ml-auto size-5 shrink-0 text-gray-400 transition-transform group-open:rotate-180") %>
+  </summary>
+
+  <div class="grid grid-cols-1 gap-8 border-t border-gray-100 px-6 pt-4 pb-6 lg:grid-cols-2">
+    <% [ [ "Overdue", overdue ], [ "Due in the next #{Invoice::DUE_SOON_DAYS} days", due_soon ] ].each do |title, invoices| %>
+      <div>
+        <h3 class="text-sm font-semibold text-gray-900"><%= title %> <span class="font-normal text-gray-500">· <%= invoices.size %></span></h3>
+
+        <% if invoices.empty? %>
+          <p class="mt-3 text-sm text-gray-500">None.</p>
+        <% else %>
+          <ul role="list" class="mt-3 divide-y divide-gray-100">
+            <% invoices.first(5).each do |invoice| %>
+              <li class="flex items-center justify-between gap-4 py-3 text-sm">
+                <div class="min-w-0">
+                  <%= link_to invoice.number, invoice, class: "font-medium text-gray-900 hover:text-brand-600" %>
+                  <p class="truncate text-gray-500"><%= invoice.client.name %></p>
+                </div>
+                <div class="flex shrink-0 flex-col items-end gap-1">
+                  <span class="font-medium tabular-nums text-gray-900"><%= format_money(invoice.total, invoice.currency) %></span>
+                  <%= due_badge(invoice) %>
+                </div>
+              </li>
+            <% end %>
+          </ul>
+
+          <% if invoices.size > 5 %>
+            <%= link_to "+#{invoices.size - 5} more", invoices_path(sort: "due", direction: "asc"), class: "link mt-2 inline-block text-sm" %>
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+<% end %>

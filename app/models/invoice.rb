@@ -28,12 +28,27 @@ class Invoice < ApplicationRecord
 
   SORTS = %w[ number client issued due billing status total ].freeze
 
+  DUE_SOON_DAYS = 14
+
+  scope :overdue, -> { where(overdue_condition) }
+  scope :due_soon, -> { sent.where(due_date: Date.current..(Date.current + DUE_SOON_DAYS)) }
+
   # Mirrors #total: each item's amount is rounded before summing, as in InvoiceItem#amount.
   TOTAL_SQL = Arel.sql(<<~SQL.squish)
     (SELECT COALESCE(SUM(ROUND(invoice_items.quantity * invoice_items.unit_price, 2)), 0)
      FROM invoice_items WHERE invoice_items.invoice_id = invoices.id) - invoices.discount
   SQL
   private_constant :TOTAL_SQL
+
+  # Same rule as #overdue?; if one changes, change the other.
+  def self.overdue_condition
+    arel_table[:status].eq("sent").and(arel_table[:due_date].lt(Date.current))
+  end
+
+  # Sums invoice totals in the database; combine with group to get one total per month or client.
+  def self.sum_of_totals
+    sum(TOTAL_SQL)
+  end
 
   def self.sorted_by(column, direction)
     direction = direction.to_s == "asc" ? :asc : :desc
@@ -60,8 +75,7 @@ class Invoice < ApplicationRecord
     status = arel_table[:status]
 
     Arel::Nodes::Case.new
-      # Same rule as #overdue?; if one changes, change the other.
-      .when(status.eq("sent").and(arel_table[:due_date].lt(Date.current))).then(3)
+      .when(overdue_condition).then(3)
       .when(status.eq("draft")).then(1)
       .when(status.eq("sent")).then(2)
       .when(status.eq("paid")).then(4)

@@ -1,0 +1,34 @@
+<%# locals: (clients:, period_label:, currency:) %>
+<% chart_data = { controller: "chart", chart_type_value: "bars", chart_currency_value: currency,
+                  chart_labels_value: clients.map(&:client_name), chart_amounts_value: clients.map { it.amount.to_f },
+                  chart_colors_value: clients.each_index.map { client_color(it).first } } if clients.any? %>
+<%= tag.section class: "rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-900/5", data: chart_data do %>
+  <h2 class="text-lg font-semibold text-gray-900">Revenue by client</h2>
+  <p class="mt-1 text-sm text-gray-500">Top clients by payments received · <%= period_label %>.</p>
+
+  <% if clients.empty? %>
+    <p class="mt-6 text-sm text-gray-500">No payments in this period.</p>
+  <% else %>
+    <% total = clients.sum(&:amount) %>
+    <div class="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-5">
+      <div class="h-64 lg:col-span-3">
+        <canvas data-chart-target="canvas" aria-hidden="true"></canvas>
+      </div>
+
+      <ul role="list" class="space-y-3 self-center lg:col-span-2">
+        <% clients.each_with_index do |client, index| %>
+          <li class="flex items-center justify-between gap-4 text-sm">
+            <span class="flex min-w-0 items-center gap-2.5">
+              <span class="size-2.5 shrink-0 rounded-full <%= client_color(index).last %>"></span>
+              <%= link_to client.client_name, client_path(client.client_id), class: "truncate font-medium text-gray-700 hover:text-brand-600" %>
+            </span>
+            <span class="flex shrink-0 items-center gap-3">
+              <span class="font-semibold tabular-nums text-gray-900"><%= format_money(client.amount, currency) %></span>
+              <span class="w-10 text-right text-xs tabular-nums text-gray-400"><%= number_to_percentage(client.amount / total * 100, precision: 0) %></span>
+            </span>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+<% end %>

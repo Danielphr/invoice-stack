@@ -1,0 +1,28 @@
+<%# locals: (series:, by_day:, currency:) %>
+<% chart_data = { controller: "chart", chart_currency_value: currency,
+                  chart_labels_value: series.keys.map { l(it, format: by_day ? "%b %-d" : "%b %Y") },
+                  chart_amounts_value: series.values.map(&:to_f) } if series.any? %>
+<%= tag.section class: "rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-900/5", data: chart_data do %>
+  <h2 class="text-lg font-semibold text-gray-900">Revenue over time</h2>
+  <p class="mt-1 text-sm text-gray-500">Payments received, by <%= by_day ? "day" : "month" %>.</p>
+
+  <% if series.empty? %>
+    <p class="mt-6 text-sm text-gray-500">No payments in this period.</p>
+  <% else %>
+    <div class="mt-6 h-72">
+      <canvas data-chart-target="canvas" aria-hidden="true"></canvas>
+    </div>
+
+    <table class="sr-only">
+      <caption>Revenue in <%= currency %></caption>
+      <tbody>
+        <% series.each do |date, amount| %>
+          <tr>
+            <th scope="row"><%= l(date, format: by_day ? :long : "%B %Y") %></th>
+            <td><%= format_money(amount, currency) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% end %>
+<% end %>
