@@ -47,9 +47,10 @@ class Invoice < ApplicationRecord
       when "status" then order(status_rank.public_send(direction))
       # Amounts in different currencies can't be compared, so each currency is grouped.
       when "total" then order(:currency, TOTAL_SQL.public_send(direction))
-      # Automatic numbers are assigned on create, so creation order is number
-      # order; sorting the text would put INV-10 before INV-9.
-      else order(created_at: direction)
+      # Drafts get the next number when sent, so they sort after the highest one.
+      else
+        sequence = arel_table[:sequence].public_send(direction)
+        order(direction == :asc ? sequence.nulls_last : sequence.nulls_first)
       end
 
     relation.order(id: direction)

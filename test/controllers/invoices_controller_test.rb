@@ -44,15 +44,15 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
     assert_select "tbody td", "Hourly"
   end
 
-  test "should sort by number, newest first, by default" do
-    newer = @user.company.invoices.create!(client: clients(:initech), currency: "USD", issue_date: Date.new(2026, 8, 1),
+  test "should sort by number, drafts and newest first, by default" do
+    @user.company.invoices.create!(client: clients(:initech), status: "sent", currency: "USD", issue_date: Date.new(2026, 8, 1),
       items_attributes: [ { description: "Support", quantity: 1, unit_price: 100 } ])
 
     get invoices_url
 
     assert_select "th[aria-sort=descending]", /Number/
     assert_select "th[aria-sort]", 1
-    assert_select "tbody tr:first-child", /#{newer.number}/
+    assert_equal [ "Draft", "INV-2", "INV-001" ], css_select("tbody tr td:first-child").map { it.text.strip }
     assert_select "th a[href=?]", invoices_path(sort: "number", direction: "asc")
   end
 

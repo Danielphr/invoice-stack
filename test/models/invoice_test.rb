@@ -231,14 +231,24 @@ class InvoiceTest < ActiveSupport::TestCase
     end
   end
 
-  test "sorts by number in creation order, so INV-9 comes before INV-10" do
+  test "sorts by number, not by when the invoice was created, so INV-9 comes before INV-10" do
     company = companies(:one)
     company.update!(next_invoice_number: 9)
-    nine = create_invoice(company, status: "sent")
-    ten = create_invoice(company, status: "sent")
+    created_first = create_invoice(company)
+    created_second = create_invoice(company, status: "sent")
+    created_first.update!(status: "sent")
+    scope = company.invoices.where(id: [ created_first, created_second ])
 
-    assert_equal [ "INV-9", "INV-10" ], company.invoices.where(id: [ nine, ten ]).sorted_by("number", "asc").map(&:number)
-    assert_equal [ "INV-10", "INV-9" ], company.invoices.where(id: [ nine, ten ]).sorted_by("number", "desc").map(&:number)
+    assert_equal [ "INV-9", "INV-10" ], scope.sorted_by("number", "asc").map(&:number)
+    assert_equal [ "INV-10", "INV-9" ], scope.sorted_by("number", "desc").map(&:number)
+  end
+
+  test "sorts drafts after the highest number" do
+    company = companies(:one)
+    scope = company.invoices.where(id: [ @invoice, invoices(:globex_draft) ])
+
+    assert_equal [ "INV-001", nil ], scope.sorted_by("number", "asc").map(&:number)
+    assert_equal [ nil, "INV-001" ], scope.sorted_by("number", "desc").map(&:number)
   end
 
   test "sorts by client name ignoring case" do
