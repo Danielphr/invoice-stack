@@ -11,8 +11,10 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "title", "InvoiceStack"
+    assert_select "#sidebar a[href=?] img[alt=InvoiceStack][src*=logo-light]", root_path
     assert_select "nav a[aria-current=page]", count: 1
     assert_select "nav a[aria-current=page]", "Dashboard"
+    assert_select "nav a svg[aria-hidden=true]", 4
     assert_select "nav a[href=?]", company_path, "Company"
     assert_select "nav a[href=?]", clients_path, "Clients"
     assert_select "nav a[href=?]", invoices_path, "Invoices"

@@ -3,8 +3,10 @@
 
 <aside id="sidebar" data-sidebar-target="panel"
        class="fixed inset-y-0 left-0 z-50 flex w-72 -translate-x-full flex-col bg-navy-950 px-6 transition-transform max-lg:invisible lg:translate-x-0">
-  <div class="flex h-16 shrink-0 items-center justify-between">
-    <%= link_to "InvoiceStack", root_path, class: "text-lg font-bold text-white" %>
+  <div class="flex h-20 shrink-0 items-center justify-between">
+    <%= link_to root_path do %>
+      <%= image_tag "logo-light.svg", alt: "InvoiceStack", class: "h-10 w-auto" %>
+    <% end %>
 
     <button type="button" class="-m-2.5 p-2.5 text-navy-300 hover:text-white lg:hidden" data-action="sidebar#close">
       <span class="sr-only">Close menu</span>
@@ -16,10 +18,10 @@
 
   <nav aria-label="Main" class="flex-1">
     <ul role="list" class="-mx-2 space-y-1">
-      <li><%= nav_link_to "Dashboard", root_path %></li>
-      <li><%= nav_link_to "Company", company_path %></li>
-      <li><%= nav_link_to "Clients", clients_path %></li>
-      <li><%= nav_link_to "Invoices", invoices_path %></li>
+      <li><%= nav_link_to "Dashboard", root_path, icon: :home %></li>
+      <li><%= nav_link_to "Company", company_path, icon: :building %></li>
+      <li><%= nav_link_to "Clients", clients_path, icon: :users %></li>
+      <li><%= nav_link_to "Invoices", invoices_path, icon: :banknotes %></li>
     </ul>
   </nav>
 
