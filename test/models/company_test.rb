@@ -225,7 +225,7 @@ class CompanyTest < ActiveSupport::TestCase
 
     company.next_invoice_number = 1
     assert_not company.valid?
-    assert_includes company.errors[:next_invoice_number], "must be greater than 1"
+    assert_includes company.errors[:next_invoice_number], "must be greater than or equal to 2"
 
     company.next_invoice_number = 2
     assert company.valid?

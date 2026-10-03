@@ -29,7 +29,7 @@ class Company < ApplicationRecord
   validates :accent_color, format: { with: /\A#\h{6}\z/, message: "must be a hex color like #4f46e5" }
   validates :invoice_number_pattern, presence: true, length: { maximum: 30 }
   validates :invoice_number_digits, numericality: { only_integer: true, in: 1..10 }
-  validates :next_invoice_number, numericality: { only_integer: true, greater_than: :last_invoice_sequence, less_than: 1_000_000_000 }
+  validates :next_invoice_number, numericality: { only_integer: true, greater_than_or_equal_to: :lowest_next_invoice_number, less_than: 1_000_000_000 }
   validate :invoice_number_pattern_must_be_valid
   validate :logo_must_be_a_supported_image
 
@@ -65,16 +65,16 @@ class Company < ApplicationRecord
     format_invoice_number(next_invoice_number, date)
   end
 
+  def lowest_next_invoice_number
+    (invoices.maximum(:sequence) || 0) + 1
+  end
+
   private
     def logo_must_be_a_supported_image
       return unless logo.attached?
 
       errors.add(:logo, "must be a PNG, JPG or WebP image") unless logo.content_type.in?(LOGO_CONTENT_TYPES)
       errors.add(:logo, "must be smaller than 5 MB") if logo.byte_size > LOGO_MAX_SIZE
-    end
-
-    def last_invoice_sequence
-      invoices.maximum(:sequence) || 0
     end
 
     def invoice_number_pattern_must_be_valid

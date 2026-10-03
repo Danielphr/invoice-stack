@@ -39,6 +39,8 @@ class CompaniesControllerTest < ActionDispatch::IntegrationTest
     assert_select "input[name=?][value=?]", "company[name]", "Acme Inc."
     assert_select "input[name=?][value=?]", "company[invoice_number_pattern]", "YP-{NUMBER}"
     assert_select "[data-controller=dropzone] input[type=file][name=?]", "company[logo]"
+    assert_select "input[name=?][min='2']", "company[next_invoice_number]"
+    assert_select "p", "Numbers below 2 are already used."
     assert_select "p", /Next invoice will be YP-0042/
     assert_select "nav a[aria-current=page]", "Company"
   end
