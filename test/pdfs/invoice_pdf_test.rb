@@ -28,6 +28,30 @@ class InvoicePdfTest < ActiveSupport::TestCase
     assert_includes text, "billing@acme.example"
   end
 
+  test "draws the company logo when there is one" do
+    assert_empty pdf_images(@invoice)
+
+    @invoice.company.logo.attach(io: file_fixture("logo.png").open, filename: "logo.png")
+
+    assert_equal 1, pdf_images(@invoice).size
+  end
+
+  test "still renders when the logo file is missing" do
+    @invoice.company.logo.attach(io: file_fixture("logo.png").open, filename: "logo.png")
+    ActiveStorage::Blob.service.delete(@invoice.company.logo.blob.key)
+
+    assert_empty pdf_images(@invoice)
+    assert_includes pdf_text(@invoice), "INV-001"
+  end
+
+  test "uses the company's accent color" do
+    @invoice.company.update!(accent_color: "#ff0000")
+
+    page = PDF::Reader.new(StringIO.new(InvoicePdf.new(@invoice).render)).pages.first
+
+    assert_includes page.raw_content, "1.0 0.0 0.0 scn"
+  end
+
   test "labels item columns by billing type" do
     assert_includes pdf_text(@invoice), "Quantity"
 
@@ -69,6 +93,11 @@ class InvoicePdfTest < ActiveSupport::TestCase
   end
 
   private
+    def pdf_images(invoice)
+      page = PDF::Reader.new(StringIO.new(InvoicePdf.new(invoice).render)).pages.first
+      page.xobjects.values.select { it.hash[:Subtype] == :Image }
+    end
+
     def pdf_text(invoice)
       PDF::Reader.new(StringIO.new(InvoicePdf.new(invoice).render)).pages.map(&:text).join("\n")
     end

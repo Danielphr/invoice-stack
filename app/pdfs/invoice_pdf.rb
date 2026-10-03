@@ -47,7 +47,8 @@ class InvoicePdf
       half = pdf.bounds.width / 2
 
       pdf.bounding_box([ 0, top ], width: half) do
-        pdf.text company.name, size: 18, style: :bold
+        logo
+        pdf.text company.name, size: 18, style: :bold, color: accent
         pdf.move_down 4
         company.address_lines.each { pdf.text it, color: MUTED }
         pdf.text company.email, color: MUTED if company.email
@@ -55,7 +56,7 @@ class InvoicePdf
       company_bottom = pdf.cursor
 
       pdf.bounding_box([ half, top ], width: half) do
-        pdf.text "INVOICE", size: 18, style: :bold, align: :right
+        pdf.text "INVOICE", size: 18, style: :bold, align: :right, color: accent
         pdf.text invoice.number, color: MUTED, align: :right
       end
 
@@ -130,7 +131,7 @@ class InvoicePdf
       end
 
       pdf.move_down height
-      pdf.stroke_color RULE
+      pdf.stroke_color header ? accent : RULE
       pdf.stroke_horizontal_rule
     end
 
@@ -143,7 +144,7 @@ class InvoicePdf
         total_line "Subtotal", invoice.subtotal
         total_line "Discount", -invoice.discount if invoice.discount.positive?
         pdf.move_down 4
-        total_line "Total", invoice.total, style: :bold
+        total_line "Total", invoice.total, style: :bold, color: accent
       end
     end
 
@@ -159,6 +160,19 @@ class InvoicePdf
       pdf.number_pages "Page <page> of <total>", at: [ 0, -16 ], width: pdf.bounds.width, align: :right, size: 8, color: MUTED
     end
 
+    def logo
+      return unless invoice.company.logo.attached?
+
+      pdf.image StringIO.new(invoice.company.logo.variant(:document).processed.download), fit: [ 160, 60 ]
+      pdf.move_down 12
+    rescue ActiveStorage::FileNotFoundError, Vips::Error
+      # A missing or unreadable logo file shouldn't stop the invoice from rendering.
+    end
+
+    def accent
+      invoice.company.accent_color.delete_prefix("#")
+    end
+
     def label(text)
       pdf.text text.upcase, size: 8, style: :bold, color: MUTED
       pdf.move_down 4
@@ -168,9 +182,9 @@ class InvoicePdf
       pdf.text "#{name}: #{value}", align: :right
     end
 
-    def total_line(name, amount, style: :normal)
-      pdf.float { pdf.text name, style: style }
-      pdf.text format_money(amount, invoice.currency), align: :right, style: style
+    def total_line(name, amount, style: :normal, color: "000000")
+      pdf.float { pdf.text name, style: style, color: color }
+      pdf.text format_money(amount, invoice.currency), align: :right, style: style, color: color
     end
 
     def format_date(date)
