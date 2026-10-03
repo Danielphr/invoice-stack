@@ -45,9 +45,7 @@ class Invoice < ApplicationRecord
       when "issued" then order(issue_date: direction)
       when "due" then order(arel_table[:due_date].public_send(direction).nulls_last)
       when "billing" then order(billing_type: direction)
-      when "status"
-        lifecycle = statuses.keys
-        in_order_of(:status, direction == :asc ? lifecycle : lifecycle.reverse, filter: false)
+      when "status" then order(status_rank.public_send(direction))
       # Amounts in different currencies can't be compared, so each currency is grouped.
       when "total" then order(:currency, TOTAL_SQL.public_send(direction))
       # Automatic numbers are assigned on create, so creation order is number
@@ -57,6 +55,19 @@ class Invoice < ApplicationRecord
 
     relation.order(id: direction)
   end
+
+  def self.status_rank
+    status = arel_table[:status]
+
+    Arel::Nodes::Case.new
+      # Same rule as #overdue?; if one changes, change the other.
+      .when(status.eq("sent").and(arel_table[:due_date].lt(Date.current))).then(3)
+      .when(status.eq("draft")).then(1)
+      .when(status.eq("sent")).then(2)
+      .when(status.eq("paid")).then(4)
+      .else(5)
+  end
+  private_class_method :status_rank
 
   def subtotal
     active_items.sum(&:amount)

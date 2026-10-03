@@ -222,14 +222,24 @@ class InvoiceTest < ActiveSupport::TestCase
     assert_equal [ acme, globex ], company.invoices.where(id: [ acme, globex ]).sorted_by("client", "asc")
   end
 
-  test "sorts by status in lifecycle order" do
+  test "sorts by status in lifecycle order, with overdue between sent and paid" do
     company = companies(:one)
-    invoices = %w[ paid draft cancelled sent ].map { create_invoice(company, status: it) }
-
+    overdue = create_invoice(company, status: "sent", issue_date: 2.months.ago, due_date: 1.month.ago)
+    invoices = [ overdue, *%w[ paid draft cancelled sent ].map { create_invoice(company, status: it) } ]
     scope = company.invoices.where(id: invoices)
 
-    assert_equal %w[ draft sent paid cancelled ], scope.sorted_by("status", "asc").map(&:status)
-    assert_equal %w[ cancelled paid sent draft ], scope.sorted_by("status", "desc").map(&:status)
+    statuses = ->(sorted) { sorted.map { it.overdue? ? "overdue" : it.status } }
+    assert_equal %w[ draft sent overdue paid cancelled ], statuses.(scope.sorted_by("status", "asc"))
+    assert_equal %w[ cancelled paid overdue sent draft ], statuses.(scope.sorted_by("status", "desc"))
+  end
+
+  test "treats an invoice due today as not yet overdue when sorting by status" do
+    company = companies(:one)
+    overdue = create_invoice(company, status: "sent", issue_date: 1.week.ago, due_date: Date.yesterday)
+    due_today = create_invoice(company, status: "sent", due_date: Date.current)
+
+    assert_not due_today.overdue?
+    assert_equal [ due_today, overdue ], company.invoices.where(id: [ due_today, overdue ]).sorted_by("status", "asc")
   end
 
   test "puts invoices without a due date last in either direction" do
