@@ -6,7 +6,9 @@ Rails.application.routes.draw do
   resources :passwords, param: :token
   resource :onboarding, only: %i[show update]
 
-  resource :company, only: %i[ show update ]
+  resource :company, only: %i[ show edit update ] do
+    resource :logo, only: :destroy, module: :companies
+  end
   resources :clients
   resources :invoices do
     resource :status, only: :update, module: :invoices
