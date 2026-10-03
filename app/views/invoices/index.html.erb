@@ -41,11 +41,6 @@
                 <%= link_to edit_invoice_path(invoice), class: "link" do %>
                   Edit<span class="sr-only">, <%= label %></span>
                 <% end %>
-                <%= button_to invoice, method: :delete, class: "link-danger",
-                      params: request.query_parameters.slice("sort", "direction", "page"),
-                      form: { data: { turbo_confirm: delete_invoice_confirmation(invoice) } } do %>
-                  Delete<span class="sr-only">, <%= label %></span>
-                <% end %>
               </div>
             </td>
           </tr>

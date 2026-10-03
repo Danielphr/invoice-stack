@@ -14,8 +14,10 @@
     <%= link_to "PDF", invoice_path(@invoice, format: :pdf), target: "_blank", rel: "noopener", class: "btn-secondary",
           data: { turbo: false } %>
     <%= link_to "Edit", edit_invoice_path(@invoice), class: "btn-secondary" %>
-    <%= button_to "Delete", @invoice, method: :delete, class: "btn-danger",
-          form: { data: { turbo_confirm: delete_invoice_confirmation(@invoice) } } %>
+    <% if @invoice.draft? %>
+      <%= button_to "Delete", @invoice, method: :delete, class: "btn-danger",
+            form: { data: { turbo_confirm: "Delete this draft? This cannot be undone." } } %>
+    <% end %>
   </div>
 </div>
 

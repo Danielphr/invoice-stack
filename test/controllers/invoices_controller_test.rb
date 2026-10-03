@@ -134,7 +134,7 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should show an empty state when there are no invoices" do
-    @user.company.invoices.destroy_all
+    remove_invoices(@user.company)
 
     get invoices_url
 
@@ -178,18 +178,12 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
     assert_select "tbody a[href=?][target=_blank]", invoice_path(@invoice, format: :pdf), text: /PDF/
   end
 
-  test "should offer to edit and delete each invoice from the list" do
-    @invoice.update!(status: "sent")
-
+  test "should offer to edit each invoice from the list, leaving deletion to the invoice page" do
     get invoices_url
 
     assert_select "tbody a[href=?]", edit_invoice_path(@invoice), text: /Edit/
-    assert_select "tbody form[action=?][data-turbo-confirm=?]", invoice_path(@invoice),
-      "Invoice INV-001 has been sent. Deleting it removes it permanently and leaves a gap in your numbering. " \
-      "Consider cancelling it instead." do
-      assert_select "input[name=_method][value=delete]"
-      assert_select "button", /Delete/
-    end
+    assert_select "tbody a[href=?]", edit_invoice_path(invoices(:globex_draft)), text: /Edit/
+    assert_select "tbody form", count: 0
   end
 
   test "should link to the PDF from the invoice page" do
@@ -281,7 +275,7 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should ask for a client first when the company has none" do
-    @user.company.invoices.destroy_all
+    remove_invoices(@user.company)
     @user.company.clients.destroy_all
 
     get new_invoice_url
@@ -387,10 +381,13 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
     assert_select "[role=note]", count: 0
   end
 
-  test "should ask for a stronger confirmation before deleting a sent invoice" do
+  test "should offer to delete only drafts from the invoice page" do
     get invoice_url(@invoice)
+    assert_select "form[action=?] input[name=_method][value=delete]", invoice_path(@invoice), count: 0
 
-    assert_select "form[data-turbo-confirm*=?]", "Consider cancelling it instead."
+    draft = invoices(:globex_draft)
+    get invoice_url(draft)
+    assert_select "form[action=?][data-turbo-confirm=?]", invoice_path(draft), "Delete this draft? This cannot be undone."
   end
 
   test "should not update an invoice with invalid data" do
@@ -420,26 +417,24 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "INV-001", @other_invoice.reload.number
   end
 
-  test "should destroy an invoice and its items" do
-    assert_difference({ "Invoice.count" => -1, "InvoiceItem.count" => -2 }) do
-      delete invoice_url(@invoice)
+  test "should delete a draft and its items" do
+    assert_difference({ "Invoice.count" => -1, "InvoiceItem.count" => -1 }) do
+      delete invoice_url(invoices(:globex_draft))
     end
 
     assert_redirected_to invoices_url
+    follow_redirect!
+    assert_select "[role=status]", "Draft deleted."
   end
 
-  test "should return to the same page and sort after deleting from the list" do
-    create_invoices(11)
+  test "should refuse to delete an issued invoice" do
+    assert_no_difference "Invoice.count" do
+      delete invoice_url(@invoice)
+    end
 
-    get invoices_url
-    assert_select "tbody form input[name=page]", count: 0
-
-    get invoices_url(sort: "client", direction: "asc", page: 2)
-    assert_select "tbody form input[type=hidden][name=page][value='2']"
-
-    delete invoice_url(@invoice), params: { sort: "client", direction: "asc", page: "2" }
-
-    assert_redirected_to invoices_url(direction: "asc", page: "2", sort: "client")
+    assert_redirected_to invoice_url(@invoice)
+    follow_redirect!
+    assert_select "[role=alert]", "Only drafts can be deleted. Cancel the invoice instead."
   end
 
   test "should not expose or delete another company's invoice" do

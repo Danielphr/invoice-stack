@@ -39,18 +39,6 @@ class InvoicesHelperTest < ActionView::TestCase
     assert_match "This invoice has been sent.", issued_invoice_warning(invoice)
   end
 
-  test "asks for a stronger delete confirmation once an invoice is issued" do
-    invoice = invoices(:globex_website)
-
-    assert_equal "Invoice INV-001 has been sent. Deleting it removes it permanently and leaves a gap in your numbering. " \
-      "Consider cancelling it instead.", delete_invoice_confirmation(invoice)
-
-    invoice.status = "paid"
-    assert_no_match "Consider cancelling", delete_invoice_confirmation(invoice)
-
-    assert_equal "Delete this draft? This cannot be undone.", delete_invoice_confirmation(invoices(:globex_draft))
-  end
-
   test "titles an invoice by its number, or as a draft" do
     assert_equal "Invoice INV-001", invoice_title(invoices(:globex_website))
     assert_equal "Draft invoice", invoice_title(invoices(:globex_draft))

@@ -69,6 +69,14 @@ class InvoiceTest < ActiveSupport::TestCase
     assert_includes @invoice.errors[:status], "can't go back to draft once the invoice is issued"
   end
 
+  test "can delete a draft but not an issued invoice" do
+    assert_not @invoice.destroy
+    assert_includes @invoice.errors[:base], "Only drafts can be deleted. Cancel the invoice instead."
+    assert Invoice.exists?(@invoice.id)
+
+    assert invoices(:globex_draft).destroy
+  end
+
   test "database rejects a draft with a number" do
     assert_raises ActiveRecord::CheckViolation do
       invoices(:globex_draft).update_columns(number: "INV-9", sequence: 9)
@@ -218,8 +226,8 @@ class InvoiceTest < ActiveSupport::TestCase
   end
 
   test "destroys its items when destroyed" do
-    assert_difference "InvoiceItem.count", -2 do
-      @invoice.destroy!
+    assert_difference "InvoiceItem.count", -1 do
+      invoices(:globex_draft).destroy!
     end
   end
 

@@ -47,9 +47,11 @@ class InvoicesController < ApplicationController
   end
 
   def destroy
-    @invoice.destroy!
-    redirect_to invoices_path(sort: params[:sort], direction: params[:direction], page: params[:page]),
-      notice: "Invoice deleted.", status: :see_other
+    if @invoice.destroy
+      redirect_to invoices_path, notice: "Draft deleted.", status: :see_other
+    else
+      redirect_to @invoice, alert: @invoice.errors.full_messages.to_sentence, status: :see_other
+    end
   end
 
   private

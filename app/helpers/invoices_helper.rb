@@ -73,14 +73,6 @@ module InvoicesHelper
     "This invoice has been #{status}. Your client may already have it, so any change alters a document you already issued."
   end
 
-  def delete_invoice_confirmation(invoice)
-    return "Delete this draft? This cannot be undone." if invoice.draft?
-
-    message = "Invoice #{invoice.number} has been #{invoice.status}. " \
-      "Deleting it removes it permanently and leaves a gap in your numbering."
-    invoice.sent? ? "#{message} Consider cancelling it instead." : message
-  end
-
   private
     def issued_status(invoice)
       status = invoice.status_in_database

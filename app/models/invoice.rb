@@ -13,6 +13,8 @@ class Invoice < ApplicationRecord
   before_validation :position_items
   before_validation :sync_paid_on
   before_save :assign_number, if: -> { sequence.nil? && !draft? }
+  # Issued invoices are cancelled instead, so their numbers are never lost or reused.
+  before_destroy :ensure_draft, prepend: true, unless: :destroyed_by_association
 
   validates :issue_date, presence: true
   validates :currency, inclusion: { in: Currency.codes }
@@ -98,6 +100,13 @@ class Invoice < ApplicationRecord
     def assign_number
       self.sequence = company.reserve_invoice_sequence
       self.number = company.format_invoice_number(sequence, issue_date)
+    end
+
+    def ensure_draft
+      return if draft?
+
+      errors.add(:base, "Only drafts can be deleted. Cancel the invoice instead.")
+      throw :abort
     end
 
     def cannot_return_to_draft
