@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_03_135650) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_03_140657) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -104,7 +104,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_03_135650) do
   create_table "invoices", force: :cascade do |t|
     t.bigint "company_id", null: false
     t.bigint "client_id", null: false
-    t.string "number", null: false
+    t.string "number"
     t.string "status", default: "draft", null: false
     t.string "billing_type", default: "fixed", null: false
     t.string "currency", null: false
@@ -115,10 +115,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_03_135650) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.date "paid_on"
-    t.integer "sequence", null: false
+    t.integer "sequence"
     t.index ["company_id", "client_id"], name: "index_invoices_on_company_id_and_client_id"
     t.index ["company_id", "number"], name: "index_invoices_on_company_id_and_number", unique: true
     t.index ["company_id", "sequence"], name: "index_invoices_on_company_id_and_sequence", unique: true
+    t.check_constraint "(number IS NULL) = (sequence IS NULL)", name: "invoices_number_sequence_check"
+    t.check_constraint "(status::text = 'draft'::text) = (number IS NULL)", name: "invoices_number_check"
     t.check_constraint "(status::text = 'paid'::text) = (paid_on IS NOT NULL)", name: "invoices_paid_on_check"
     t.check_constraint "billing_type::text = ANY (ARRAY['fixed'::character varying, 'hourly'::character varying]::text[])", name: "invoices_billing_type_check"
     t.check_constraint "discount >= 0::numeric", name: "invoices_discount_check"

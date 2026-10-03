@@ -12,13 +12,14 @@ class Invoice < ApplicationRecord
 
   before_validation :position_items
   before_validation :sync_paid_on
-  before_create :assign_number
+  before_save :assign_number, if: -> { sequence.nil? && !draft? }
 
   validates :issue_date, presence: true
   validates :currency, inclusion: { in: Currency.codes }
   validates :discount, numericality: { greater_than_or_equal_to: 0, less_than: 10_000_000_000 }
   validates :notes, length: { maximum: 500 }
   validate :client_must_belong_to_company
+  validate :cannot_return_to_draft
   validate :due_date_cannot_be_before_issue_date
   validate :must_have_items
   validate :discount_cannot_exceed_subtotal
@@ -97,6 +98,10 @@ class Invoice < ApplicationRecord
     def assign_number
       self.sequence = company.reserve_invoice_sequence
       self.number = company.format_invoice_number(sequence, issue_date)
+    end
+
+    def cannot_return_to_draft
+      errors.add(:status, "can't go back to draft once the invoice is issued") if draft? && sequence?
     end
 
     def client_must_belong_to_company

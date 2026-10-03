@@ -12,9 +12,10 @@
 
     <div>
       <%= form.label :number, class: "label" %>
-      <%= form.text_field :number, disabled: true, placeholder: @number_preview, class: "input mt-2 disabled:bg-gray-50 disabled:text-gray-500" %>
-      <% if invoice.new_record? %>
-        <p class="mt-2 text-xs text-gray-500">Assigned automatically when you save.</p>
+      <%= form.text_field :number, disabled: true, placeholder: (invoice_number_preview(invoice) unless invoice.number),
+            class: "input mt-2 disabled:bg-gray-50 disabled:text-gray-500" %>
+      <% unless invoice.number %>
+        <p class="mt-2 text-xs text-gray-500">Assigned when the invoice is sent.</p>
       <% end %>
     </div>
 
@@ -30,7 +31,7 @@
 
     <div>
       <%= form.label :status, class: "label" %>
-      <%= form.select :status, Invoice.statuses.keys.map { [ it.humanize, it ] }, {}, class: "input mt-2" %>
+      <%= form.select :status, invoice_status_options(invoice), {}, class: "input mt-2" %>
     </div>
 
     <% if invoice.paid? %>

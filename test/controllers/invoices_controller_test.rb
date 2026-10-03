@@ -28,7 +28,7 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
     get invoices_url
 
     assert_response :success
-    assert_select "tbody tr", 1
+    assert_select "tbody tr", 2
     assert_select "tbody tr", /INV-001/
     assert_select "tbody tr", /Globex Corporation/
     assert_select "tbody tr", /\$2,150.00 USD/
@@ -93,7 +93,7 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
 
     get invoices_url(sort: "client", direction: "asc", page: 2)
 
-    assert_select "tbody tr", 2
+    assert_select "tbody tr", 3
     assert_select "nav.pagy a[aria-current=page]", "2"
   end
 
@@ -109,6 +109,28 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
     get invoices_url(sort: "client", page: 99)
 
     assert_redirected_to invoices_url(page: 2, sort: "client")
+  end
+
+  test "should show drafts without a number" do
+    draft = invoices(:globex_draft)
+
+    get invoices_url
+    assert_select "tbody a[href=?]", invoice_path(draft), "Draft"
+
+    get invoice_url(draft)
+    assert_select "h1", "Draft invoice"
+
+    get edit_invoice_url(draft)
+    assert_select "input[name=?][disabled][placeholder=?]", "invoice[number]", "INV-2"
+    assert_select "p", "Assigned when the invoice is sent."
+  end
+
+  test "should not offer draft as a status once the invoice is issued" do
+    get edit_invoice_url(@invoice)
+    assert_select "select[name=?] option[value=draft]", "invoice[status]", count: 0
+
+    get edit_invoice_url(invoices(:globex_draft))
+    assert_select "select[name=?] option[value=draft]", "invoice[status]"
   end
 
   test "should show an empty state when there are no invoices" do
@@ -279,13 +301,14 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
     invoice = Invoice.order(:created_at).last
     assert_redirected_to invoice_url(invoice)
     assert_equal @user.company, invoice.company
-    assert_equal "INV-2", invoice.number
+    assert invoice.draft?
+    assert_nil invoice.number
     assert_equal [ "Design", "Support" ], invoice.items.map(&:description)
     assert_equal BigDecimal("621.50"), invoice.total
   end
 
   test "should ignore a submitted number when creating an invoice" do
-    post invoices_url, params: { invoice: invoice_params(number: "SPECIAL-1", items_attributes: {
+    post invoices_url, params: { invoice: invoice_params(number: "SPECIAL-1", status: "sent", items_attributes: {
       "0" => { description: "Design", quantity: "1", unit_price: "500" }
     }) }
 
@@ -360,8 +383,7 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
     get edit_invoice_url(@invoice)
     assert_select "[role=note]", /This invoice has been sent/
 
-    @invoice.update!(status: "draft")
-    get edit_invoice_url(@invoice)
+    get edit_invoice_url(invoices(:globex_draft))
     assert_select "[role=note]", count: 0
   end
 

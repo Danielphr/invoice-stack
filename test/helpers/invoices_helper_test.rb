@@ -27,8 +27,7 @@ class InvoicesHelperTest < ActionView::TestCase
     invoice = invoices(:globex_website)
     assert_match "This invoice has been sent.", issued_invoice_warning(invoice)
 
-    invoice.update!(status: "draft")
-    assert_nil issued_invoice_warning(invoice)
+    assert_nil issued_invoice_warning(invoices(:globex_draft))
 
     assert_nil issued_invoice_warning(Invoice.new(status: "sent"))
   end
@@ -49,8 +48,12 @@ class InvoicesHelperTest < ActionView::TestCase
     invoice.status = "paid"
     assert_no_match "Consider cancelling", delete_invoice_confirmation(invoice)
 
-    invoice.status = "draft"
-    assert_equal "Delete invoice INV-001? This cannot be undone.", delete_invoice_confirmation(invoice)
+    assert_equal "Delete this draft? This cannot be undone.", delete_invoice_confirmation(invoices(:globex_draft))
+  end
+
+  test "titles an invoice by its number, or as a draft" do
+    assert_equal "Invoice INV-001", invoice_title(invoices(:globex_website))
+    assert_equal "Draft invoice", invoice_title(invoices(:globex_draft))
   end
 
   test "labels item columns by billing type" do

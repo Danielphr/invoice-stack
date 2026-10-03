@@ -18,12 +18,13 @@ class Invoices::StatusesControllerTest < ActionDispatch::IntegrationTest
     assert_select "[role=status]", "Invoice marked as paid."
   end
 
-  test "should mark a draft as sent" do
-    @invoice.update!(status: "draft")
+  test "should mark a draft as sent and give it the next number" do
+    draft = invoices(:globex_draft)
 
-    patch invoice_status_url(@invoice), params: { status: "sent" }
+    patch invoice_status_url(draft), params: { status: "sent" }
 
-    assert @invoice.reload.sent?
+    assert draft.reload.sent?
+    assert_equal "INV-2", draft.number
   end
 
   test "should cancel an invoice" do
@@ -58,12 +59,15 @@ class Invoices::StatusesControllerTest < ActionDispatch::IntegrationTest
     patch invoice_status_url(other_invoice), params: { status: "paid" }
 
     assert_response :not_found
-    assert other_invoice.reload.draft?
+    assert other_invoice.reload.sent?
   end
 
   test "should offer the next actions for each status" do
-    { "draft" => [ "Mark as sent" ], "sent" => [ "Mark as paid", "Cancel invoice" ],
-      "paid" => [ "Reopen" ], "cancelled" => [ "Reopen" ] }.each do |status, actions|
+    draft = invoices(:globex_draft)
+    get invoice_url(draft)
+    assert_equal [ "Mark as sent" ], css_select("form[action='#{invoice_status_path(draft)}'] button").map(&:text)
+
+    { "sent" => [ "Mark as paid", "Cancel invoice" ], "paid" => [ "Reopen" ], "cancelled" => [ "Reopen" ] }.each do |status, actions|
       @invoice.update!(status: status)
 
       get invoice_url(@invoice)

@@ -18,3 +18,10 @@ other_company_consulting:
   quantity: 2
   unit_price: 500.00
   position: 0
+
+globex_support:
+  invoice: globex_draft
+  description: Support
+  quantity: 4
+  unit_price: 50.00
+  position: 0

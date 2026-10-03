@@ -90,6 +90,13 @@ class InvoicePdfTest < ActiveSupport::TestCase
     assert_not_includes pdf_text(@invoice), "Page 1 of 1"
   end
 
+  test "marks a draft without a number" do
+    draft = invoices(:globex_draft)
+
+    assert_match(/Number\s+Draft/, pdf_text(draft))
+    assert_equal "draft-invoice.pdf", InvoicePdf.new(draft).filename
+  end
+
   test "builds a file name that is safe on any system" do
     @invoice.number = "INV/2026: 7"
 

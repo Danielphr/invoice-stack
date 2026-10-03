@@ -23,7 +23,6 @@ class InvoicesController < ApplicationController
   def new
     @invoice = Current.user.company.invoices.new(issue_date: Date.current, currency: Current.user.company.default_currency)
     @invoice.items.build
-    set_number_preview
   end
 
   def create
@@ -32,7 +31,6 @@ class InvoicesController < ApplicationController
     if @invoice.save
       redirect_to @invoice, notice: "Invoice created."
     else
-      set_number_preview
       render :new, status: :unprocessable_entity
     end
   end
@@ -69,10 +67,6 @@ class InvoicesController < ApplicationController
 
     def set_clients
       @clients = Current.user.company.clients.by_name
-    end
-
-    def set_number_preview
-      @number_preview = Current.user.company.preview_invoice_number(@invoice.issue_date || Date.current)
     end
 
     def invoice_params

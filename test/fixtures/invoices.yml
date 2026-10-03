@@ -14,5 +14,12 @@ other_company_invoice:
   client: other_company_client
   number: INV-001
   sequence: 1
+  status: sent
   currency: EUR
   issue_date: 2026-09-01
+
+globex_draft:
+  company: one
+  client: globex
+  currency: USD
+  issue_date: 2026-09-15

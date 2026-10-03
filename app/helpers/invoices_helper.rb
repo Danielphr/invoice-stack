@@ -19,6 +19,20 @@ module InvoicesHelper
     end
   end
 
+  def invoice_title(invoice)
+    invoice.number ? "Invoice #{invoice.number}" : "Draft invoice"
+  end
+
+  def invoice_number_preview(invoice)
+    invoice.company.preview_invoice_number(invoice.issue_date || Date.current)
+  end
+
+  def invoice_status_options(invoice)
+    statuses = Invoice.statuses.keys
+    statuses -= [ "draft" ] if invoice.sequence_in_database
+    statuses.map { [ it.humanize, it ] }
+  end
+
   def invoice_status_badge(invoice)
     status = invoice.overdue? ? "overdue" : invoice.status
 
@@ -60,7 +74,7 @@ module InvoicesHelper
   end
 
   def delete_invoice_confirmation(invoice)
-    return "Delete invoice #{invoice.number}? This cannot be undone." if invoice.draft?
+    return "Delete this draft? This cannot be undone." if invoice.draft?
 
     message = "Invoice #{invoice.number} has been #{invoice.status}. " \
       "Deleting it removes it permanently and leaves a gap in your numbering."
