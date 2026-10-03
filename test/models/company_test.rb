@@ -37,6 +37,58 @@ class CompanyTest < ActiveSupport::TestCase
     assert_empty User.where(company: company)
   end
 
+  test "defaults new companies to UTC and US dollars" do
+    company = Company.new
+
+    assert_equal "UTC", company.time_zone
+    assert_equal "USD", company.default_currency
+  end
+
+  test "allows a company without email or address" do
+    company = companies(:one)
+
+    assert company.valid?
+    assert_empty company.address_lines
+  end
+
+  test "normalizes and validates the email" do
+    company = companies(:one)
+
+    company.email = " Billing@ACME.example "
+    assert_equal "billing@acme.example", company.email
+
+    company.email = "not an email"
+    assert_not company.valid?
+    assert_includes company.errors[:email], "is invalid"
+  end
+
+  test "has a complete address with line 1, city and country" do
+    company = Company.new(address_line1: "100 Example Street", city: "Springfield")
+    assert_not company.address_complete?
+
+    company.country = "US"
+    assert company.address_complete?
+  end
+
+  test "formats its address like a client's" do
+    company = Company.new(address_line1: "100 Example Street", city: "Springfield", state: "Illinois",
+      postal_code: "62701", country: "US")
+
+    assert_equal [ "100 Example Street", "Springfield, Illinois, 62701", "United States" ], company.address_lines
+  end
+
+  test "rejects an unsupported country, time zone or currency" do
+    company = companies(:one)
+    company.country = "XX"
+    company.time_zone = "Mars/Olympus"
+    company.default_currency = "XYZ"
+
+    assert_not company.valid?
+    assert_includes company.errors[:country], "is not included in the list"
+    assert_includes company.errors[:time_zone], "is not included in the list"
+    assert_includes company.errors[:default_currency], "is not included in the list"
+  end
+
   test "starts invoice numbering at INV-1" do
     company = Company.new
 

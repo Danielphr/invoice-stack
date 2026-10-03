@@ -56,6 +56,15 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
     assert_select "dd", "$2,150.00 USD"
   end
 
+  test "should remind the user when the company address is missing" do
+    get invoice_url(@invoice)
+    assert_select "[role=note] a[href=?]", company_path
+
+    @user.company.update!(address_line1: "100 Example Street", city: "Springfield", country: "US")
+    get invoice_url(@invoice)
+    assert_select "[role=note]", count: 0
+  end
+
   test "should render an invoice as a PDF" do
     get invoice_url(@invoice, format: :pdf)
 
@@ -96,10 +105,44 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
     get new_invoice_url
 
     assert_response :success
-    assert_select "input[name=?][value=?]", "invoice[issue_date]", Date.current.iso8601
+    assert_select "input[name=?][value=?]", "invoice[issue_date]", Time.find_zone(@user.company.time_zone).today.iso8601
     assert_select "select[name=?] option[selected][value=?]", "invoice[currency]", "USD"
     assert_select "tbody tr[data-invoice-form-target=item]", 1
     assert_select "select[name=?] option", "invoice[client_id]", text: "Wayne Enterprises", count: 0
+  end
+
+  test "should default new invoices to the company's currency" do
+    @user.company.update!(default_currency: "UYU")
+
+    get new_invoice_url
+
+    assert_select "select[name=?] option[selected][value=?]", "invoice[currency]", "UYU"
+  end
+
+  test "should use the company's time zone for today's date" do
+    travel_to Time.utc(2026, 10, 2, 1, 0) do
+      @user.company.update!(time_zone: "Montevideo")
+      get new_invoice_url
+      assert_select "input[name=?][value=?]", "invoice[issue_date]", "2026-10-01"
+
+      @user.company.update!(time_zone: "Tokyo")
+      get new_invoice_url
+      assert_select "input[name=?][value=?]", "invoice[issue_date]", "2026-10-02"
+    end
+  end
+
+  test "should decide overdue in the company's time zone" do
+    @invoice.update!(due_date: Date.new(2026, 10, 1), issue_date: Date.new(2026, 9, 1))
+
+    travel_to Time.utc(2026, 10, 2, 1, 0) do
+      @user.company.update!(time_zone: "Montevideo")
+      get invoices_url
+      assert_select "tbody span", text: "Overdue", count: 0
+
+      @user.company.update!(time_zone: "UTC")
+      get invoices_url
+      assert_select "tbody span", text: "Overdue"
+    end
   end
 
   test "should show the next number in a locked field on new" do

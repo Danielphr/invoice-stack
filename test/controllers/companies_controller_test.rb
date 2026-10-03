@@ -27,6 +27,39 @@ class CompaniesControllerTest < ActionDispatch::IntegrationTest
     assert_select "nav a[aria-current=page]", "Company"
   end
 
+  test "should update the company's details, address and preferences" do
+    patch company_url, params: { company: {
+      name: "Acme Studio", email: "billing@acme.example",
+      address_line1: "Av. 18 de Julio 1234", city: "Montevideo", postal_code: "11100", country: "UY",
+      time_zone: "Montevideo", default_currency: "UYU"
+    } }
+
+    assert_redirected_to company_url
+    @company.reload
+    assert_equal "Acme Studio", @company.name
+    assert_equal "billing@acme.example", @company.email
+    assert_equal [ "Av. 18 de Julio 1234", "Montevideo, 11100", "Uruguay" ], @company.address_lines
+    assert_equal "Montevideo", @company.time_zone
+    assert_equal "UYU", @company.default_currency
+  end
+
+  test "should remind the user to add an address until it is complete" do
+    get company_url
+    assert_select "[role=note]", /Add your company's address/
+
+    @company.update!(address_line1: "100 Example Street", city: "Springfield", country: "US")
+    get company_url
+    assert_select "[role=note]", count: 0
+  end
+
+  test "should keep the saved name in the heading when the new name is invalid" do
+    patch company_url, params: { company: { name: "" } }
+
+    assert_response :unprocessable_entity
+    assert_select "h1", "Acme Inc."
+    assert_select "[role=alert] li", "Company name can't be blank"
+  end
+
   test "should update the invoice number settings" do
     patch company_url, params: { company: {
       invoice_number_pattern: "YP-{YEAR}-{NUMBER}", invoice_number_digits: "3", next_invoice_number: "413"
