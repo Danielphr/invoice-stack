@@ -18,7 +18,7 @@
       <tbody class="divide-y divide-gray-200 text-gray-600">
         <% @clients.each do |client| %>
           <tr>
-            <td class="px-4 py-3 font-medium text-gray-900"><%= link_to client.name, client, class: "hover:text-indigo-600" %></td>
+            <td class="px-4 py-3 font-medium text-gray-900"><%= link_to client.name, client, class: "hover:text-brand-600" %></td>
             <td class="px-4 py-3"><%= client.email %></td>
             <td class="px-4 py-3"><%= client.city %>, <%= client.country_name %></td>
           </tr>

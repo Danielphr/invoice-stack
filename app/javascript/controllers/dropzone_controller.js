@@ -5,11 +5,11 @@ export default class extends Controller {
 
   highlight(event) {
     event.preventDefault()
-    this.zoneTarget.classList.add("border-indigo-500", "bg-indigo-50")
+    this.zoneTarget.classList.add("border-brand-500", "bg-brand-50")
   }
 
   unhighlight() {
-    this.zoneTarget.classList.remove("border-indigo-500", "bg-indigo-50")
+    this.zoneTarget.classList.remove("border-brand-500", "bg-brand-50")
   }
 
   drop(event) {

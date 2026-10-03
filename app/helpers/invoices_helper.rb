@@ -55,7 +55,7 @@ module InvoicesHelper
 
     tag.th scope: "col", class: [ "px-4 py-3", ("text-right" if align == :right) ], aria: { sort: aria_sort } do
       link_to invoices_path(sort: column, direction: ascending ? "desc" : "asc"),
-          class: "inline-flex items-center gap-1 hover:text-indigo-600" do
+          class: "inline-flex items-center gap-1 hover:text-brand-600" do
         safe_join([ label, (tag.span(ascending ? "▲" : "▼", aria: { hidden: true }) if active) ].compact)
       end
     end
