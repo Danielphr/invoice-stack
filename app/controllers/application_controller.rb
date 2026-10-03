@@ -1,5 +1,6 @@
 class ApplicationController < ActionController::Base
   include Authentication
+  include Pagy::Method
 
   before_action :require_completed_onboarding
   around_action :use_company_time_zone, if: -> { Current.user }

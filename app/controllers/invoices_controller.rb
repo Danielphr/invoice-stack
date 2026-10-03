@@ -1,9 +1,13 @@
 class InvoicesController < ApplicationController
   before_action :set_invoice, only: %i[ show edit update destroy ]
   before_action :set_clients, only: %i[ new create edit update ]
+  helper_method :sort_column, :sort_direction
 
   def index
-    @invoices = Current.user.company.invoices.includes(:client, :items).order(issue_date: :desc, id: :desc)
+    invoices = Current.user.company.invoices.includes(:client, :items).sorted_by(sort_column, sort_direction)
+    @pagy, @invoices = pagy(:offset, invoices, limit: 10, raise_range_error: true)
+  rescue Pagy::RangeError => error
+    redirect_to error.pagy.page_url(:last)
   end
 
   def show
@@ -50,10 +54,19 @@ class InvoicesController < ApplicationController
 
   def destroy
     @invoice.destroy!
-    redirect_to invoices_path, notice: "Invoice deleted.", status: :see_other
+    redirect_to invoices_path(sort: params[:sort], direction: params[:direction], page: params[:page]),
+      notice: "Invoice deleted.", status: :see_other
   end
 
   private
+    def sort_column
+      params[:sort].presence_in(Invoice::SORTS) || "number"
+    end
+
+    def sort_direction
+      params[:direction].presence_in(%w[ asc desc ]) || "desc"
+    end
+
     def set_invoice
       @invoice = Current.user.company.invoices.includes(:client, :items).find(params.expect(:id))
     end

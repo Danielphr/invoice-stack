@@ -203,10 +203,80 @@ class InvoiceTest < ActiveSupport::TestCase
     end
   end
 
+  test "sorts by number in creation order, so INV-9 comes before INV-10" do
+    company = companies(:one)
+    company.update!(next_invoice_number: 9)
+    nine = create_invoice(company)
+    ten = create_invoice(company)
+
+    assert_equal [ "INV-9", "INV-10" ], company.invoices.where(id: [ nine, ten ]).sorted_by("number", "asc").map(&:number)
+    assert_equal [ "INV-10", "INV-9" ], company.invoices.where(id: [ nine, ten ]).sorted_by("number", "desc").map(&:number)
+  end
+
+  test "sorts by client name ignoring case" do
+    company = companies(:one)
+    clients(:initech).update!(name: "acme labs")
+    acme = create_invoice(company, client: clients(:initech))
+    globex = create_invoice(company, client: clients(:globex))
+
+    assert_equal [ acme, globex ], company.invoices.where(id: [ acme, globex ]).sorted_by("client", "asc")
+  end
+
+  test "sorts by status in lifecycle order, with overdue between sent and paid" do
+    company = companies(:one)
+    overdue = create_invoice(company, status: "sent", issue_date: 2.months.ago, due_date: 1.month.ago)
+    invoices = [ overdue, *%w[ paid draft cancelled sent ].map { create_invoice(company, status: it) } ]
+    scope = company.invoices.where(id: invoices)
+
+    statuses = ->(sorted) { sorted.map { it.overdue? ? "overdue" : it.status } }
+    assert_equal %w[ draft sent overdue paid cancelled ], statuses.(scope.sorted_by("status", "asc"))
+    assert_equal %w[ cancelled paid overdue sent draft ], statuses.(scope.sorted_by("status", "desc"))
+  end
+
+  test "treats an invoice due today as not yet overdue when sorting by status" do
+    company = companies(:one)
+    overdue = create_invoice(company, status: "sent", issue_date: 1.week.ago, due_date: Date.yesterday)
+    due_today = create_invoice(company, status: "sent", due_date: Date.current)
+
+    assert_not due_today.overdue?
+    assert_equal [ due_today, overdue ], company.invoices.where(id: [ due_today, overdue ]).sorted_by("status", "asc")
+  end
+
+  test "puts invoices without a due date last in either direction" do
+    company = companies(:one)
+    undated = create_invoice(company, due_date: nil)
+    early = create_invoice(company, due_date: 1.week.from_now)
+    late = create_invoice(company, due_date: 2.weeks.from_now)
+    scope = company.invoices.where(id: [ undated, early, late ])
+
+    assert_equal [ early, late, undated ], scope.sorted_by("due", "asc")
+    assert_equal [ late, early, undated ], scope.sorted_by("due", "desc")
+  end
+
+  test "sorts by total after the discount, grouping each currency" do
+    company = companies(:one)
+    hundred = create_invoice(company, items: [ [ 1, 100 ] ])
+    ninety = create_invoice(company, items: [ [ 2, 80 ] ], discount: 70)
+    euros = create_invoice(company, items: [ [ 1, 1000 ] ], currency: "EUR")
+    scope = company.invoices.where(id: [ hundred, ninety, euros ])
+
+    assert_equal [ euros, ninety, hundred ], scope.sorted_by("total", "asc")
+    assert_equal [ euros, hundred, ninety ], scope.sorted_by("total", "desc")
+  end
+
+  test "rounds each item before summing when sorting by total, like #total" do
+    company = companies(:one)
+    three_cents = create_invoice(company, items: [ [ 0.5, 0.01 ] ] * 3)
+    two_cents = create_invoice(company, items: [ [ 1, 0.02 ] ])
+
+    assert_equal 0.03.to_d, three_cents.total
+    assert_equal [ two_cents, three_cents ], company.invoices.where(id: [ three_cents, two_cents ]).sorted_by("total", "asc")
+  end
+
   private
-    def create_invoice(company, **attributes)
+    def create_invoice(company, items: [ [ 1, 100 ] ], **attributes)
       invoice = company.invoices.new(client: clients(:globex), currency: "USD", issue_date: Date.current, **attributes)
-      invoice.items.build(description: "Work", quantity: 1, unit_price: 100)
+      items.each { |quantity, unit_price| invoice.items.build(description: "Work", quantity:, unit_price:) }
       invoice.save!
       invoice
     end

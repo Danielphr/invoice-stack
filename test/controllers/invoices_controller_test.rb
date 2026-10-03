@@ -35,6 +35,82 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
     assert_select "tbody", text: /Wayne Enterprises/, count: 0
   end
 
+  test "should show each invoice's billing type in the list" do
+    @invoice.update!(billing_type: "hourly")
+
+    get invoices_url
+
+    assert_select "thead th", "Billing"
+    assert_select "tbody td", "Hourly"
+  end
+
+  test "should sort by number, newest first, by default" do
+    newer = @user.company.invoices.create!(client: clients(:initech), currency: "USD", issue_date: Date.new(2026, 8, 1),
+      items_attributes: [ { description: "Support", quantity: 1, unit_price: 100 } ])
+
+    get invoices_url
+
+    assert_select "th[aria-sort=descending]", /Number/
+    assert_select "th[aria-sort]", 1
+    assert_select "tbody tr:first-child", /#{newer.number}/
+    assert_select "th a[href=?]", invoices_path(sort: "number", direction: "asc")
+  end
+
+  test "should sort by the chosen column and link to the opposite direction" do
+    get invoices_url(sort: "client", direction: "asc")
+
+    assert_response :success
+    assert_select "th[aria-sort=ascending]", /Client/
+    assert_select "th a[href=?]", invoices_path(sort: "client", direction: "desc")
+    assert_select "th a[href=?]", invoices_path(sort: "issued", direction: "asc")
+  end
+
+  test "should sort by total" do
+    get invoices_url(sort: "total", direction: "desc")
+
+    assert_response :success
+    assert_select "th.text-right[aria-sort=descending]", /Total/
+    assert_select "tbody tr", /\$2,150.00 USD/
+  end
+
+  test "should fall back to the default sort for unknown parameters" do
+    get invoices_url(sort: "number; DROP TABLE invoices", direction: "sideways")
+
+    assert_response :success
+    assert_select "th[aria-sort=descending]", /Number/
+  end
+
+  test "should show 10 invoices per page with links that keep the sort" do
+    create_invoices(11)
+
+    get invoices_url(sort: "client", direction: "asc")
+
+    assert_select "tbody tr", 10
+    assert_select "nav.pagy a[aria-current=page]", "1"
+    next_url = URI(css_select("nav.pagy a[rel=next]").first["href"])
+    assert_equal "/invoices", next_url.path
+    assert_equal({ "sort" => "client", "direction" => "asc", "page" => "2" }, Rack::Utils.parse_query(next_url.query))
+
+    get invoices_url(sort: "client", direction: "asc", page: 2)
+
+    assert_select "tbody tr", 2
+    assert_select "nav.pagy a[aria-current=page]", "2"
+  end
+
+  test "should not show pagination for a single page" do
+    get invoices_url
+
+    assert_select "nav.pagy", count: 0
+  end
+
+  test "should redirect a page past the end to the last page" do
+    create_invoices(11)
+
+    get invoices_url(sort: "client", page: 99)
+
+    assert_redirected_to invoices_url(page: 2, sort: "client")
+  end
+
   test "should show an empty state when there are no invoices" do
     @user.company.invoices.destroy_all
 
@@ -78,6 +154,20 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
     get invoices_url
 
     assert_select "tbody a[href=?][target=_blank]", invoice_path(@invoice, format: :pdf), text: /PDF/
+  end
+
+  test "should offer to edit and delete each invoice from the list" do
+    @invoice.update!(status: "sent")
+
+    get invoices_url
+
+    assert_select "tbody a[href=?]", edit_invoice_path(@invoice), text: /Edit/
+    assert_select "tbody form[action=?][data-turbo-confirm=?]", invoice_path(@invoice),
+      "Invoice INV-001 has been sent. Deleting it removes it permanently and leaves a gap in your numbering. " \
+      "Consider cancelling it instead." do
+      assert_select "input[name=_method][value=delete]"
+      assert_select "button", /Delete/
+    end
   end
 
   test "should link to the PDF from the invoice page" do
@@ -331,6 +421,20 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to invoices_url
   end
 
+  test "should return to the same page and sort after deleting from the list" do
+    create_invoices(11)
+
+    get invoices_url
+    assert_select "tbody form input[name=page]", count: 0
+
+    get invoices_url(sort: "client", direction: "asc", page: 2)
+    assert_select "tbody form input[type=hidden][name=page][value='2']"
+
+    delete invoice_url(@invoice), params: { sort: "client", direction: "asc", page: "2" }
+
+    assert_redirected_to invoices_url(direction: "asc", page: "2", sort: "client")
+  end
+
   test "should not expose or delete another company's invoice" do
     get invoice_url(@other_invoice)
     assert_response :not_found
@@ -342,6 +446,13 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
   end
 
   private
+    def create_invoices(count)
+      count.times do
+        @user.company.invoices.create!(client: clients(:initech), currency: "USD", issue_date: Date.current,
+          items_attributes: [ { description: "Support", quantity: 1, unit_price: 100 } ])
+      end
+    end
+
     def invoice_params(**overrides)
       { client_id: clients(:globex).id, currency: "USD", issue_date: "2026-10-01" }.merge(overrides)
     end

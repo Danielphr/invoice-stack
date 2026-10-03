@@ -27,6 +27,48 @@ class Invoice < ApplicationRecord
   validate :must_have_items
   validate :discount_cannot_exceed_subtotal
 
+  SORTS = %w[ number client issued due billing status total ].freeze
+
+  # Mirrors #total: each item's amount is rounded before summing, as in InvoiceItem#amount.
+  TOTAL_SQL = Arel.sql(<<~SQL.squish)
+    (SELECT COALESCE(SUM(ROUND(invoice_items.quantity * invoice_items.unit_price, 2)), 0)
+     FROM invoice_items WHERE invoice_items.invoice_id = invoices.id) - invoices.discount
+  SQL
+  private_constant :TOTAL_SQL
+
+  def self.sorted_by(column, direction)
+    direction = direction.to_s == "asc" ? :asc : :desc
+
+    relation =
+      case column.to_s
+      when "client" then joins(:client).order(Client.arel_table[:name].lower.public_send(direction))
+      when "issued" then order(issue_date: direction)
+      when "due" then order(arel_table[:due_date].public_send(direction).nulls_last)
+      when "billing" then order(billing_type: direction)
+      when "status" then order(status_rank.public_send(direction))
+      # Amounts in different currencies can't be compared, so each currency is grouped.
+      when "total" then order(:currency, TOTAL_SQL.public_send(direction))
+      # Automatic numbers are assigned on create, so creation order is number
+      # order; sorting the text would put INV-10 before INV-9.
+      else order(created_at: direction)
+      end
+
+    relation.order(id: direction)
+  end
+
+  def self.status_rank
+    status = arel_table[:status]
+
+    Arel::Nodes::Case.new
+      # Same rule as #overdue?; if one changes, change the other.
+      .when(status.eq("sent").and(arel_table[:due_date].lt(Date.current))).then(3)
+      .when(status.eq("draft")).then(1)
+      .when(status.eq("sent")).then(2)
+      .when(status.eq("paid")).then(4)
+      .else(5)
+  end
+  private_class_method :status_rank
+
   def subtotal
     active_items.sum(&:amount)
   end

@@ -10,12 +10,13 @@
     <table class="min-w-full divide-y divide-gray-200 text-sm">
       <thead class="bg-gray-50 text-left font-semibold text-gray-900">
         <tr>
-          <th scope="col" class="px-4 py-3">Number</th>
-          <th scope="col" class="px-4 py-3">Client</th>
-          <th scope="col" class="px-4 py-3">Issued</th>
-          <th scope="col" class="px-4 py-3">Due</th>
-          <th scope="col" class="px-4 py-3">Status</th>
-          <th scope="col" class="px-4 py-3 text-right">Total</th>
+          <%= invoice_sort_header "Number", "number" %>
+          <%= invoice_sort_header "Client", "client" %>
+          <%= invoice_sort_header "Issued", "issued" %>
+          <%= invoice_sort_header "Due", "due" %>
+          <%= invoice_sort_header "Billing", "billing" %>
+          <%= invoice_sort_header "Status", "status" %>
+          <%= invoice_sort_header "Total", "total", align: :right %>
           <th scope="col" class="px-4 py-3"><span class="sr-only">Actions</span></th>
         </tr>
       </thead>
@@ -26,18 +27,33 @@
             <td class="px-4 py-3"><%= invoice.client.name %></td>
             <td class="px-4 py-3 whitespace-nowrap"><%= l(invoice.issue_date, format: :medium) %></td>
             <td class="px-4 py-3 whitespace-nowrap"><%= invoice.due_date ? l(invoice.due_date, format: :medium) : "—" %></td>
+            <td class="px-4 py-3"><%= invoice.billing_type.humanize %></td>
             <td class="px-4 py-3"><%= invoice_status_badge(invoice) %></td>
             <td class="px-4 py-3 text-right whitespace-nowrap text-gray-900"><%= format_money(invoice.total, invoice.currency) %></td>
-            <td class="px-4 py-3 text-right">
-              <%= link_to invoice_path(invoice, format: :pdf), target: "_blank", rel: "noopener", class: "link", data: { turbo: false } do %>
-                PDF<span class="sr-only">, <%= invoice.number %></span>
-              <% end %>
+            <td class="px-4 py-3">
+              <div class="flex justify-end gap-4 whitespace-nowrap">
+                <%= link_to invoice_path(invoice, format: :pdf), target: "_blank", rel: "noopener", class: "link", data: { turbo: false } do %>
+                  PDF<span class="sr-only">, <%= invoice.number %></span>
+                <% end %>
+                <%= link_to edit_invoice_path(invoice), class: "link" do %>
+                  Edit<span class="sr-only">, <%= invoice.number %></span>
+                <% end %>
+                <%= button_to invoice, method: :delete, class: "link-danger",
+                      params: request.query_parameters.slice("sort", "direction", "page"),
+                      form: { data: { turbo_confirm: delete_invoice_confirmation(invoice) } } do %>
+                  Delete<span class="sr-only">, <%= invoice.number %></span>
+                <% end %>
+              </div>
             </td>
           </tr>
         <% end %>
       </tbody>
     </table>
   </div>
+
+  <% if @pagy.last > 1 %>
+    <div class="mt-6 flex justify-center"><%== @pagy.series_nav %></div>
+  <% end %>
 <% else %>
   <div class="mt-8 rounded-lg border-2 border-dashed border-gray-300 p-12 text-center">
     <h2 class="text-sm font-semibold text-gray-900">No invoices yet</h2>

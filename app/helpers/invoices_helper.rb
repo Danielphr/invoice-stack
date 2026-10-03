@@ -25,6 +25,20 @@ module InvoicesHelper
     tag.span status.humanize, class: [ "inline-flex rounded-md px-2 py-1 text-xs font-medium", STATUS_BADGE_CLASSES.fetch(status) ]
   end
 
+  def invoice_sort_header(label, column, align: :left)
+    active = column == sort_column
+    ascending = active && sort_direction == "asc"
+
+    aria_sort = (ascending ? "ascending" : "descending" if active)
+
+    tag.th scope: "col", class: [ "px-4 py-3", ("text-right" if align == :right) ], aria: { sort: aria_sort } do
+      link_to invoices_path(sort: column, direction: ascending ? "desc" : "asc"),
+          class: "inline-flex items-center gap-1 hover:text-indigo-600" do
+        safe_join([ label, (tag.span(ascending ? "▲" : "▼", aria: { hidden: true }) if active) ].compact)
+      end
+    end
+  end
+
   ITEM_LABELS = {
     "fixed" => { quantity: "Quantity", unit_price: "Price" },
     "hourly" => { quantity: "Hours", unit_price: "Rate" }
