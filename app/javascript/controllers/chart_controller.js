@@ -7,13 +7,14 @@ Chart.defaults.color = "#94a3b8"
 
 const PURPLE = "#9c42e5"
 
-// Draws the revenue area chart from data rendered by the server.
+// Draws a dashboard chart from data rendered by the server:
+// "area" for revenue over time, "bars" for revenue by client.
 export default class extends Controller {
   static targets = [ "canvas" ]
-  static values = { labels: Array, amounts: Array, currency: String }
+  static values = { type: { type: String, default: "area" }, labels: Array, amounts: Array, colors: Array, currency: String }
 
   connect() {
-    this.chart = new Chart(this.canvasTarget, this.#areaConfig())
+    this.chart = new Chart(this.canvasTarget, this.typeValue === "bars" ? this.#barsConfig() : this.#areaConfig())
   }
 
   disconnect() {
@@ -46,6 +47,24 @@ export default class extends Controller {
         scales: {
           y: { beginAtZero: true, grid: { color: "#f1f5f9" }, border: { display: false }, ticks: { callback: this.#compactMoney } },
           x: { grid: { display: false }, border: { display: false }, ticks: { maxRotation: 0, autoSkipPadding: 16 } }
+        }
+      }
+    }
+  }
+
+  #barsConfig() {
+    return {
+      type: "bar",
+      data: {
+        labels: this.labelsValue,
+        datasets: [ { data: this.amountsValue, backgroundColor: this.colorsValue, borderRadius: 6, maxBarThickness: 28 } ]
+      },
+      options: {
+        ...this.#sharedOptions("x"),
+        indexAxis: "y",
+        scales: {
+          x: { beginAtZero: true, grid: { color: "#f1f5f9" }, border: { display: false }, ticks: { callback: this.#compactMoney } },
+          y: { grid: { display: false }, border: { display: false }, ticks: { color: "#475569", font: { size: 13 } } }
         }
       }
     }

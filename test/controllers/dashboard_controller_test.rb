@@ -65,7 +65,7 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     end
     assert_select "nav[aria-label=Period] a[href=?]", root_path(currency: "EUR"), "All time"
     assert_select "dl > div", text: /€80.00 EUR\s+1 invoice/
-    assert_select "section[data-chart-currency-value=EUR]", 1
+    assert_select "section[data-chart-currency-value=EUR]", 2
   end
 
   test "should chart revenue over the period with an accessible table" do
@@ -75,7 +75,7 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_select "section h2", "Revenue over time"
-    assert_select "section[data-controller=chart][data-chart-currency-value=USD]" do |chart|
+    assert_select "section[data-controller=chart][data-chart-currency-value=USD]:not([data-chart-type-value])" do |chart|
       assert_equal (1..10).map { Date.new(2026, it).strftime("%b %Y") }, JSON.parse(chart.first["data-chart-labels-value"])
       assert_equal [ 0.0 ] * 9 + [ 300.0 ], JSON.parse(chart.first["data-chart-amounts-value"])
       assert_select "canvas[data-chart-target=canvas][aria-hidden=true]"
@@ -84,10 +84,26 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_select "section table.sr-only tr", text: /October 2026\s*\$300.00 USD/
   end
 
+  test "should rank clients by revenue with a legend" do
+    paid(300, client: clients(:initech))
+    paid(100)
+
+    get root_url
+
+    assert_select "section[data-chart-type-value=bars]" do |chart|
+      assert_equal [ "Initech", "Globex Corporation" ], JSON.parse(chart.first["data-chart-labels-value"])
+      assert_equal [ 300.0, 100.0 ], JSON.parse(chart.first["data-chart-amounts-value"])
+      assert_equal [ "#9c42e5", "#06b6d4" ], JSON.parse(chart.first["data-chart-colors-value"])
+      assert_select "h2", "Revenue by client"
+      assert_select "li", text: /Initech\s+\$300.00 USD\s+75%/
+      assert_select "li a[href=?]", client_path(clients(:initech))
+    end
+  end
+
   test "should say when there is nothing to chart" do
     get root_url
 
-    assert_select "section p", text: "No payments in this period.", count: 1
+    assert_select "section p", text: "No payments in this period.", count: 2
     assert_select "[data-controller=chart]", count: 0
   end
 

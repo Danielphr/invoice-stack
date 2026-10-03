@@ -43,3 +43,8 @@
 <div class="mt-6">
   <%= render "revenue_chart", series: @dashboard.revenue_over_time, by_day: @dashboard.chart_by_day?, currency: @dashboard.currency %>
 </div>
+
+<div class="mt-6">
+  <%= render "client_revenue", clients: @dashboard.top_clients, period_label: dashboard_period_label(@dashboard.period),
+        currency: @dashboard.currency %>
+</div>
