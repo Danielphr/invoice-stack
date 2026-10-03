@@ -62,6 +62,14 @@ class CompanyTest < ActiveSupport::TestCase
     assert_includes company.errors[:email], "is invalid"
   end
 
+  test "has a complete address with line 1, city and country" do
+    company = Company.new(address_line1: "100 Example Street", city: "Springfield")
+    assert_not company.address_complete?
+
+    company.country = "US"
+    assert company.address_complete?
+  end
+
   test "formats its address like a client's" do
     company = Company.new(address_line1: "100 Example Street", city: "Springfield", state: "Illinois",
       postal_code: "62701", country: "US")

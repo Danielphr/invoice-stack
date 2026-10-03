@@ -18,6 +18,16 @@ class InvoicePdfTest < ActiveSupport::TestCase
     assert_includes text, "$2,150.00 USD"
   end
 
+  test "includes the company's address and email when present" do
+    @invoice.company.update!(email: "billing@acme.example", address_line1: "100 Example Street", city: "Springfield",
+      country: "US")
+    text = pdf_text(@invoice)
+
+    assert_includes text, "100 Example Street"
+    assert_includes text, "Springfield"
+    assert_includes text, "billing@acme.example"
+  end
+
   test "labels item columns by billing type" do
     assert_includes pdf_text(@invoice), "Quantity"
 

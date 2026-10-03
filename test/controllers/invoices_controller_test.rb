@@ -56,6 +56,15 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
     assert_select "dd", "$2,150.00 USD"
   end
 
+  test "should remind the user when the company address is missing" do
+    get invoice_url(@invoice)
+    assert_select "[role=note] a[href=?]", company_path
+
+    @user.company.update!(address_line1: "100 Example Street", city: "Springfield", country: "US")
+    get invoice_url(@invoice)
+    assert_select "[role=note]", count: 0
+  end
+
   test "should render an invoice as a PDF" do
     get invoice_url(@invoice, format: :pdf)
 

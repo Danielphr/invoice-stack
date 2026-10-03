@@ -28,6 +28,10 @@ class Company < ApplicationRecord
     name.present?
   end
 
+  def address_complete?
+    [ address_line1, city, country ].all?(&:present?)
+  end
+
   # Builds an invoice number from the pattern, e.g. "INV-{YEAR}-{NUMBER}"
   # with sequence 42 and 4 digits becomes "INV-2026-0042".
   def format_invoice_number(sequence, date)

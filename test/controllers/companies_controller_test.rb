@@ -43,6 +43,15 @@ class CompaniesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "UYU", @company.default_currency
   end
 
+  test "should remind the user to add an address until it is complete" do
+    get company_url
+    assert_select "[role=note]", /Add your company's address/
+
+    @company.update!(address_line1: "100 Example Street", city: "Springfield", country: "US")
+    get company_url
+    assert_select "[role=note]", count: 0
+  end
+
   test "should keep the saved name in the heading when the new name is invalid" do
     patch company_url, params: { company: { name: "" } }
 

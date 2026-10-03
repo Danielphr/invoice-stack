@@ -2,6 +2,12 @@
 
 <h1 class="text-2xl font-semibold text-gray-900"><%= @company.name_in_database %></h1>
 
+<% if @company.errors.empty? && !@company.address_complete? %>
+  <p role="note" class="mt-6 max-w-2xl rounded-md bg-amber-50 p-4 text-sm text-amber-800">
+    Add your company's address so it appears on your invoices.
+  </p>
+<% end %>
+
 <%= form_with model: @company, url: company_path, method: :patch, class: "mt-8 max-w-2xl space-y-10" do |form| %>
   <%= render "shared/form_errors", model: @company %>
 

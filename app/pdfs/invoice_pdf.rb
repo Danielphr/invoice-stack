@@ -42,14 +42,24 @@ class InvoicePdf
     end
 
     def header
+      company = invoice.company
       top = pdf.cursor
-      pdf.text invoice.company.name, size: 18, style: :bold
+      half = pdf.bounds.width / 2
 
-      pdf.bounding_box([ pdf.bounds.width / 2, top ], width: pdf.bounds.width / 2) do
+      pdf.bounding_box([ 0, top ], width: half) do
+        pdf.text company.name, size: 18, style: :bold
+        pdf.move_down 4
+        company.address_lines.each { pdf.text it, color: MUTED }
+        pdf.text company.email, color: MUTED if company.email
+      end
+      company_bottom = pdf.cursor
+
+      pdf.bounding_box([ half, top ], width: half) do
         pdf.text "INVOICE", size: 18, style: :bold, align: :right
         pdf.text invoice.number, color: MUTED, align: :right
       end
 
+      pdf.move_cursor_to [ company_bottom, pdf.cursor ].min
       pdf.move_down 32
     end
 
