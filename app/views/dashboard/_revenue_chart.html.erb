@@ -1,0 +1,50 @@
+<%# locals: (series:, by_day:, default_currency:) %>
+<% currencies = series.values.flat_map(&:keys).uniq.sort %>
+<% amounts = currencies.index_with { |currency| series.values.map { it.fetch(currency, 0) } } %>
+<% selected = currencies.include?(default_currency) ? default_currency : currencies.first %>
+
+<% chart_data = { controller: "chart", chart_currency_value: selected,
+                  chart_labels_value: series.keys.map { l(it, format: by_day ? "%b %-d" : "%b %Y") },
+                  chart_series_value: amounts.transform_values { it.map(&:to_f) } } if selected %>
+<%= tag.section class: "rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-900/5", data: chart_data do %>
+  <div class="flex flex-wrap items-start justify-between gap-4">
+    <div>
+      <h2 class="text-lg font-semibold text-gray-900">Revenue over time</h2>
+      <p class="mt-1 text-sm text-gray-500">Payments received, by <%= by_day ? "day" : "month" %>.</p>
+    </div>
+
+    <% if currencies.many? %>
+      <div role="group" aria-label="Currency" class="flex gap-1 rounded-xl bg-gray-100 p-1 text-sm font-medium">
+        <% currencies.each do |currency| %>
+          <button type="button" aria-pressed="<%= currency == selected %>"
+                  data-chart-target="option" data-action="chart#select" data-chart-currency-param="<%= currency %>"
+                  class="cursor-pointer rounded-lg px-3.5 py-1.5 text-gray-500 hover:text-gray-700 aria-pressed:bg-white aria-pressed:text-gray-900 aria-pressed:shadow-sm">
+            <%= currency %>
+          </button>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+
+  <% if currencies.empty? %>
+    <p class="mt-6 text-sm text-gray-500">No payments in this period.</p>
+  <% else %>
+    <div class="mt-6 h-72">
+      <canvas data-chart-target="canvas" aria-hidden="true"></canvas>
+    </div>
+
+    <% amounts.each do |currency, values| %>
+      <table class="sr-only">
+        <caption>Revenue in <%= currency %></caption>
+        <tbody>
+          <% series.keys.zip(values).each do |date, amount| %>
+            <tr>
+              <th scope="row"><%= l(date, format: by_day ? :long : "%B %Y") %></th>
+              <td><%= format_money(amount, currency) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% end %>
+  <% end %>
+<% end %>

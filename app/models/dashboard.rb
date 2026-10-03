@@ -7,7 +7,10 @@ class Dashboard
 
   attr_reader :period
 
+  delegate :default_currency, to: :@company
+
   def initialize(company, period: nil)
+    @company = company
     @invoices = company.invoices
     @period = period.presence_in(PERIODS) || "all"
   end
@@ -29,15 +32,22 @@ class Dashboard
     @invoices.draft.count
   end
 
-  # { Date (first of the month) => { "USD" => amount } } for the last few months, oldest first, including empty months.
-  def revenue_by_month(months: 12)
-    first_month = Date.current.beginning_of_month << (months - 1)
-    sums = @invoices.paid.where(paid_on: first_month..)
-      .group(Arel.sql("DATE_TRUNC('month', invoices.paid_on)::date"), :currency).sum_of_totals
+  # Revenue over the period, oldest first, including empty days or months: { Date => { "USD" => amount } }.
+  # "This month" is broken down by day; every other period by month.
+  def revenue_over_time
+    range = chart_range or return {}
+    by_day = chart_by_day?
+    group = by_day ? :paid_on : Arel.sql("DATE_TRUNC('month', invoices.paid_on)::date")
+    sums = @invoices.paid.where(paid_on: range).group(group, :currency).sum_of_totals
+    buckets = by_day ? range.to_a : range.select { it.day == 1 }
 
-    Array.new(months) { first_month >> it }.index_with do |month|
-      sums.filter_map { |(sum_month, currency), amount| [ currency, amount ] if sum_month == month }.sort.to_h
+    buckets.index_with do |bucket|
+      sums.filter_map { |(sum_bucket, currency), amount| [ currency, amount ] if sum_bucket == bucket }.sort.to_h
     end
+  end
+
+  def chart_by_day?
+    period == "month"
   end
 
   # The highest-paying clients in each currency.
@@ -65,6 +75,19 @@ class Dashboard
       when "last_year" then today.prev_year.all_year
       when "quarter" then today.all_quarter
       when "month" then today.all_month
+      end
+    end
+
+    # Like period_range, but never past today, and all time starts at the first payment.
+    def chart_range
+      today = Date.current
+
+      case period
+      when "all"
+        first_payment = @invoices.paid.minimum(:paid_on)
+        first_payment.beginning_of_month..today if first_payment
+      when "last_year" then today.prev_year.all_year
+      else period_range.begin..today
       end
     end
 

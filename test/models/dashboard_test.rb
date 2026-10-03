@@ -41,19 +41,40 @@ class DashboardTest < ActiveSupport::TestCase
     assert_equal 1, dashboard.drafts_count
   end
 
-  test "lists revenue for each of the last 12 months, including empty ones" do
+  test "charts revenue by month over the period, including empty months" do
     paid(100, paid_on: Date.new(2026, 10, 3))
     paid(50, paid_on: Date.new(2026, 10, 10), currency: "EUR")
-    paid(300, paid_on: Date.new(2025, 11, 20), issue_date: Date.new(2025, 11, 1))
-    paid(999, paid_on: Date.new(2025, 10, 31), issue_date: Date.new(2025, 10, 1))
+    paid(300, paid_on: Date.new(2026, 2, 20))
+    paid(999, paid_on: Date.new(2025, 12, 31), issue_date: Date.new(2025, 12, 1))
 
-    months = Dashboard.new(@company).revenue_by_month
+    series = Dashboard.new(@company, period: "year").revenue_over_time
 
-    assert_equal 12, months.size
-    assert_equal [ Date.new(2025, 11, 1), Date.new(2026, 10, 1) ], [ months.keys.first, months.keys.last ]
-    assert_equal({ "USD" => 300 }, months[Date.new(2025, 11, 1)])
-    assert_equal({ "EUR" => 50, "USD" => 100 }, months[Date.new(2026, 10, 1)])
-    assert_equal({}, months[Date.new(2026, 5, 1)])
+    assert_equal (1..10).map { Date.new(2026, it, 1) }, series.keys
+    assert_equal({ "USD" => 300 }, series[Date.new(2026, 2, 1)])
+    assert_equal({ "EUR" => 50, "USD" => 100 }, series[Date.new(2026, 10, 1)])
+    assert_equal({}, series[Date.new(2026, 5, 1)])
+  end
+
+  test "charts this month by day, up to today" do
+    paid(100, paid_on: Date.new(2026, 10, 3))
+
+    dashboard = Dashboard.new(@company, period: "month")
+    series = dashboard.revenue_over_time
+
+    assert dashboard.chart_by_day?
+    assert_equal (1..15).map { Date.new(2026, 10, it) }, series.keys
+    assert_equal({ "USD" => 100 }, series[Date.new(2026, 10, 3)])
+  end
+
+  test "charts all time from the month of the first payment" do
+    paid(300, paid_on: Date.new(2026, 8, 20))
+
+    assert_equal [ Date.new(2026, 8, 1), Date.new(2026, 9, 1), Date.new(2026, 10, 1) ],
+      Dashboard.new(@company).revenue_over_time.keys
+  end
+
+  test "has nothing to chart for all time without payments" do
+    assert_empty Dashboard.new(@company).revenue_over_time
   end
 
   test "ranks the top clients within each currency" do

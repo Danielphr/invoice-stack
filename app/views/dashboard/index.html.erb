@@ -32,3 +32,8 @@
     </dd>
   </div>
 </dl>
+
+<div class="mt-6">
+  <%= render "revenue_chart", series: @dashboard.revenue_over_time, by_day: @dashboard.chart_by_day?,
+        default_currency: @dashboard.default_currency %>
+</div>
