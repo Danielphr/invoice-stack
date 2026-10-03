@@ -1,13 +1,24 @@
-<%# locals: (overdue:, due_soon:, currency:) %>
-<section aria-labelledby="attention-heading" class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-900/5">
-  <h2 id="attention-heading" class="text-lg font-semibold text-gray-900">Needs attention</h2>
-  <p class="mt-1 text-sm text-gray-500">Overdue invoices and invoices due in the next <%= Dashboard::DUE_SOON_DAYS %> days.</p>
+<%# locals: (overdue:, due_soon:) %>
+<% if overdue.empty? && due_soon.empty? %>
+  <section aria-labelledby="attention-heading" class="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white px-6 py-4 shadow-sm">
+    <h2 id="attention-heading" class="text-base font-semibold text-gray-900">Needs attention</h2>
+    <p class="text-sm text-gray-500">Nothing right now. All sent invoices are on time.</p>
+  </section>
+<% else %>
+  <%= tag.details class: [ "group rounded-2xl border bg-white shadow-sm", overdue.any? ? "border-red-200" : "border-amber-200" ] do %>
+    <summary class="flex cursor-pointer list-none flex-wrap items-center gap-3 px-6 py-4 [&::-webkit-details-marker]:hidden">
+      <h2 class="text-base font-semibold text-gray-900">Needs attention</h2>
+      <% if overdue.any? %>
+        <span class="rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700"><%= overdue.size %> overdue</span>
+      <% end %>
+      <% if due_soon.any? %>
+        <span class="rounded-md bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700"><%= due_soon.size %> due soon</span>
+      <% end %>
+      <%= heroicon(:chevron_down, class: "ml-auto size-5 shrink-0 text-gray-400 transition-transform group-open:rotate-180") %>
+    </summary>
 
-  <% if overdue.empty? && due_soon.empty? %>
-    <p class="mt-6 text-sm text-gray-500">Nothing needs attention. All sent invoices are on time.</p>
-  <% else %>
-    <div class="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-2">
-      <% [ [ "Overdue", overdue ], [ "Due soon", due_soon ] ].each do |title, invoices| %>
+    <div class="grid grid-cols-1 gap-8 border-t border-gray-100 px-6 pt-4 pb-6 lg:grid-cols-2">
+      <% [ [ "Overdue", overdue ], [ "Due in the next #{Invoice::DUE_SOON_DAYS} days", due_soon ] ].each do |title, invoices| %>
         <div>
           <h3 class="text-sm font-semibold text-gray-900"><%= title %> <span class="font-normal text-gray-500">· <%= invoices.size %></span></h3>
 
@@ -22,7 +33,7 @@
                     <p class="truncate text-gray-500"><%= invoice.client.name %></p>
                   </div>
                   <div class="flex shrink-0 flex-col items-end gap-1">
-                    <span class="font-medium tabular-nums text-gray-900"><%= format_money(invoice.total, currency) %></span>
+                    <span class="font-medium tabular-nums text-gray-900"><%= format_money(invoice.total, invoice.currency) %></span>
                     <%= due_badge(invoice) %>
                   </div>
                 </li>
@@ -37,4 +48,4 @@
       <% end %>
     </div>
   <% end %>
-</section>
+<% end %>

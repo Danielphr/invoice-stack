@@ -33,26 +33,31 @@ class DashboardTest < ActiveSupport::TestCase
     paid(100, paid_on: Date.new(2026, 10, 3))
     paid(70, paid_on: Date.new(2026, 10, 4), currency: "EUR")
 
-    assert_equal %w[ EUR USD ], Dashboard.new(@company).currencies
+    assert_equal %w[ USD EUR ], Dashboard.new(@company).currencies
     assert_equal "USD", Dashboard.new(@company).currency
     assert_equal 70, Dashboard.new(@company, currency: "EUR").revenue.total
     assert_equal "USD", Dashboard.new(@company, currency: "XYZ").currency
   end
 
-  test "starts with a currency in use when the default has no invoices" do
+  test "offers the company's currency first and starts on it, even without invoices in it" do
     remove_invoices(@company)
     paid(70, paid_on: Date.new(2026, 10, 4), currency: "EUR")
+    paid(50, paid_on: Date.new(2026, 10, 4), currency: "BRL")
 
-    assert_equal "EUR", Dashboard.new(@company).currency
-  end
-
-  test "summarizes outstanding and overdue invoices and counts drafts" do
-    create_invoice(500, status: "sent", issue_date: Date.new(2026, 10, 1), due_date: Date.new(2026, 10, 30))
     dashboard = Dashboard.new(@company)
 
-    assert_equal [ 2, 2650 ], [ dashboard.outstanding.count, dashboard.outstanding.total ]
+    assert_equal %w[ USD BRL EUR ], dashboard.currencies
+    assert_equal "USD", dashboard.currency
+  end
+
+  test "summarizes invoices due soon and overdue in the currency" do
+    create_invoice(500, status: "sent", issue_date: Date.new(2026, 10, 1), due_date: Date.new(2026, 10, 29))
+    create_invoice(800, status: "sent", issue_date: Date.new(2026, 10, 1), due_date: Date.new(2026, 10, 30))
+    create_invoice(90, status: "sent", issue_date: Date.new(2026, 10, 1), due_date: Date.new(2026, 10, 20), currency: "EUR")
+    dashboard = Dashboard.new(@company)
+
+    assert_equal [ 1, 500 ], [ dashboard.due_soon.count, dashboard.due_soon.total ]
     assert_equal [ 1, 2150 ], [ dashboard.overdue.count, dashboard.overdue.total ]
-    assert_equal 1, dashboard.drafts_count
   end
 
   test "charts revenue by month over the period, including empty months" do
@@ -99,21 +104,21 @@ class DashboardTest < ActiveSupport::TestCase
     assert_equal [ "Initech" ], Dashboard.new(@company).top_clients(limit: 1).map(&:client_name)
   end
 
-  test "lists overdue invoices, longest overdue first, whatever the period" do
-    older = create_invoice(100, status: "sent", issue_date: Date.new(2025, 1, 1), due_date: Date.new(2025, 1, 31))
+  test "lists overdue invoices in every currency, longest overdue first, whatever the filters" do
+    older = create_invoice(100, status: "sent", issue_date: Date.new(2025, 1, 1), due_date: Date.new(2025, 1, 31), currency: "EUR")
     create_invoice(100, status: "sent", issue_date: Date.new(2026, 10, 1), due_date: Date.new(2026, 10, 20))
 
-    assert_equal [ older, invoices(:globex_website) ], Dashboard.new(@company, period: "month").overdue_invoices.to_a
+    assert_equal [ older, invoices(:globex_website) ], Dashboard.new(@company, period: "month", currency: "USD").overdue_invoices.to_a
   end
 
-  test "lists sent invoices due within two weeks, soonest first" do
+  test "lists sent invoices due within two weeks in every currency, soonest first" do
     today = create_invoice(100, status: "sent", issue_date: Date.new(2026, 10, 1), due_date: Date.new(2026, 10, 15))
     later = create_invoice(100, status: "sent", issue_date: Date.new(2026, 10, 1), due_date: Date.new(2026, 10, 29))
     create_invoice(100, status: "sent", issue_date: Date.new(2026, 10, 1), due_date: Date.new(2026, 10, 30))
     paid(100, issue_date: Date.new(2026, 10, 1), paid_on: Date.new(2026, 10, 2), due_date: Date.new(2026, 10, 20))
-    create_invoice(100, status: "sent", issue_date: Date.new(2026, 10, 1), due_date: Date.new(2026, 10, 20), currency: "EUR")
+    euros = create_invoice(100, status: "sent", issue_date: Date.new(2026, 10, 1), due_date: Date.new(2026, 10, 20), currency: "EUR")
 
-    assert_equal [ today, later ], Dashboard.new(@company).due_soon_invoices.to_a
+    assert_equal [ today, euros, later ], Dashboard.new(@company, currency: "USD").due_soon_invoices.to_a
   end
 
   test "only counts the company's own invoices" do

@@ -1,49 +1,35 @@
 <% content_for :title, "Dashboard" %>
 
-<div class="flex flex-wrap items-center justify-between gap-4">
-  <h1 class="text-2xl font-semibold text-gray-900">Dashboard</h1>
-
-  <div class="flex flex-wrap gap-3">
-    <% if @dashboard.currencies.many? %>
-      <nav aria-label="Currency" class="flex gap-1 rounded-lg bg-white p-1 text-sm font-medium shadow-sm ring-1 ring-gray-900/5">
-        <% @dashboard.currencies.each do |currency| %>
-          <%= dashboard_filter_link @dashboard, currency, currency: %>
-        <% end %>
-      </nav>
-    <% end %>
-
-    <nav aria-label="Period" class="flex flex-wrap gap-1 rounded-lg bg-white p-1 text-sm font-medium shadow-sm ring-1 ring-gray-900/5">
-      <% Dashboard::PERIODS.each do |period| %>
-        <%= dashboard_filter_link @dashboard, dashboard_period_label(period), period: %>
-      <% end %>
-    </nav>
-  </div>
-</div>
-
-<dl class="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
-  <%= render "stat", label: "Revenue · #{dashboard_period_label(@dashboard.period)}", icon: :currency, tone: "bg-brand-50 text-brand-600",
-        summary: @dashboard.revenue, currency: @dashboard.currency, empty: "No payments" %>
-  <%= render "stat", label: "Outstanding", icon: :clock, tone: "bg-amber-50 text-amber-600",
-        summary: @dashboard.outstanding, currency: @dashboard.currency, empty: "Nothing due" %>
-  <%= render "stat", label: "Overdue", icon: :warning, tone: "bg-red-50 text-red-600",
-        summary: @dashboard.overdue, currency: @dashboard.currency, empty: "Nothing overdue" %>
-
-  <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-900/5 transition-shadow hover:shadow-md">
-    <dt class="flex items-center justify-between text-sm font-medium text-gray-500">
-      Drafts
-      <span class="rounded-xl bg-gray-100 p-2 text-gray-600"><%= heroicon(:document, class: "size-5") %></span>
-    </dt>
-    <dd class="mt-3">
-      <p class="text-2xl font-semibold tracking-tight tabular-nums text-gray-900"><%= @dashboard.drafts_count %></p>
-      <%= link_to "Review drafts", invoices_path(sort: "status", direction: "asc"), class: "link mt-1 inline-block text-sm" %>
-    </dd>
-  </div>
-</dl>
+<h1 class="text-2xl font-semibold text-gray-900">Dashboard</h1>
 
 <div class="mt-6">
-  <%= render "attention", overdue: @dashboard.overdue_invoices.to_a, due_soon: @dashboard.due_soon_invoices.to_a,
-        currency: @dashboard.currency %>
+  <%= render "attention", overdue: @dashboard.overdue_invoices.to_a, due_soon: @dashboard.due_soon_invoices.to_a %>
 </div>
+
+<div class="mt-8 flex flex-wrap items-center gap-3">
+  <% if @dashboard.currencies.many? %>
+    <nav aria-label="Currency" class="flex gap-1 rounded-lg bg-white p-1 text-sm font-medium shadow-sm ring-1 ring-gray-900/5">
+      <% @dashboard.currencies.each do |currency| %>
+        <%= dashboard_filter_link @dashboard, currency, currency: %>
+      <% end %>
+    </nav>
+  <% end %>
+
+  <nav aria-label="Period" class="ml-auto flex flex-wrap gap-1 rounded-lg bg-white p-1 text-sm font-medium shadow-sm ring-1 ring-gray-900/5">
+    <% Dashboard::PERIODS.each do |period| %>
+      <%= dashboard_filter_link @dashboard, dashboard_period_label(period), period: %>
+    <% end %>
+  </nav>
+</div>
+
+<dl class="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+  <%= render "stat", label: "Revenue · #{dashboard_period_label(@dashboard.period)}", icon: :currency, tone: "bg-brand-50 text-brand-600",
+        summary: @dashboard.revenue, currency: @dashboard.currency, empty: "No payments" %>
+  <%= render "stat", label: "Due soon", icon: :clock, tone: "bg-amber-50 text-amber-600",
+        summary: @dashboard.due_soon, currency: @dashboard.currency, empty: "Nothing due" %>
+  <%= render "stat", label: "Overdue", icon: :warning, tone: "bg-red-50 text-red-600",
+        summary: @dashboard.overdue, currency: @dashboard.currency, empty: "Nothing overdue" %>
+</dl>
 
 <div class="mt-6">
   <%= render "revenue_chart", series: @dashboard.revenue_over_time, by_day: @dashboard.chart_by_day?, currency: @dashboard.currency %>

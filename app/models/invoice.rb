@@ -28,7 +28,10 @@ class Invoice < ApplicationRecord
 
   SORTS = %w[ number client issued due billing status total ].freeze
 
+  DUE_SOON_DAYS = 14
+
   scope :overdue, -> { where(overdue_condition) }
+  scope :due_soon, -> { sent.where(due_date: Date.current..(Date.current + DUE_SOON_DAYS)) }
 
   # Mirrors #total: each item's amount is rounded before summing, as in InvoiceItem#amount.
   TOTAL_SQL = Arel.sql(<<~SQL.squish)

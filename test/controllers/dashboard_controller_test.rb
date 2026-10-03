@@ -28,11 +28,9 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
 
     assert_select "dt", "Revenue · All time"
     assert_select "dl > div", text: /No payments/
-    assert_select "dl > div", text: /Outstanding\s+\$2,150.00 USD\s+1 invoice/
+    assert_select "dl > div", text: /Due soon\s+Nothing due\s+0 invoices/
     assert_select "dl > div", text: /Overdue\s+\$2,150.00 USD\s+1 invoice/
-    assert_select "dl > div", text: /Drafts\s+1/
-    assert_select "dl dt svg[aria-hidden=true]", 4
-    assert_select "a[href=?]", invoices_path(sort: "status", direction: "asc"), "Review drafts"
+    assert_select "dl dt svg[aria-hidden=true]", 3
   end
 
   test "should filter revenue by period" do
@@ -100,21 +98,29 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "should list overdue and soon-due invoices that need attention" do
-    due_soon = nil
+  test "should show needs attention at the top, collapsed, in every currency" do
+    euros = nil
     travel_to Date.new(2026, 10, 15) do
-      due_soon = @user.company.invoices.create!(client: clients(:initech), currency: "USD", status: "sent", issue_date: Date.current,
+      euros = @user.company.invoices.create!(client: clients(:initech), currency: "EUR", status: "sent", issue_date: Date.current,
         due_date: Date.current + 3, items_attributes: [ { description: "Work", quantity: 1, unit_price: 100 } ])
 
+      get root_url(currency: "USD", period: "month")
+    end
+
+    assert_select "details:not([open]).border-red-200 summary h2", "Needs attention"
+    assert_select "details summary", text: /1 overdue\s+1 due soon/
+    assert_select "details li", text: /INV-001\s+Globex Corporation\s+\$2,150.00 USD\s+15 days overdue/
+    assert_select "details li a[href=?]", invoice_path(euros), euros.number
+    assert_select "details li", text: /€100.00 EUR\s+Due in 3 days/
+    assert css_select("details").first.ancestors.none? { it.name == "dl" }, "needs attention should sit outside the filtered numbers"
+  end
+
+  test "should outline needs attention in amber when nothing is overdue" do
+    travel_to Date.new(2026, 9, 20) do
       get root_url
     end
 
-    assert_select "section[aria-labelledby=attention-heading]" do
-      assert_select "h3", /Overdue\s+· 1/
-      assert_select "li", text: /INV-001\s+Globex Corporation\s+\$2,150.00 USD\s+15 days overdue/
-      assert_select "li a[href=?]", invoice_path(due_soon), due_soon.number
-      assert_select "li span.text-amber-700", "Due in 3 days"
-    end
+    assert_select "details:not([open]).border-amber-200 summary", text: /1 due soon/
   end
 
   test "should link to the rest when more than five invoices need attention" do
@@ -127,7 +133,7 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
       get root_url
     end
 
-    assert_select "section[aria-labelledby=attention-heading] a[href=?]", invoices_path(sort: "due", direction: "asc"), "+1 more"
+    assert_select "details a[href=?]", invoices_path(sort: "due", direction: "asc"), "+1 more"
   end
 
   test "should say when nothing needs attention" do
@@ -135,7 +141,8 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
 
     get root_url
 
-    assert_select "section[aria-labelledby=attention-heading] p", "Nothing needs attention. All sent invoices are on time."
+    assert_select "details", count: 0
+    assert_select "section[aria-labelledby=attention-heading] p", "Nothing right now. All sent invoices are on time."
   end
 
   test "should say when there is nothing to chart" do

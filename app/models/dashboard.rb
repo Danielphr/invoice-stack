@@ -8,8 +8,10 @@ class Dashboard
   attr_reader :period, :currency, :currencies
 
   def initialize(company, period: nil, currency: nil)
-    @currencies = company.invoices.distinct.order(:currency).pluck(:currency)
-    @currency = currency.presence_in(@currencies) || default_currency_for(company)
+    @company = company
+    # The company's own currency comes first and is the default; other currencies in use follow.
+    @currencies = [ company.default_currency, *company.invoices.distinct.order(:currency).pluck(:currency) ].uniq
+    @currency = currency.presence_in(@currencies) || company.default_currency
     @invoices = company.invoices.where(currency: @currency)
     @period = period.presence_in(PERIODS) || "all"
   end
@@ -19,16 +21,12 @@ class Dashboard
     summarize(paid_in_period)
   end
 
-  def outstanding
-    summarize(@invoices.sent)
+  def due_soon
+    summarize(@invoices.due_soon)
   end
 
   def overdue
     summarize(@invoices.overdue)
-  end
-
-  def drafts_count
-    @invoices.draft.count
   end
 
   # Revenue over the period, oldest first, including empty days or months: { Date => amount }.
@@ -53,23 +51,16 @@ class Dashboard
       .max_by(limit, &:amount)
   end
 
-  DUE_SOON_DAYS = 14
-
-  # Overdue invoices, longest overdue first. Unlike the totals, these ignore the period: urgency is about today.
+  # The invoices that need attention ignore both filters, since urgency is about today and spans every currency.
   def overdue_invoices
-    @invoices.overdue.includes(:client, :items).order(:due_date, :id)
+    @company.invoices.overdue.includes(:client, :items).order(:due_date, :id)
   end
 
-  # Sent invoices due between today and the next two weeks, soonest first.
   def due_soon_invoices
-    @invoices.sent.where(due_date: Date.current..(Date.current + DUE_SOON_DAYS)).includes(:client, :items).order(:due_date, :id)
+    @company.invoices.due_soon.includes(:client, :items).order(:due_date, :id)
   end
 
   private
-    def default_currency_for(company)
-      @currencies.include?(company.default_currency) || @currencies.empty? ? company.default_currency : @currencies.first
-    end
-
     def paid_in_period
       range = period_range
       range ? @invoices.paid.where(paid_on: range) : @invoices.paid
