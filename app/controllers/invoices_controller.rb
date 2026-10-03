@@ -35,8 +35,6 @@ class InvoicesController < ApplicationController
       set_number_preview
       render :new, status: :unprocessable_entity
     end
-  rescue ActiveRecord::RecordNotUnique
-    reject_duplicate_number(:new)
   end
 
   def edit
@@ -48,8 +46,6 @@ class InvoicesController < ApplicationController
     else
       render :edit, status: :unprocessable_entity
     end
-  rescue ActiveRecord::RecordNotUnique
-    reject_duplicate_number(:edit)
   end
 
   def destroy
@@ -79,17 +75,9 @@ class InvoicesController < ApplicationController
       @number_preview = Current.user.company.preview_invoice_number(@invoice.issue_date || Date.current)
     end
 
-    # The uniqueness validation catches duplicates in normal use; the unique
-    # index only fires when two requests save the same number at the same time.
-    def reject_duplicate_number(template)
-      @invoice.errors.add(:number, :taken)
-      set_number_preview if @invoice.new_record?
-      render template, status: :unprocessable_entity
-    end
-
     def invoice_params
       params.expect(invoice: [
-        :client_id, :number, :status, :billing_type, :currency, :issue_date, :due_date, :paid_on, :discount, :notes,
+        :client_id, :status, :billing_type, :currency, :issue_date, :due_date, :paid_on, :discount, :notes,
         items_attributes: [ [ :id, :description, :quantity, :unit_price, :_destroy ] ]
       ])
     end

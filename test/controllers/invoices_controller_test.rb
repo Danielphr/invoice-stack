@@ -235,18 +235,16 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "should show the next number in a locked field on new" do
+  test "should show the next number in a disabled field on new" do
     get new_invoice_url
 
-    assert_select "input[name=?][readonly][placeholder=?]", "invoice[number]", "INV-1"
-    assert_select "button", "Override"
-    assert_select "[data-field-override-target=warning][hidden]"
+    assert_select "input[name=?][disabled][placeholder=?]", "invoice[number]", "INV-1"
   end
 
-  test "should show the current number in a locked field on edit" do
+  test "should show the current number in a disabled field on edit" do
     get edit_invoice_url(@invoice)
 
-    assert_select "input[name=?][readonly][value=?]", "invoice[number]", "INV-001"
+    assert_select "input[name=?][disabled][value=?]", "invoice[number]", "INV-001"
   end
 
   test "should label item inputs with their column headers" do
@@ -286,33 +284,20 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
     assert_equal BigDecimal("621.50"), invoice.total
   end
 
-  test "should create an invoice with an overridden number" do
+  test "should ignore a submitted number when creating an invoice" do
     post invoices_url, params: { invoice: invoice_params(number: "SPECIAL-1", items_attributes: {
       "0" => { description: "Design", quantity: "1", unit_price: "500" }
     }) }
 
-    assert_equal "SPECIAL-1", Invoice.order(:created_at).last.number
-    assert_equal 1, @user.company.reload.next_invoice_number
+    assert_equal "INV-1", Invoice.order(:created_at).last.number
   end
 
-  test "should reject an overridden number that is already used and keep the field unlocked" do
-    assert_no_difference "Invoice.count" do
-      post invoices_url, params: { invoice: invoice_params(number: "INV-001", items_attributes: {
-        "0" => { description: "Design", quantity: "1", unit_price: "500" }
-      }) }
-    end
+  test "should ignore a submitted number when updating an invoice" do
+    patch invoice_url(@invoice), params: { invoice: { number: "SPECIAL-1", notes: "Thanks!" } }
 
-    assert_response :unprocessable_entity
-    assert_select "[role=alert] li", "Number has already been taken"
-    assert_select "input[name=?][value=?]:not([readonly])", "invoice[number]", "INV-001"
-    assert_select "[data-field-override-target=warning]:not([hidden])"
-  end
-
-  test "should not allow removing the number of an existing invoice" do
-    patch invoice_url(@invoice), params: { invoice: { number: "" } }
-
-    assert_response :unprocessable_entity
-    assert_select "[role=alert] li", "Number can't be blank"
+    assert_redirected_to invoice_url(@invoice)
+    assert_equal "Thanks!", @invoice.reload.notes
+    assert_equal "INV-001", @invoice.number
   end
 
   test "should not create an invoice without items" do

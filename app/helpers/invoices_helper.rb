@@ -59,15 +59,6 @@ module InvoicesHelper
     "This invoice has been #{status}. Your client may already have it, so any change alters a document you already issued."
   end
 
-  def invoice_number_warning(invoice)
-    if (status = issued_status(invoice))
-      "This invoice has already been #{status}; changing its number can confuse your client and your records. " \
-        "Manual numbers must be unique."
-    else
-      "Manual numbers must be unique. The automatic sequence will skip any number you use."
-    end
-  end
-
   def delete_invoice_confirmation(invoice)
     return "Delete invoice #{invoice.number}? This cannot be undone." if invoice.draft?
 

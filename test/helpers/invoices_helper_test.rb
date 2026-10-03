@@ -40,12 +40,6 @@ class InvoicesHelperTest < ActionView::TestCase
     assert_match "This invoice has been sent.", issued_invoice_warning(invoice)
   end
 
-  test "uses a stronger number warning for issued invoices" do
-    assert_match "changing its number can confuse your client", invoice_number_warning(invoices(:globex_website))
-    assert_equal "Manual numbers must be unique. The automatic sequence will skip any number you use.",
-      invoice_number_warning(Invoice.new)
-  end
-
   test "asks for a stronger delete confirmation once an invoice is issued" do
     invoice = invoices(:globex_website)
 
