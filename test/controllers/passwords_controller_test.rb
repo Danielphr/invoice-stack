@@ -41,7 +41,7 @@ class PasswordsControllerTest < ActionDispatch::IntegrationTest
 
   test "update" do
     assert_changes -> { @user.reload.password_digest } do
-      put password_path(@user.password_reset_token), params: { password: "new", password_confirmation: "new" }
+      put password_path(@user.password_reset_token), params: { password: "a-new-long-password", password_confirmation: "a-new-long-password" }
       assert_redirected_to new_session_path
     end
 
@@ -52,16 +52,26 @@ class PasswordsControllerTest < ActionDispatch::IntegrationTest
   test "update with non matching passwords" do
     token = @user.password_reset_token
     assert_no_changes -> { @user.reload.password_digest } do
-      put password_path(token), params: { password: "no", password_confirmation: "match" }
+      put password_path(token), params: { password: "a-new-long-password", password_confirmation: "does-not-match" }
       assert_redirected_to edit_password_path(token)
     end
 
     follow_redirect!
-    assert_notice "Passwords did not match"
+    assert_notice "Password confirmation doesn't match Password"
+  end
+
+  test "update with a password that is too short" do
+    token = @user.password_reset_token
+    assert_no_changes -> { @user.reload.password_digest } do
+      put password_path(token), params: { password: "short", password_confirmation: "short" }
+    end
+
+    follow_redirect!
+    assert_notice "Password is too short (minimum is 12 characters)"
   end
 
   private
     def assert_notice(text)
-      assert_select "[role=status], [role=alert]", /#{text}/
+      assert_select "[role=status], [role=alert]", /#{Regexp.escape(text)}/
     end
 end

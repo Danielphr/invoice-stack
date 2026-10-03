@@ -22,7 +22,9 @@
 
   <div>
     <%= form.label :password, class: "label" %>
-    <%= render "shared/password_field", form: form, field: :password, autocomplete: "new-password" %>
+    <%= render "shared/password_field", form: form, field: :password, autocomplete: "new-password",
+          minlength: User::PASSWORD_MIN_LENGTH, aria: { describedby: "password-hint" } %>
+    <p id="password-hint" class="mt-2 text-xs text-gray-500">At least <%= User::PASSWORD_MIN_LENGTH %> characters.</p>
   </div>
 
   <div>
