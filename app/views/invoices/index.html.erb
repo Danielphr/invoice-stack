@@ -22,8 +22,11 @@
       </thead>
       <tbody class="divide-y divide-gray-200 text-gray-600">
         <% @invoices.each do |invoice| %>
+          <% label = invoice.number || "draft for #{invoice.client.name}" %>
           <tr>
-            <td class="px-4 py-3 font-medium text-gray-900"><%= link_to invoice.number, invoice, class: "hover:text-indigo-600" %></td>
+            <td class="px-4 py-3 font-medium text-gray-900">
+              <%= link_to invoice.number || "Draft", invoice, class: [ "hover:text-indigo-600", ("font-normal text-gray-400" unless invoice.number) ] %>
+            </td>
             <td class="px-4 py-3"><%= invoice.client.name %></td>
             <td class="px-4 py-3 whitespace-nowrap"><%= l(invoice.issue_date, format: :medium) %></td>
             <td class="px-4 py-3 whitespace-nowrap"><%= invoice.due_date ? l(invoice.due_date, format: :medium) : "—" %></td>
@@ -33,15 +36,10 @@
             <td class="px-4 py-3">
               <div class="flex justify-end gap-4 whitespace-nowrap">
                 <%= link_to invoice_path(invoice, format: :pdf), target: "_blank", rel: "noopener", class: "link", data: { turbo: false } do %>
-                  PDF<span class="sr-only">, <%= invoice.number %></span>
+                  PDF<span class="sr-only">, <%= label %></span>
                 <% end %>
                 <%= link_to edit_invoice_path(invoice), class: "link" do %>
-                  Edit<span class="sr-only">, <%= invoice.number %></span>
-                <% end %>
-                <%= button_to invoice, method: :delete, class: "link-danger",
-                      params: request.query_parameters.slice("sort", "direction", "page"),
-                      form: { data: { turbo_confirm: delete_invoice_confirmation(invoice) } } do %>
-                  Delete<span class="sr-only">, <%= invoice.number %></span>
+                  Edit<span class="sr-only">, <%= label %></span>
                 <% end %>
               </div>
             </td>

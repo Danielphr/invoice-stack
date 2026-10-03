@@ -12,5 +12,11 @@ module ActiveSupport
     fixtures :all
 
     # Add more helper methods to be used by all tests here...
+
+    # Issued invoices can't be destroyed, so tests that need none skip the callbacks.
+    def remove_invoices(company)
+      InvoiceItem.where(invoice: company.invoices).delete_all
+      company.invoices.delete_all
+    end
   end
 end

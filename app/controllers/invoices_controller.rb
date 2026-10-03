@@ -23,7 +23,6 @@ class InvoicesController < ApplicationController
   def new
     @invoice = Current.user.company.invoices.new(issue_date: Date.current, currency: Current.user.company.default_currency)
     @invoice.items.build
-    set_number_preview
   end
 
   def create
@@ -32,11 +31,8 @@ class InvoicesController < ApplicationController
     if @invoice.save
       redirect_to @invoice, notice: "Invoice created."
     else
-      set_number_preview
       render :new, status: :unprocessable_entity
     end
-  rescue ActiveRecord::RecordNotUnique
-    reject_duplicate_number(:new)
   end
 
   def edit
@@ -48,14 +44,14 @@ class InvoicesController < ApplicationController
     else
       render :edit, status: :unprocessable_entity
     end
-  rescue ActiveRecord::RecordNotUnique
-    reject_duplicate_number(:edit)
   end
 
   def destroy
-    @invoice.destroy!
-    redirect_to invoices_path(sort: params[:sort], direction: params[:direction], page: params[:page]),
-      notice: "Invoice deleted.", status: :see_other
+    if @invoice.destroy
+      redirect_to invoices_path, notice: "Draft deleted.", status: :see_other
+    else
+      redirect_to @invoice, alert: @invoice.errors.full_messages.to_sentence, status: :see_other
+    end
   end
 
   private
@@ -75,21 +71,9 @@ class InvoicesController < ApplicationController
       @clients = Current.user.company.clients.by_name
     end
 
-    def set_number_preview
-      @number_preview = Current.user.company.preview_invoice_number(@invoice.issue_date || Date.current)
-    end
-
-    # The uniqueness validation catches duplicates in normal use; the unique
-    # index only fires when two requests save the same number at the same time.
-    def reject_duplicate_number(template)
-      @invoice.errors.add(:number, :taken)
-      set_number_preview if @invoice.new_record?
-      render template, status: :unprocessable_entity
-    end
-
     def invoice_params
       params.expect(invoice: [
-        :client_id, :number, :status, :billing_type, :currency, :issue_date, :due_date, :paid_on, :discount, :notes,
+        :client_id, :status, :billing_type, :currency, :issue_date, :due_date, :paid_on, :discount, :notes,
         items_attributes: [ [ :id, :description, :quantity, :unit_price, :_destroy ] ]
       ])
     end

@@ -220,6 +220,17 @@ class CompanyTest < ActiveSupport::TestCase
     assert_includes company.errors[:next_invoice_number], "must be less than 1000000000"
   end
 
+  test "requires the next number to be above the last sequence used" do
+    company = companies(:one)
+
+    company.next_invoice_number = 1
+    assert_not company.valid?
+    assert_includes company.errors[:next_invoice_number], "must be greater than or equal to 2"
+
+    company.next_invoice_number = 2
+    assert company.valid?
+  end
+
   test "database rejects a pattern without {NUMBER}" do
     assert_raises ActiveRecord::StatementInvalid do
       companies(:one).update_column(:invoice_number_pattern, "INV-{YEAR}")

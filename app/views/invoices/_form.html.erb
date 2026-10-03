@@ -10,20 +10,13 @@
       <%= form.collection_select :client_id, clients, :id, :name, { prompt: "Select a client" }, required: true, class: "input mt-2" %>
     </div>
 
-    <% number_locked = !invoice.number_changed? %>
-    <div data-controller="field-override">
+    <div>
       <%= form.label :number, class: "label" %>
-      <div class="mt-2 flex gap-2">
-        <%= form.text_field :number, maxlength: 50, readonly: number_locked, required: invoice.persisted?,
-              placeholder: @number_preview, data: { field_override_target: "input" },
-              class: "input read-only:bg-gray-50 read-only:text-gray-500" %>
-        <%= tag.button "Override", type: "button", hidden: !number_locked, class: "btn-secondary",
-              data: { field_override_target: "button", action: "field-override#unlock" } %>
-      </div>
-      <% if invoice.new_record? %>
-        <p class="mt-2 text-xs text-gray-500">Assigned automatically when you save.</p>
+      <%= form.text_field :number, disabled: true, placeholder: (invoice_number_preview(invoice) unless invoice.number),
+            class: "input mt-2 disabled:bg-gray-50 disabled:text-gray-500" %>
+      <% unless invoice.number %>
+        <p class="mt-2 text-xs text-gray-500">Assigned when the invoice is sent.</p>
       <% end %>
-      <%= tag.p invoice_number_warning(invoice), hidden: number_locked, class: "mt-2 text-xs text-amber-700", data: { field_override_target: "warning" } %>
     </div>
 
     <div>
@@ -38,7 +31,10 @@
 
     <div>
       <%= form.label :status, class: "label" %>
-      <%= form.select :status, Invoice.statuses.keys.map { [ it.humanize, it ] }, {}, class: "input mt-2" %>
+      <%= form.select :status, invoice_status_options(invoice), {}, class: "input mt-2" %>
+      <% unless invoice.sequence_in_database %>
+        <p class="mt-2 text-xs text-gray-500">Changing the status from Draft assigns the invoice number.</p>
+      <% end %>
     </div>
 
     <% if invoice.paid? %>

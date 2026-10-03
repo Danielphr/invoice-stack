@@ -29,7 +29,7 @@ class Company < ApplicationRecord
   validates :accent_color, format: { with: /\A#\h{6}\z/, message: "must be a hex color like #4f46e5" }
   validates :invoice_number_pattern, presence: true, length: { maximum: 30 }
   validates :invoice_number_digits, numericality: { only_integer: true, in: 1..10 }
-  validates :next_invoice_number, numericality: { only_integer: true, greater_than_or_equal_to: 1, less_than: 1_000_000_000 }
+  validates :next_invoice_number, numericality: { only_integer: true, greater_than_or_equal_to: :lowest_next_invoice_number, less_than: 1_000_000_000 }
   validate :invoice_number_pattern_must_be_valid
   validate :logo_must_be_a_supported_image
 
@@ -53,18 +53,20 @@ class Company < ApplicationRecord
     end
   end
 
-  # Takes the next free invoice number and advances the counter. Must run inside
-  # the transaction that creates the invoice: the row lock makes concurrent
-  # requests wait, so two invoices can never be given the same number.
-  def reserve_invoice_number(date)
+  # Takes the next sequence and advances the counter. Must run inside the
+  # transaction that creates the invoice: the row lock makes concurrent
+  # requests wait, so two invoices can never be given the same sequence.
+  def reserve_invoice_sequence
     lock!
-    sequence = next_free_invoice_sequence(date)
-    update_columns(next_invoice_number: sequence + 1)
-    format_invoice_number(sequence, date)
+    next_invoice_number.tap { update_columns(next_invoice_number: it + 1) }
   end
 
   def preview_invoice_number(date)
-    format_invoice_number(next_free_invoice_sequence(date), date)
+    format_invoice_number(next_invoice_number, date)
+  end
+
+  def lowest_next_invoice_number
+    (invoices.maximum(:sequence) || 0) + 1
   end
 
   private
@@ -73,12 +75,6 @@ class Company < ApplicationRecord
 
       errors.add(:logo, "must be a PNG, JPG or WebP image") unless logo.content_type.in?(LOGO_CONTENT_TYPES)
       errors.add(:logo, "must be smaller than 5 MB") if logo.byte_size > LOGO_MAX_SIZE
-    end
-
-    def next_free_invoice_sequence(date)
-      sequence = next_invoice_number
-      sequence += 1 while invoices.exists?(number: format_invoice_number(sequence, date))
-      sequence
     end
 
     def invoice_number_pattern_must_be_valid

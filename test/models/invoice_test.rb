@@ -25,58 +25,134 @@ class InvoiceTest < ActiveSupport::TestCase
     assert_includes invoice.errors[:currency], "is not included in the list"
   end
 
-  test "requires a number once the invoice exists" do
-    @invoice.number = " "
-
-    assert_not @invoice.valid?
-    assert_includes @invoice.errors[:number], "can't be blank"
-  end
-
-  test "assigns the company's next number when saved without one" do
+  test "assigns the company's next number when first saved as issued" do
     company = companies(:one)
 
-    first = create_invoice(company)
-    second = create_invoice(company)
+    first = create_invoice(company, status: "sent")
+    second = create_invoice(company, status: "paid")
 
-    assert_equal [ "INV-1", "INV-2" ], [ first.number, second.number ]
-    assert_equal 3, company.reload.next_invoice_number
+    assert_equal [ [ 2, "INV-2" ], [ 3, "INV-3" ] ], [ [ first.sequence, first.number ], [ second.sequence, second.number ] ]
+    assert_equal 4, company.reload.next_invoice_number
   end
 
   test "builds the number from the pattern and the issue date" do
     company = companies(:one)
     company.update!(invoice_number_pattern: "YP-{YEAR}-{NUMBER}", invoice_number_digits: 4)
 
-    invoice = create_invoice(company, issue_date: Date.new(2025, 12, 31))
+    invoice = create_invoice(company, status: "sent", issue_date: Date.new(2025, 12, 31))
 
-    assert_equal "YP-2025-0001", invoice.number
+    assert_equal "YP-2025-0002", invoice.number
   end
 
-  test "keeps a manually entered number without advancing the counter" do
-    company = companies(:one)
+  test "leaves a draft without a number until it is sent" do
+    draft = invoices(:globex_draft)
+    assert_nil draft.number
 
-    invoice = create_invoice(company, number: "SPECIAL-7")
+    draft.update!(status: "sent")
 
-    assert_equal "SPECIAL-7", invoice.number
-    assert_equal 1, company.reload.next_invoice_number
+    assert_equal [ 2, "INV-2" ], [ draft.sequence, draft.number ]
+    assert_equal 3, draft.company.reload.next_invoice_number
   end
 
-  test "skips numbers that were already used manually" do
-    company = companies(:one)
-    create_invoice(company, number: "INV-1")
-    create_invoice(company, number: "INV-2")
+  test "dates a draft today when it is sent, keeping its payment term" do
+    draft = invoices(:globex_draft)
+    draft.update!(due_date: Date.new(2026, 9, 30))
+    draft.company.update!(invoice_number_pattern: "INV-{YEAR}{MONTH}-{NUMBER}")
 
-    invoice = create_invoice(company)
+    travel_to Date.new(2026, 10, 3) do
+      draft.update!(status: "sent")
+    end
 
-    assert_equal "INV-3", invoice.number
-    assert_equal 4, company.reload.next_invoice_number
+    assert_equal Date.new(2026, 10, 3), draft.issue_date
+    assert_equal Date.new(2026, 10, 18), draft.due_date
+    assert_equal "INV-202610-2", draft.number
+  end
+
+  test "keeps an issue date that is changed while sending" do
+    draft = invoices(:globex_draft)
+
+    travel_to Date.new(2026, 10, 3) do
+      draft.update!(status: "sent", issue_date: Date.new(2026, 9, 20))
+    end
+
+    assert_equal Date.new(2026, 9, 20), draft.issue_date
+  end
+
+  test "keeps both dates when the due date is changed while sending" do
+    draft = invoices(:globex_draft)
+
+    travel_to Date.new(2026, 10, 3) do
+      draft.update!(status: "sent", due_date: Date.new(2026, 10, 15))
+    end
+
+    assert_equal [ Date.new(2026, 9, 15), Date.new(2026, 10, 15) ], [ draft.issue_date, draft.due_date ]
+  end
+
+  test "keeps a later issue date and no due date when sent" do
+    draft = invoices(:globex_draft)
+    draft.update!(issue_date: Date.new(2026, 10, 10))
+
+    travel_to Date.new(2026, 10, 3) do
+      draft.update!(status: "sent")
+    end
+
+    assert_equal Date.new(2026, 10, 10), draft.issue_date
+    assert_nil draft.due_date
+  end
+
+  test "keeps its number when cancelled and reopened" do
+    @invoice.update!(status: "cancelled")
+    @invoice.update!(status: "sent")
+
+    assert_equal [ 1, "INV-001" ], [ @invoice.sequence, @invoice.number ]
+    assert_equal 2, @invoice.company.reload.next_invoice_number
+  end
+
+  test "can't go back to draft once issued" do
+    @invoice.status = "draft"
+
+    assert_not @invoice.valid?
+    assert_includes @invoice.errors[:status], "can't go back to draft once the invoice is issued"
+  end
+
+  test "can delete a draft but not an issued invoice" do
+    assert_not @invoice.destroy
+    assert_includes @invoice.errors[:base], "Only drafts can be deleted. Cancel the invoice instead."
+    assert Invoice.exists?(@invoice.id)
+
+    assert invoices(:globex_draft).destroy
+  end
+
+  test "database rejects a draft with a number" do
+    assert_raises ActiveRecord::CheckViolation do
+      invoices(:globex_draft).update_columns(number: "INV-9", sequence: 9)
+    end
+  end
+
+  test "database rejects an issued invoice without a number" do
+    assert_raises ActiveRecord::CheckViolation do
+      @invoice.update_columns(number: nil, sequence: nil)
+    end
+  end
+
+  test "ignores a number set before saving" do
+    invoice = create_invoice(companies(:one), status: "sent", number: "SPECIAL-7")
+
+    assert_equal "INV-2", invoice.number
+  end
+
+  test "database rejects a sequence used twice in the same company" do
+    assert_raises ActiveRecord::RecordNotUnique do
+      create_invoice(companies(:one), status: "sent").update_column(:sequence, 1)
+    end
   end
 
   test "previews the next number without reserving it" do
     company = companies(:one)
 
-    assert_equal "INV-1", company.preview_invoice_number(Date.current)
-    assert_equal "INV-1", company.preview_invoice_number(Date.current)
-    assert_equal 1, company.reload.next_invoice_number
+    assert_equal "INV-2", company.preview_invoice_number(Date.current)
+    assert_equal "INV-2", company.preview_invoice_number(Date.current)
+    assert_equal 2, company.reload.next_invoice_number
   end
 
   test "rejects unknown statuses and billing types" do
@@ -88,12 +164,10 @@ class InvoiceTest < ActiveSupport::TestCase
     assert_includes @invoice.errors[:billing_type], "is not included in the list"
   end
 
-  test "requires a number that is unique within the company" do
-    duplicate = companies(:one).invoices.new(@invoice.attributes.slice("client_id", "currency", "issue_date", "number"))
-    duplicate.items.build(description: "Work", quantity: 1, unit_price: 10)
-
-    assert_not duplicate.valid?
-    assert_includes duplicate.errors[:number], "has already been taken"
+  test "database rejects a number used twice in the same company" do
+    assert_raises ActiveRecord::RecordNotUnique do
+      create_invoice(companies(:one), status: "sent").update_column(:number, "INV-001")
+    end
   end
 
   test "allows the same number in different companies" do
@@ -154,7 +228,7 @@ class InvoiceTest < ActiveSupport::TestCase
   end
 
   test "numbers items in order" do
-    invoice = companies(:one).invoices.new(client: clients(:globex), number: "INV-002", currency: "USD", issue_date: Date.current)
+    invoice = companies(:one).invoices.new(client: clients(:globex), currency: "USD", issue_date: Date.current)
     invoice.items.build(description: "First", quantity: 1, unit_price: 10)
     invoice.items.build(description: "Second", quantity: 1, unit_price: 20)
 
@@ -198,19 +272,29 @@ class InvoiceTest < ActiveSupport::TestCase
   end
 
   test "destroys its items when destroyed" do
-    assert_difference "InvoiceItem.count", -2 do
-      @invoice.destroy!
+    assert_difference "InvoiceItem.count", -1 do
+      invoices(:globex_draft).destroy!
     end
   end
 
-  test "sorts by number in creation order, so INV-9 comes before INV-10" do
+  test "sorts by number, not by when the invoice was created, so INV-9 comes before INV-10" do
     company = companies(:one)
     company.update!(next_invoice_number: 9)
-    nine = create_invoice(company)
-    ten = create_invoice(company)
+    created_first = create_invoice(company)
+    created_second = create_invoice(company, status: "sent")
+    created_first.update!(status: "sent")
+    scope = company.invoices.where(id: [ created_first, created_second ])
 
-    assert_equal [ "INV-9", "INV-10" ], company.invoices.where(id: [ nine, ten ]).sorted_by("number", "asc").map(&:number)
-    assert_equal [ "INV-10", "INV-9" ], company.invoices.where(id: [ nine, ten ]).sorted_by("number", "desc").map(&:number)
+    assert_equal [ "INV-9", "INV-10" ], scope.sorted_by("number", "asc").map(&:number)
+    assert_equal [ "INV-10", "INV-9" ], scope.sorted_by("number", "desc").map(&:number)
+  end
+
+  test "sorts drafts after the highest number" do
+    company = companies(:one)
+    scope = company.invoices.where(id: [ @invoice, invoices(:globex_draft) ])
+
+    assert_equal [ "INV-001", nil ], scope.sorted_by("number", "asc").map(&:number)
+    assert_equal [ nil, "INV-001" ], scope.sorted_by("number", "desc").map(&:number)
   end
 
   test "sorts by client name ignoring case" do

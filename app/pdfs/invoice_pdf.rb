@@ -14,7 +14,7 @@ class InvoicePdf
   end
 
   def render
-    @pdf = Prawn::Document.new(page_size: "A4", margin: 36, info: { Title: "Invoice #{invoice.number}" })
+    @pdf = Prawn::Document.new(page_size: "A4", margin: 36, info: { Title: invoice_title(invoice) })
     use_lato
 
     header
@@ -27,7 +27,7 @@ class InvoicePdf
   end
 
   def filename
-    "#{invoice.number.gsub(/[^\w.-]+/, "-")}.pdf"
+    invoice.number ? "#{invoice.number.gsub(/[^\w.-]+/, "-")}.pdf" : "draft-invoice.pdf"
   end
 
   private
@@ -76,7 +76,7 @@ class InvoicePdf
       width = pdf.bounds.width
 
       pdf.bounding_box([ 8, top ], width: width * 0.38 - 8) do
-        detail "Number", invoice.number
+        detail "Number", invoice.number || "Draft"
         detail "Invoice Date", format_date(invoice.issue_date)
         detail "Due Date", format_date(invoice.due_date) if invoice.due_date
         detail "Paid On", format_date(invoice.paid_on) if invoice.paid?

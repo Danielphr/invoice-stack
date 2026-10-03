@@ -35,7 +35,7 @@ class ClientsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should show an empty state when there are no clients" do
-    @user.company.invoices.destroy_all
+    remove_invoices(@user.company)
     @user.company.clients.destroy_all
 
     get clients_url

@@ -23,7 +23,7 @@ class InvoiceNumberingConcurrencyTest < ActiveSupport::TestCase
       Thread.new do
         ActiveRecord::Base.connection_pool.with_connection do
           company = Company.find(@company.id)
-          invoice = company.invoices.new(client_id: @client.id, currency: "USD", issue_date: Date.current)
+          invoice = company.invoices.new(client_id: @client.id, status: "sent", currency: "USD", issue_date: Date.current)
           invoice.items.build(description: "Work", quantity: 1, unit_price: 100)
 
           gate.pop

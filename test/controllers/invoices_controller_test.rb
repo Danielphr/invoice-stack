@@ -28,7 +28,7 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
     get invoices_url
 
     assert_response :success
-    assert_select "tbody tr", 1
+    assert_select "tbody tr", 2
     assert_select "tbody tr", /INV-001/
     assert_select "tbody tr", /Globex Corporation/
     assert_select "tbody tr", /\$2,150.00 USD/
@@ -44,15 +44,15 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
     assert_select "tbody td", "Hourly"
   end
 
-  test "should sort by number, newest first, by default" do
-    newer = @user.company.invoices.create!(client: clients(:initech), currency: "USD", issue_date: Date.new(2026, 8, 1),
+  test "should sort by number, drafts and newest first, by default" do
+    @user.company.invoices.create!(client: clients(:initech), status: "sent", currency: "USD", issue_date: Date.new(2026, 8, 1),
       items_attributes: [ { description: "Support", quantity: 1, unit_price: 100 } ])
 
     get invoices_url
 
     assert_select "th[aria-sort=descending]", /Number/
     assert_select "th[aria-sort]", 1
-    assert_select "tbody tr:first-child", /#{newer.number}/
+    assert_equal [ "Draft", "INV-2", "INV-001" ], css_select("tbody tr td:first-child").map { it.text.strip }
     assert_select "th a[href=?]", invoices_path(sort: "number", direction: "asc")
   end
 
@@ -93,7 +93,7 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
 
     get invoices_url(sort: "client", direction: "asc", page: 2)
 
-    assert_select "tbody tr", 2
+    assert_select "tbody tr", 3
     assert_select "nav.pagy a[aria-current=page]", "2"
   end
 
@@ -111,8 +111,35 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to invoices_url(page: 2, sort: "client")
   end
 
+  test "should show drafts without a number" do
+    draft = invoices(:globex_draft)
+
+    get invoices_url
+    assert_select "tbody a[href=?]", invoice_path(draft), "Draft"
+
+    get invoice_url(draft)
+    assert_select "h1", "Draft invoice"
+
+    @user.company.update!(invoice_number_pattern: "INV-{YEAR}-{NUMBER}")
+    travel_to Date.new(2027, 1, 4) do
+      get edit_invoice_url(draft)
+    end
+    assert_select "input[name=?][disabled][placeholder=?]", "invoice[number]", "INV-2027-2"
+    assert_select "p", "Assigned when the invoice is sent."
+  end
+
+  test "should not offer draft as a status once the invoice is issued" do
+    get edit_invoice_url(@invoice)
+    assert_select "select[name=?] option[value=draft]", "invoice[status]", count: 0
+    assert_select "p", text: /assigns the invoice number/, count: 0
+
+    get edit_invoice_url(invoices(:globex_draft))
+    assert_select "select[name=?] option[value=draft]", "invoice[status]"
+    assert_select "p", "Changing the status from Draft assigns the invoice number."
+  end
+
   test "should show an empty state when there are no invoices" do
-    @user.company.invoices.destroy_all
+    remove_invoices(@user.company)
 
     get invoices_url
 
@@ -156,18 +183,12 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
     assert_select "tbody a[href=?][target=_blank]", invoice_path(@invoice, format: :pdf), text: /PDF/
   end
 
-  test "should offer to edit and delete each invoice from the list" do
-    @invoice.update!(status: "sent")
-
+  test "should offer to edit each invoice from the list, leaving deletion to the invoice page" do
     get invoices_url
 
     assert_select "tbody a[href=?]", edit_invoice_path(@invoice), text: /Edit/
-    assert_select "tbody form[action=?][data-turbo-confirm=?]", invoice_path(@invoice),
-      "Invoice INV-001 has been sent. Deleting it removes it permanently and leaves a gap in your numbering. " \
-      "Consider cancelling it instead." do
-      assert_select "input[name=_method][value=delete]"
-      assert_select "button", /Delete/
-    end
+    assert_select "tbody a[href=?]", edit_invoice_path(invoices(:globex_draft)), text: /Edit/
+    assert_select "tbody form", count: 0
   end
 
   test "should link to the PDF from the invoice page" do
@@ -235,18 +256,16 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "should show the next number in a locked field on new" do
+  test "should show the next number in a disabled field on new" do
     get new_invoice_url
 
-    assert_select "input[name=?][readonly][placeholder=?]", "invoice[number]", "INV-1"
-    assert_select "button", "Override"
-    assert_select "[data-field-override-target=warning][hidden]"
+    assert_select "input[name=?][disabled][placeholder=?]", "invoice[number]", "INV-2"
   end
 
-  test "should show the current number in a locked field on edit" do
+  test "should show the current number in a disabled field on edit" do
     get edit_invoice_url(@invoice)
 
-    assert_select "input[name=?][readonly][value=?]", "invoice[number]", "INV-001"
+    assert_select "input[name=?][disabled][value=?]", "invoice[number]", "INV-001"
   end
 
   test "should label item inputs with their column headers" do
@@ -261,7 +280,7 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should ask for a client first when the company has none" do
-    @user.company.invoices.destroy_all
+    remove_invoices(@user.company)
     @user.company.clients.destroy_all
 
     get new_invoice_url
@@ -281,38 +300,26 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
     invoice = Invoice.order(:created_at).last
     assert_redirected_to invoice_url(invoice)
     assert_equal @user.company, invoice.company
-    assert_equal "INV-1", invoice.number
+    assert invoice.draft?
+    assert_nil invoice.number
     assert_equal [ "Design", "Support" ], invoice.items.map(&:description)
     assert_equal BigDecimal("621.50"), invoice.total
   end
 
-  test "should create an invoice with an overridden number" do
-    post invoices_url, params: { invoice: invoice_params(number: "SPECIAL-1", items_attributes: {
+  test "should ignore a submitted number when creating an invoice" do
+    post invoices_url, params: { invoice: invoice_params(number: "SPECIAL-1", status: "sent", items_attributes: {
       "0" => { description: "Design", quantity: "1", unit_price: "500" }
     }) }
 
-    assert_equal "SPECIAL-1", Invoice.order(:created_at).last.number
-    assert_equal 1, @user.company.reload.next_invoice_number
+    assert_equal "INV-2", Invoice.order(:created_at).last.number
   end
 
-  test "should reject an overridden number that is already used and keep the field unlocked" do
-    assert_no_difference "Invoice.count" do
-      post invoices_url, params: { invoice: invoice_params(number: "INV-001", items_attributes: {
-        "0" => { description: "Design", quantity: "1", unit_price: "500" }
-      }) }
-    end
+  test "should ignore a submitted number when updating an invoice" do
+    patch invoice_url(@invoice), params: { invoice: { number: "SPECIAL-1", notes: "Thanks!" } }
 
-    assert_response :unprocessable_entity
-    assert_select "[role=alert] li", "Number has already been taken"
-    assert_select "input[name=?][value=?]:not([readonly])", "invoice[number]", "INV-001"
-    assert_select "[data-field-override-target=warning]:not([hidden])"
-  end
-
-  test "should not allow removing the number of an existing invoice" do
-    patch invoice_url(@invoice), params: { invoice: { number: "" } }
-
-    assert_response :unprocessable_entity
-    assert_select "[role=alert] li", "Number can't be blank"
+    assert_redirected_to invoice_url(@invoice)
+    assert_equal "Thanks!", @invoice.reload.notes
+    assert_equal "INV-001", @invoice.number
   end
 
   test "should not create an invoice without items" do
@@ -375,15 +382,17 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
     get edit_invoice_url(@invoice)
     assert_select "[role=note]", /This invoice has been sent/
 
-    @invoice.update!(status: "draft")
-    get edit_invoice_url(@invoice)
+    get edit_invoice_url(invoices(:globex_draft))
     assert_select "[role=note]", count: 0
   end
 
-  test "should ask for a stronger confirmation before deleting a sent invoice" do
+  test "should offer to delete only drafts from the invoice page" do
     get invoice_url(@invoice)
+    assert_select "form[action=?] input[name=_method][value=delete]", invoice_path(@invoice), count: 0
 
-    assert_select "form[data-turbo-confirm*=?]", "Consider cancelling it instead."
+    draft = invoices(:globex_draft)
+    get invoice_url(draft)
+    assert_select "form[action=?][data-turbo-confirm=?]", invoice_path(draft), "Delete this draft? This cannot be undone."
   end
 
   test "should not update an invoice with invalid data" do
@@ -413,26 +422,24 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "INV-001", @other_invoice.reload.number
   end
 
-  test "should destroy an invoice and its items" do
-    assert_difference({ "Invoice.count" => -1, "InvoiceItem.count" => -2 }) do
-      delete invoice_url(@invoice)
+  test "should delete a draft and its items" do
+    assert_difference({ "Invoice.count" => -1, "InvoiceItem.count" => -1 }) do
+      delete invoice_url(invoices(:globex_draft))
     end
 
     assert_redirected_to invoices_url
+    follow_redirect!
+    assert_select "[role=status]", "Draft deleted."
   end
 
-  test "should return to the same page and sort after deleting from the list" do
-    create_invoices(11)
+  test "should refuse to delete an issued invoice" do
+    assert_no_difference "Invoice.count" do
+      delete invoice_url(@invoice)
+    end
 
-    get invoices_url
-    assert_select "tbody form input[name=page]", count: 0
-
-    get invoices_url(sort: "client", direction: "asc", page: 2)
-    assert_select "tbody form input[type=hidden][name=page][value='2']"
-
-    delete invoice_url(@invoice), params: { sort: "client", direction: "asc", page: "2" }
-
-    assert_redirected_to invoices_url(direction: "asc", page: "2", sort: "client")
+    assert_redirected_to invoice_url(@invoice)
+    follow_redirect!
+    assert_select "[role=alert]", "Only drafts can be deleted. Cancel the invoice instead."
   end
 
   test "should not expose or delete another company's invoice" do

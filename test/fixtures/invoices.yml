@@ -2,6 +2,7 @@ globex_website:
   company: one
   client: globex
   number: INV-001
+  sequence: 1
   status: sent
   currency: USD
   issue_date: 2026-09-01
@@ -12,5 +13,13 @@ other_company_invoice:
   company: other
   client: other_company_client
   number: INV-001
+  sequence: 1
+  status: sent
   currency: EUR
   issue_date: 2026-09-01
+
+globex_draft:
+  company: one
+  client: globex
+  currency: USD
+  issue_date: 2026-09-15

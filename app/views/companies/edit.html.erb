@@ -135,8 +135,11 @@
         <%= form.label :next_invoice_number, class: "label" do %>
           <%= Company.human_attribute_name(:next_invoice_number) %> <span class="text-red-500" aria-hidden="true">*</span>
         <% end %>
-        <%= form.number_field :next_invoice_number, required: true, min: 1, max: 999_999_999, class: "input mt-2" %>
-        <p class="mt-2 text-xs text-gray-500">Numbers that are already used are skipped automatically.</p>
+        <% lowest = @company.lowest_next_invoice_number %>
+        <%= form.number_field :next_invoice_number, required: true, min: lowest, max: 999_999_999, class: "input mt-2" %>
+        <% if lowest > 1 %>
+          <p class="mt-2 text-xs text-gray-500">Numbers below <%= lowest %> are already used.</p>
+        <% end %>
       </div>
     </div>
 

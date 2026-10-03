@@ -19,6 +19,28 @@ module InvoicesHelper
     end
   end
 
+  def invoice_title(invoice)
+    invoice.number ? "Invoice #{invoice.number}" : "Draft invoice"
+  end
+
+  def invoice_number_preview(invoice)
+    invoice.company.preview_invoice_number(invoice.issue_date_when_sent)
+  end
+
+  def send_invoice_confirmation(invoice)
+    date = invoice.issue_date_when_sent
+    message = "Send this invoice as #{invoice_number_preview(invoice)}?"
+    message += " It will be dated #{l(date, format: :long)}." if date != invoice.issue_date
+
+    "#{message} Its number is final: it can be cancelled, but not deleted or turned back into a draft."
+  end
+
+  def invoice_status_options(invoice)
+    statuses = Invoice.statuses.keys
+    statuses -= [ "draft" ] if invoice.sequence_in_database
+    statuses.map { [ it.humanize, it ] }
+  end
+
   def invoice_status_badge(invoice)
     status = invoice.overdue? ? "overdue" : invoice.status
 
@@ -57,23 +79,6 @@ module InvoicesHelper
     return unless status
 
     "This invoice has been #{status}. Your client may already have it, so any change alters a document you already issued."
-  end
-
-  def invoice_number_warning(invoice)
-    if (status = issued_status(invoice))
-      "This invoice has already been #{status}; changing its number can confuse your client and your records. " \
-        "Manual numbers must be unique."
-    else
-      "Manual numbers must be unique. The automatic sequence will skip any number you use."
-    end
-  end
-
-  def delete_invoice_confirmation(invoice)
-    return "Delete invoice #{invoice.number}? This cannot be undone." if invoice.draft?
-
-    message = "Invoice #{invoice.number} has been #{invoice.status}. " \
-      "Deleting it removes it permanently and leaves a gap in your numbering."
-    invoice.sent? ? "#{message} Consider cancelling it instead." : message
   end
 
   private

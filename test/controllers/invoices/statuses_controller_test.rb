@@ -15,15 +15,24 @@ class Invoices::StatusesControllerTest < ActionDispatch::IntegrationTest
     assert_equal Time.find_zone(@invoice.company.time_zone).today, @invoice.paid_on
 
     follow_redirect!
-    assert_select "[role=status]", "Invoice marked as paid."
+    assert_select "[role=status]", "Invoice INV-001 marked as paid."
   end
 
-  test "should mark a draft as sent" do
-    @invoice.update!(status: "draft")
+  test "should mark a draft as sent and give it the next number" do
+    draft = invoices(:globex_draft)
 
-    patch invoice_status_url(@invoice), params: { status: "sent" }
+    patch invoice_status_url(draft), params: { status: "sent" }
 
-    assert @invoice.reload.sent?
+    assert draft.reload.sent?
+    assert_equal "INV-2", draft.number
+    follow_redirect!
+    assert_select "[role=status]", "Invoice INV-2 marked as sent."
+  end
+
+  test "should confirm before sending a draft" do
+    get invoice_url(invoices(:globex_draft))
+
+    assert_select "form[action=?][data-turbo-confirm^=?]", invoice_status_path(invoices(:globex_draft)), "Send this invoice as INV-2?"
   end
 
   test "should cancel an invoice" do
@@ -58,12 +67,15 @@ class Invoices::StatusesControllerTest < ActionDispatch::IntegrationTest
     patch invoice_status_url(other_invoice), params: { status: "paid" }
 
     assert_response :not_found
-    assert other_invoice.reload.draft?
+    assert other_invoice.reload.sent?
   end
 
   test "should offer the next actions for each status" do
-    { "draft" => [ "Mark as sent" ], "sent" => [ "Mark as paid", "Cancel invoice" ],
-      "paid" => [ "Reopen" ], "cancelled" => [ "Reopen" ] }.each do |status, actions|
+    draft = invoices(:globex_draft)
+    get invoice_url(draft)
+    assert_equal [ "Mark as sent" ], css_select("form[action='#{invoice_status_path(draft)}'] button").map(&:text)
+
+    { "sent" => [ "Mark as paid", "Cancel invoice" ], "paid" => [ "Reopen" ], "cancelled" => [ "Reopen" ] }.each do |status, actions|
       @invoice.update!(status: status)
 
       get invoice_url(@invoice)
