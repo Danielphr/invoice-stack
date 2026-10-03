@@ -1,11 +1,19 @@
 import { Controller } from "@hotwired/stimulus"
-import { Chart, registerables } from "chart.js"
-
-Chart.register(...registerables)
-Chart.defaults.font.family = "Inter, ui-sans-serif, system-ui, sans-serif"
-Chart.defaults.color = "#94a3b8"
 
 const PURPLE = "#9c42e5"
+
+// Chart.js is only downloaded on pages that show a chart, the first time one appears.
+let loadingChart
+
+function loadChart() {
+  loadingChart ??= import("chart.js").then(({ Chart, registerables }) => {
+    Chart.register(...registerables)
+    Chart.defaults.font.family = "Inter, ui-sans-serif, system-ui, sans-serif"
+    Chart.defaults.color = "#94a3b8"
+    return Chart
+  })
+  return loadingChart
+}
 
 // Draws a dashboard chart from data rendered by the server:
 // "area" for revenue over time, "bars" for revenue by client.
@@ -13,7 +21,11 @@ export default class extends Controller {
   static targets = [ "canvas" ]
   static values = { type: { type: String, default: "area" }, labels: Array, amounts: Array, colors: Array, currency: String }
 
-  connect() {
+  async connect() {
+    const Chart = await loadChart()
+    // The page may have changed while Chart.js was loading.
+    if (!this.element.isConnected) return
+
     this.chart = new Chart(this.canvasTarget, this.typeValue === "bars" ? this.#barsConfig() : this.#areaConfig())
   }
 

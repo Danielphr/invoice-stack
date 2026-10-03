@@ -21,7 +21,7 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_select "nav a[href=?]", invoices_path, "Invoices"
   end
 
-  test "should show revenue, outstanding, overdue and draft totals" do
+  test "should show revenue, due soon and overdue totals" do
     travel_to Date.new(2026, 10, 15) do
       get root_url
     end
@@ -150,6 +150,12 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
 
     assert_select "section p", text: "No payments in this period.", count: 2
     assert_select "[data-controller=chart]", count: 0
+  end
+
+  test "should not preload Chart.js on every page" do
+    get clients_url
+
+    assert_no_match %r{modulepreload" href="/assets/chart\.js}, response.body
   end
 
   test "should show current user, company and log out" do
