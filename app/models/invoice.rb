@@ -42,13 +42,9 @@ class Invoice < ApplicationRecord
     arel_table[:status].eq("sent").and(arel_table[:due_date].lt(Date.current))
   end
 
-  # Sums invoice totals in the database; combine with group to get one total per currency, month or client.
+  # Sums invoice totals in the database; combine with group to get one total per month or client.
   def self.sum_of_totals
     sum(TOTAL_SQL)
-  end
-
-  def self.total_by_currency
-    group(:currency).order(:currency).sum_of_totals
   end
 
   def self.sorted_by(column, direction)

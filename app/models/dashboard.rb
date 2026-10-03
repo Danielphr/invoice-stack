@@ -1,17 +1,16 @@
-# The numbers behind the dashboard for one company. Amounts are kept per currency,
+# The numbers behind the dashboard for one company, in one currency at a time,
 # since totals in different currencies can't be added together.
 class Dashboard
   PERIODS = %w[ all year last_year quarter month ].freeze
-  Summary = Data.define(:count, :totals)
-  ClientRevenue = Data.define(:client_id, :client_name, :currency, :amount)
+  Summary = Data.define(:count, :total)
+  ClientRevenue = Data.define(:client_id, :client_name, :amount)
 
-  attr_reader :period
+  attr_reader :period, :currency, :currencies
 
-  delegate :default_currency, to: :@company
-
-  def initialize(company, period: nil)
-    @company = company
-    @invoices = company.invoices
+  def initialize(company, period: nil, currency: nil)
+    @currencies = company.invoices.distinct.order(:currency).pluck(:currency)
+    @currency = currency.presence_in(@currencies) || default_currency_for(company)
+    @invoices = company.invoices.where(currency: @currency)
     @period = period.presence_in(PERIODS) || "all"
   end
 
@@ -32,29 +31,26 @@ class Dashboard
     @invoices.draft.count
   end
 
-  # Revenue over the period, oldest first, including empty days or months: { Date => { "USD" => amount } }.
+  # Revenue over the period, oldest first, including empty days or months: { Date => amount }.
   # "This month" is broken down by day; every other period by month.
   def revenue_over_time
     range = chart_range or return {}
-    by_day = chart_by_day?
-    group = by_day ? :paid_on : Arel.sql("DATE_TRUNC('month', invoices.paid_on)::date")
-    sums = @invoices.paid.where(paid_on: range).group(group, :currency).sum_of_totals
-    buckets = by_day ? range.to_a : range.select { it.day == 1 }
+    group = chart_by_day? ? :paid_on : Arel.sql("DATE_TRUNC('month', invoices.paid_on)::date")
+    sums = @invoices.paid.where(paid_on: range).group(group).sum_of_totals
+    buckets = chart_by_day? ? range.to_a : range.select { it.day == 1 }
 
-    buckets.index_with do |bucket|
-      sums.filter_map { |(sum_bucket, currency), amount| [ currency, amount ] if sum_bucket == bucket }.sort.to_h
-    end
+    buckets.index_with { sums.fetch(it, 0) }
   end
 
   def chart_by_day?
     period == "month"
   end
 
-  # The highest-paying clients in each currency.
-  def top_clients(limit: 5)
-    paid_in_period.joins(:client).group("clients.id", "clients.name", :currency).sum_of_totals
-      .map { |(client_id, client_name, currency), amount| ClientRevenue.new(client_id:, client_name:, currency:, amount:) }
-      .group_by(&:currency).sort.flat_map { |_currency, revenues| revenues.max_by(limit, &:amount) }
+  # The highest-paying clients in the period.
+  def top_clients(limit: 8)
+    paid_in_period.joins(:client).group("clients.id", "clients.name").sum_of_totals
+      .map { |(client_id, client_name), amount| ClientRevenue.new(client_id:, client_name:, amount:) }
+      .max_by(limit, &:amount)
   end
 
   def recent_payments(limit: 5)
@@ -62,6 +58,10 @@ class Dashboard
   end
 
   private
+    def default_currency_for(company)
+      @currencies.include?(company.default_currency) || @currencies.empty? ? company.default_currency : @currencies.first
+    end
+
     def paid_in_period
       range = period_range
       range ? @invoices.paid.where(paid_on: range) : @invoices.paid
@@ -92,6 +92,6 @@ class Dashboard
     end
 
     def summarize(invoices)
-      Summary.new(count: invoices.count, totals: invoices.total_by_currency)
+      Summary.new(count: invoices.count, total: invoices.sum_of_totals)
     end
 end

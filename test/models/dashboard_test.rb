@@ -6,53 +6,65 @@ class DashboardTest < ActiveSupport::TestCase
     travel_to Date.new(2026, 10, 15)
   end
 
-  test "counts revenue by payment date within the period, per currency" do
+  test "counts revenue by payment date within the period" do
     paid(100, paid_on: Date.new(2026, 10, 3))
-    paid(50, paid_on: Date.new(2026, 10, 10), currency: "EUR")
     paid(200, paid_on: Date.new(2026, 7, 1))
     paid(300, paid_on: Date.new(2025, 12, 20), issue_date: Date.new(2025, 12, 1))
 
-    assert_equal({ "EUR" => 50, "USD" => 100 }, revenue_for("month"))
-    assert_equal({ "EUR" => 50, "USD" => 100 }, revenue_for("quarter"))
-    assert_equal({ "EUR" => 50, "USD" => 300 }, revenue_for("year"))
-    assert_equal({ "USD" => 300 }, revenue_for("last_year"))
-    assert_equal({ "EUR" => 50, "USD" => 600 }, revenue_for("all"))
-    assert_equal 2, Dashboard.new(@company, period: "month").revenue.count
+    assert_equal 100, revenue_for("month")
+    assert_equal 100, revenue_for("quarter")
+    assert_equal 300, revenue_for("year")
+    assert_equal 300, revenue_for("last_year")
+    assert_equal 600, revenue_for("all")
+    assert_equal 1, Dashboard.new(@company, period: "month").revenue.count
   end
 
   test "counts a payment in the month it was received, not the month it was issued" do
     paid(100, issue_date: Date.new(2026, 9, 20), paid_on: Date.new(2026, 10, 2))
 
-    assert_equal({ "USD" => 100 }, revenue_for("month"))
+    assert_equal 100, revenue_for("month")
   end
 
   test "falls back to all time for an unknown period" do
     assert_equal "all", Dashboard.new(@company, period: "decade").period
   end
 
+  test "shows one currency at a time, starting with the company's default" do
+    paid(100, paid_on: Date.new(2026, 10, 3))
+    paid(70, paid_on: Date.new(2026, 10, 4), currency: "EUR")
+
+    assert_equal %w[ EUR USD ], Dashboard.new(@company).currencies
+    assert_equal "USD", Dashboard.new(@company).currency
+    assert_equal 70, Dashboard.new(@company, currency: "EUR").revenue.total
+    assert_equal "USD", Dashboard.new(@company, currency: "XYZ").currency
+  end
+
+  test "starts with a currency in use when the default has no invoices" do
+    remove_invoices(@company)
+    paid(70, paid_on: Date.new(2026, 10, 4), currency: "EUR")
+
+    assert_equal "EUR", Dashboard.new(@company).currency
+  end
+
   test "summarizes outstanding and overdue invoices and counts drafts" do
     create_invoice(500, status: "sent", issue_date: Date.new(2026, 10, 1), due_date: Date.new(2026, 10, 30))
     dashboard = Dashboard.new(@company)
 
-    assert_equal 2, dashboard.outstanding.count
-    assert_equal({ "USD" => 2650 }, dashboard.outstanding.totals)
-    assert_equal 1, dashboard.overdue.count
-    assert_equal({ "USD" => 2150 }, dashboard.overdue.totals)
+    assert_equal [ 2, 2650 ], [ dashboard.outstanding.count, dashboard.outstanding.total ]
+    assert_equal [ 1, 2150 ], [ dashboard.overdue.count, dashboard.overdue.total ]
     assert_equal 1, dashboard.drafts_count
   end
 
   test "charts revenue by month over the period, including empty months" do
     paid(100, paid_on: Date.new(2026, 10, 3))
-    paid(50, paid_on: Date.new(2026, 10, 10), currency: "EUR")
     paid(300, paid_on: Date.new(2026, 2, 20))
     paid(999, paid_on: Date.new(2025, 12, 31), issue_date: Date.new(2025, 12, 1))
+    paid(50, paid_on: Date.new(2026, 10, 10), currency: "EUR")
 
     series = Dashboard.new(@company, period: "year").revenue_over_time
 
     assert_equal (1..10).map { Date.new(2026, it, 1) }, series.keys
-    assert_equal({ "USD" => 300 }, series[Date.new(2026, 2, 1)])
-    assert_equal({ "EUR" => 50, "USD" => 100 }, series[Date.new(2026, 10, 1)])
-    assert_equal({}, series[Date.new(2026, 5, 1)])
+    assert_equal [ 300, 0, 100 ], [ series[Date.new(2026, 2, 1)], series[Date.new(2026, 5, 1)], series[Date.new(2026, 10, 1)] ]
   end
 
   test "charts this month by day, up to today" do
@@ -63,7 +75,7 @@ class DashboardTest < ActiveSupport::TestCase
 
     assert dashboard.chart_by_day?
     assert_equal (1..15).map { Date.new(2026, 10, it) }, series.keys
-    assert_equal({ "USD" => 100 }, series[Date.new(2026, 10, 3)])
+    assert_equal 100, series[Date.new(2026, 10, 3)]
   end
 
   test "charts all time from the month of the first payment" do
@@ -77,15 +89,14 @@ class DashboardTest < ActiveSupport::TestCase
     assert_empty Dashboard.new(@company).revenue_over_time
   end
 
-  test "ranks the top clients within each currency" do
+  test "ranks the top clients in the currency" do
     paid(100, paid_on: Date.new(2026, 10, 3), client: clients(:globex))
     paid(400, paid_on: Date.new(2026, 10, 4), client: clients(:initech))
-    paid(80, paid_on: Date.new(2026, 10, 5), client: clients(:globex), currency: "EUR")
+    paid(900, paid_on: Date.new(2026, 10, 5), client: clients(:globex), currency: "EUR")
 
-    top = Dashboard.new(@company).top_clients(limit: 1)
-
-    assert_equal [ [ "EUR", "Globex Corporation", 80 ], [ "USD", "Initech", 400 ] ],
-      top.map { [ it.currency, it.client_name, it.amount ] }
+    assert_equal [ [ "Initech", 400 ], [ "Globex Corporation", 100 ] ],
+      Dashboard.new(@company).top_clients.map { [ it.client_name, it.amount ] }
+    assert_equal [ "Initech" ], Dashboard.new(@company).top_clients(limit: 1).map(&:client_name)
   end
 
   test "lists the most recent payments first" do
@@ -98,12 +109,12 @@ class DashboardTest < ActiveSupport::TestCase
   test "only counts the company's own invoices" do
     paid(700, paid_on: Date.new(2026, 10, 3), company: companies(:other), client: clients(:other_company_client))
 
-    assert_empty Dashboard.new(@company).revenue.totals
+    assert_equal 0, Dashboard.new(@company).revenue.total
   end
 
   private
     def revenue_for(period)
-      Dashboard.new(@company, period:).revenue.totals
+      Dashboard.new(@company, period:).revenue.total
     end
 
     def paid(amount, paid_on:, issue_date: paid_on, **attributes)

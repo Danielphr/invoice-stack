@@ -3,23 +3,30 @@
 <div class="flex flex-wrap items-center justify-between gap-4">
   <h1 class="text-2xl font-semibold text-gray-900">Dashboard</h1>
 
-  <nav aria-label="Period" class="flex flex-wrap gap-1 rounded-lg bg-white p-1 text-sm font-medium shadow-sm ring-1 ring-gray-900/5">
-    <% Dashboard::PERIODS.each do |period| %>
-      <% current = period == @dashboard.period %>
-      <%= link_to dashboard_period_label(period), root_path(period: (period unless period == "all")),
-            aria: { current: (current ? "true" : nil) },
-            class: [ "rounded-md px-3 py-1.5", current ? "bg-brand-600 text-white" : "text-gray-600 hover:bg-gray-100 hover:text-gray-900" ] %>
+  <div class="flex flex-wrap gap-3">
+    <% if @dashboard.currencies.many? %>
+      <nav aria-label="Currency" class="flex gap-1 rounded-lg bg-white p-1 text-sm font-medium shadow-sm ring-1 ring-gray-900/5">
+        <% @dashboard.currencies.each do |currency| %>
+          <%= dashboard_filter_link @dashboard, currency, currency: %>
+        <% end %>
+      </nav>
     <% end %>
-  </nav>
+
+    <nav aria-label="Period" class="flex flex-wrap gap-1 rounded-lg bg-white p-1 text-sm font-medium shadow-sm ring-1 ring-gray-900/5">
+      <% Dashboard::PERIODS.each do |period| %>
+        <%= dashboard_filter_link @dashboard, dashboard_period_label(period), period: %>
+      <% end %>
+    </nav>
+  </div>
 </div>
 
 <dl class="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
   <%= render "stat", label: "Revenue · #{dashboard_period_label(@dashboard.period)}", icon: :currency, tone: "bg-brand-50 text-brand-600",
-        totals: @dashboard.revenue.totals, count: @dashboard.revenue.count, empty: "No payments" %>
+        summary: @dashboard.revenue, currency: @dashboard.currency, empty: "No payments" %>
   <%= render "stat", label: "Outstanding", icon: :clock, tone: "bg-amber-50 text-amber-600",
-        totals: @dashboard.outstanding.totals, count: @dashboard.outstanding.count, empty: "Nothing due" %>
+        summary: @dashboard.outstanding, currency: @dashboard.currency, empty: "Nothing due" %>
   <%= render "stat", label: "Overdue", icon: :warning, tone: "bg-red-50 text-red-600",
-        totals: @dashboard.overdue.totals, count: @dashboard.overdue.count, empty: "Nothing overdue" %>
+        summary: @dashboard.overdue, currency: @dashboard.currency, empty: "Nothing overdue" %>
 
   <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-900/5 transition-shadow hover:shadow-md">
     <dt class="flex items-center justify-between text-sm font-medium text-gray-500">
@@ -34,6 +41,5 @@
 </dl>
 
 <div class="mt-6">
-  <%= render "revenue_chart", series: @dashboard.revenue_over_time, by_day: @dashboard.chart_by_day?,
-        default_currency: @dashboard.default_currency %>
+  <%= render "revenue_chart", series: @dashboard.revenue_over_time, by_day: @dashboard.chart_by_day?, currency: @dashboard.currency %>
 </div>
