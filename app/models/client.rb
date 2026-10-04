@@ -3,6 +3,14 @@ class Client < ApplicationRecord
   # separated by spaces, dots, dashes or parentheses.
   PHONE_FORMAT = /\A\+?(?:[\s().-]*\d){7,15}[\s().-]*\z/
 
+  SORTS = %w[ name location invoices ].freeze
+  Stats = Data.define(:invoices_count, :overdue_count, :outstanding)
+  Summary = Data.define(:billed, :paid, :outstanding, :overdue)
+  Totals = Data.define(:count, :amounts)
+
+  INVOICES_COUNT_SQL = Arel.sql("(SELECT COUNT(*) FROM invoices WHERE invoices.client_id = clients.id)")
+  private_constant :INVOICES_COUNT_SQL
+
   include HasAddress
 
   belongs_to :company
@@ -26,6 +34,57 @@ class Client < ApplicationRecord
   validates :phone, :contact_phone, format: { with: PHONE_FORMAT }, length: { maximum: 30 }, allow_nil: true
   validates :website, length: { maximum: 255 }
   validate :website_must_be_a_web_address
+
+  def self.sorted_by(column, direction)
+    direction = direction.to_s == "desc" ? :desc : :asc
+
+    relation =
+      case column.to_s
+      when "location" then order(arel_table[:city].lower.public_send(direction))
+      when "invoices" then order(INVOICES_COUNT_SQL.public_send(direction))
+      else order(arel_table[:name].lower.public_send(direction))
+      end
+
+    relation.order(id: direction)
+  end
+
+  # Invoice counts and amounts owed for a list of clients, in three grouped queries rather than three per client.
+  # Outstanding amounts are kept per currency: { "USD" => amount }.
+  def self.invoice_stats(clients)
+    invoices = Invoice.where(client: clients)
+    counts = invoices.group(:client_id).count
+    overdue = invoices.overdue.group(:client_id).count
+    outstanding = invoices.sent.group(:client_id, :currency).order(:currency).sum_of_totals
+
+    clients.to_h do |client|
+      amounts = outstanding.filter_map { |(client_id, currency), amount| [ currency, amount ] if client_id == client.id }.to_h
+      [ client.id, Stats.new(invoices_count: counts.fetch(client.id, 0), overdue_count: overdue.fetch(client.id, 0), outstanding: amounts) ]
+    end
+  end
+
+  # How many invoices this client was billed, paid and owes, with the amounts per currency.
+  # Drafts and cancelled invoices aren't billed.
+  def invoice_summary
+    issued = invoices.where(status: %w[ sent paid ])
+    counts = issued.group(:status).count
+    sums = issued.group(:status, :currency).sum_of_totals
+    totals = ->(status) do
+      Totals.new(count: counts.fetch(status, 0), amounts: sums.filter_map { |(s, currency), amount| [ currency, amount ] if s == status }.sort.to_h)
+    end
+    paid, outstanding = totals.("paid"), totals.("sent")
+    billed = Totals.new(count: paid.count + outstanding.count, amounts: paid.amounts.merge(outstanding.amounts) { |_currency, a, b| a + b }.sort.to_h)
+    overdue = Totals.new(count: invoices.overdue.count, amounts: invoices.overdue.group(:currency).order(:currency).sum_of_totals)
+
+    Summary.new(billed:, paid:, outstanding:, overdue:)
+  end
+
+  def website_host
+    URI.parse(website).host&.delete_prefix("www.") if website
+  end
+
+  def initials
+    name.scan(/\p{L}+/).first(2).map { it[0] }.join.upcase
+  end
 
   def contact_name
     [ contact_first_name, contact_last_name ].compact.join(" ").presence

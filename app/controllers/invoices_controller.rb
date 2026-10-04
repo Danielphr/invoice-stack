@@ -21,7 +21,8 @@ class InvoicesController < ApplicationController
   end
 
   def new
-    @invoice = Current.user.company.invoices.new(issue_date: Date.current, currency: Current.user.company.default_currency)
+    client = Current.user.company.clients.find_by(id: params[:client_id])
+    @invoice = Current.user.company.invoices.new(client:, issue_date: Date.current, currency: Current.user.company.default_currency)
     @invoice.items.build
   end
 

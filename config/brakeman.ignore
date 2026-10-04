@@ -3,19 +3,19 @@
     {
       "warning_type": "Cross-Site Scripting",
       "warning_code": 4,
-      "fingerprint": "833a6efc4bac465f8b75c45f9f3fee049500f87958b88ded6a9dceab570fd97f",
+      "fingerprint": "3b3560cc52f46a79528a41efb60a23d32949d6b8553bdc44af3e5ad06fe3763e",
       "check_name": "LinkToHref",
       "message": "Potentially unsafe model attribute in `link_to` href",
       "file": "app/views/clients/show.html.erb",
-      "line": 31,
+      "line": 22,
       "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
-      "code": "link_to(Current.user.company.clients.find(params.expect(:id)).website, Current.user.company.clients.find(params.expect(:id)).website, :class => \"link\", :target => \"_blank\", :rel => \"noopener noreferrer\")",
+      "code": "link_to(Current.user.company.clients.find(params.expect(:id)).website_host, Current.user.company.clients.find(params.expect(:id)).website, :target => \"_blank\", :rel => \"noopener noreferrer\", :class => \"hover:text-brand-600\")",
       "render_path": [
         {
           "type": "controller",
           "class": "ClientsController",
           "method": "show",
-          "line": 9,
+          "line": 15,
           "file": "app/controllers/clients_controller.rb",
           "rendered": {
             "name": "clients/show",

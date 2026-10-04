@@ -3,7 +3,7 @@
 <%= link_to "← Company", company_path, class: "link text-sm" %>
 <h1 class="mt-2 text-2xl font-semibold text-gray-900">Edit company</h1>
 
-<%= form_with model: @company, url: company_path, method: :patch, class: "mt-8 max-w-5xl space-y-10" do |form| %>
+<%= form_with model: @company, url: company_path, method: :patch, class: "mt-8 space-y-10" do |form| %>
   <%= render "shared/form_errors", model: @company %>
 
   <%= render layout: "shared/settings_section", locals: { title: "Profile", description: "How your company appears on invoices." } do %>
@@ -158,5 +158,6 @@
 
 <% if @company.logo.attached? %>
   <%= button_to "Remove logo", company_logo_path, method: :delete,
-        form: { id: "remove-logo", hidden: true, data: { turbo_confirm: "Remove your company logo?" } } %>
+        form: { id: "remove-logo", hidden: true, data: { turbo_confirm: "Remove your company logo? Invoices will be shown without it.",
+          confirm_title: "Remove logo", confirm_button: "Remove", confirm_destructive: true } } %>
 <% end %>

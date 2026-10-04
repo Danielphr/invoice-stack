@@ -31,7 +31,48 @@ class ClientsControllerTest < ActionDispatch::IntegrationTest
 
     get clients_url
 
-    assert_equal [ "acme labs", "Globex Corporation", "Initech" ], css_select("tbody tr td:first-child").map { it.text.strip }
+    assert_equal [ "acme labs", "Globex Corporation", "Initech" ], css_select("tbody tr td:first-child a").map { it.text.strip }
+  end
+
+  test "should show each client's invoice count, amount outstanding and overdue invoices" do
+    travel_to Date.new(2026, 10, 15) do
+      get clients_url
+    end
+
+    assert_select "p", "2 clients"
+    assert_select "tbody tr", text: /GC\s+Globex Corporation\s+billing@globex.example\s+Springfield, United States\s+2\s+\$2,150.00 USD\s+1 overdue/
+    assert_select "tbody tr", text: /Initech\s+—\s+Montevideo, Uruguay\s+0\s+—/
+    assert_select "tbody tr a[href=?]", client_path(@client), "Globex Corporation"
+    assert_select "tbody tr a[href=?]", "mailto:billing@globex.example"
+  end
+
+  test "should offer to edit each client, leaving deletion to the client page" do
+    get clients_url
+
+    assert_select "tbody a[href=?]", edit_client_path(@client), /Edit/
+    assert_select "tbody a[href=?]", edit_client_path(clients(:initech)), /Edit/
+    assert_select "tbody form", count: 0
+  end
+
+  test "should sort clients by invoice count and link to the opposite direction" do
+    get clients_url(sort: "invoices", direction: "desc")
+
+    assert_equal [ "Globex Corporation", "Initech" ], css_select("tbody tr td:first-child a").map { it.text.strip }
+    assert_select "th[aria-sort=descending]", /Invoices/
+    assert_select "th a[href=?]", clients_path(sort: "invoices", direction: "asc")
+  end
+
+  test "should paginate clients, ten per page" do
+    11.times { |index| @user.company.clients.create!(name: "Client #{index.to_s.rjust(2, "0")}", city: "Austin", country: "US") }
+
+    get clients_url
+
+    assert_select "p", "13 clients"
+    assert_select "tbody tr", 10
+    assert_select "nav.pagy a[rel=next]"
+
+    get clients_url(page: 9)
+    assert_redirected_to clients_url(page: 2)
   end
 
   test "should show an empty state when there are no clients" do
@@ -44,11 +85,33 @@ class ClientsControllerTest < ActionDispatch::IntegrationTest
     assert_select "h2", "No clients yet"
   end
 
-  test "should show a client" do
-    get client_url(@client)
+  test "should show a client with their totals and invoices" do
+    travel_to Date.new(2026, 10, 15) do
+      get client_url(@client)
+    end
 
     assert_response :success
     assert_select "h1", @client.name
+    assert_select "a[href=?]", "mailto:billing@globex.example"
+    assert_select "a[href=?][target=_blank]", "https://globex.example", "globex.example"
+    assert_select "dl > div", text: /Billed\s+\$2,150.00 USD\s+1 invoice issued/
+    assert_select "dl > div", text: /Paid\s+No payments yet/
+    assert_select "dl > div", text: /Outstanding\s+\$2,150.00 USD\s+1 awaiting payment/
+    assert_select "dl > div", text: /Overdue\s+\$2,150.00 USD\s+1 past due/
+    assert_select "#client-invoices-heading", /Invoices\s+· 2/
+    assert_select "section[aria-labelledby=client-invoices-heading] tbody tr", 2
+    assert_select "section[aria-labelledby=client-invoices-heading] tbody a[href=?]", invoice_path(invoices(:globex_website)), "INV-001"
+    assert_select "a[href=?]", new_invoice_path(client_id: @client.id), "New invoice"
+    assert_select "form[action=?]", client_path(@client), count: 0
+  end
+
+  test "should offer to delete a client without invoices" do
+    client = clients(:initech)
+
+    get client_url(client)
+
+    assert_select "p", "No invoices yet for this client."
+    assert_select "form[action=?][data-turbo-confirm][data-confirm-title=?][data-confirm-destructive=true]", client_path(client), "Delete client"
   end
 
   test "should highlight Clients in the navigation on client pages" do
@@ -57,6 +120,15 @@ class ClientsControllerTest < ActionDispatch::IntegrationTest
 
       assert_select "nav a[aria-current=page]", "Clients"
     end
+  end
+
+  test "should link back from the edit and new client pages" do
+    get edit_client_url(@client)
+    assert_select "a[href=?]", client_path(@client), "← Globex Corporation"
+    assert_equal [ "Client", "Address", "Contact person", "Notes" ], css_select("section h2").map { it.text.strip }
+
+    get new_client_url
+    assert_select "a[href=?]", clients_path, "← Clients"
   end
 
   test "should get new" do

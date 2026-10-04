@@ -103,7 +103,7 @@
   }
 
   .btn-secondary {
-    @apply flex cursor-pointer font-display justify-center rounded-md bg-white px-3 py-1.5 text-sm/6 font-semibold text-gray-900 shadow-xs ring-1 ring-gray-300 ring-inset hover:bg-gray-50;
+    @apply flex cursor-pointer font-display justify-center rounded-md bg-white px-3 py-1.5 text-sm/6 font-semibold text-gray-900 shadow-xs ring-1 ring-gray-300 ring-inset hover:bg-gray-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600;
   }
 
   .btn-danger {

@@ -7,6 +7,7 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     get new_session_path
     assert_response :success
     assert_select "title", "Sign in to your account · InvoiceStack"
+    assert_select "head meta[charset=utf-8]"
     assert_select "img[alt=InvoiceStack][src*=logo]"
     assert_select "meta[name=theme-color][content=?]", "#011640"
     assert_select "link[rel=preload][as=font][crossorigin][href*=inter-latin]"

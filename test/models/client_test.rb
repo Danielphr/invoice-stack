@@ -114,6 +114,12 @@ class ClientTest < ActiveSupport::TestCase
     assert_equal [ "Montevideo", "Uruguay" ], clients(:initech).address_lines
   end
 
+  test "leaves out a state that has the same name as the city" do
+    client = Client.new(city: "Montevideo", state: "montevideo", postal_code: "11000", country: "UY")
+
+    assert_equal [ "Montevideo, 11000", "Uruguay" ], client.address_lines
+  end
+
   test "joins the contact name" do
     assert_equal "Hank Scorpio", @client.contact_name
     assert_nil clients(:initech).contact_name
@@ -123,5 +129,58 @@ class ClientTest < ActiveSupport::TestCase
     assert_not @client.destroy
     assert @client.reload
     assert_includes @client.errors[:base], "Cannot delete record because dependent invoices exist"
+  end
+
+  test "sorts by name, location or invoice count" do
+    company = companies(:one)
+    acme = company.clients.create!(name: "acme labs", city: "Zurich", country: "CH")
+    scope = company.clients.where(id: [ acme, clients(:globex), clients(:initech) ])
+
+    assert_equal [ acme, clients(:globex), clients(:initech) ], scope.sorted_by("name", "asc").to_a
+    assert_equal [ clients(:initech), clients(:globex), acme ], scope.sorted_by("location", "asc").to_a
+    assert_equal clients(:globex), scope.sorted_by("invoices", "desc").first
+  end
+
+  test "summarizes invoices for a list of clients" do
+    travel_to Date.new(2026, 10, 15)
+    company = companies(:one)
+    company.invoices.create!(client: clients(:globex), currency: "EUR", status: "sent", issue_date: Date.current, due_date: Date.current,
+      items_attributes: [ { description: "Work", quantity: 1, unit_price: 100 } ])
+
+    stats = Client.invoice_stats(company.clients.where(id: [ clients(:globex), clients(:initech) ]))
+
+    assert_equal 3, stats[clients(:globex).id].invoices_count
+    assert_equal 1, stats[clients(:globex).id].overdue_count
+    assert_equal({ "EUR" => 100, "USD" => 2150 }, stats[clients(:globex).id].outstanding)
+    assert_equal [ 0, 0, {} ], stats[clients(:initech).id].to_h.values
+  end
+
+  test "summarizes what the client was billed, paid and owes, per currency" do
+    travel_to Date.new(2026, 10, 15)
+    client = clients(:globex)
+    client.company.invoices.create!(client:, currency: "EUR", status: "paid", issue_date: Date.current, paid_on: Date.current,
+      items_attributes: [ { description: "Work", quantity: 1, unit_price: 300 } ])
+    client.company.invoices.create!(client:, currency: "USD", status: "cancelled", issue_date: Date.current,
+      items_attributes: [ { description: "Work", quantity: 1, unit_price: 999 } ])
+
+    summary = client.invoice_summary
+
+    assert_equal [ 2, { "EUR" => 300, "USD" => 2150 } ], [ summary.billed.count, summary.billed.amounts ]
+    assert_equal [ 1, { "EUR" => 300 } ], [ summary.paid.count, summary.paid.amounts ]
+    assert_equal [ 1, { "USD" => 2150 } ], [ summary.outstanding.count, summary.outstanding.amounts ]
+    assert_equal [ 1, { "USD" => 2150 } ], [ summary.overdue.count, summary.overdue.amounts ]
+  end
+
+  test "shows the website's host without www" do
+    assert_equal "globex.example", clients(:globex).website_host
+    assert_equal "example.com", Client.new(website: "https://www.example.com/about").website_host
+    assert_nil Client.new.website_host
+  end
+
+  test "builds initials from the first two words of the name, skipping symbols" do
+    assert_equal "GC", clients(:globex).initials
+    assert_equal "I", clients(:initech).initials
+    assert_equal "HP", Client.new(name: "Harbor & Pine").initials
+    assert_equal "ÉM", Client.new(name: "études Montaña").initials
   end
 end

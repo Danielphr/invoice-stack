@@ -17,7 +17,7 @@ module HasAddress
     [
       address_line1,
       address_line2,
-      [ city, state, postal_code ].compact.join(", "),
+      [ city, (state unless state&.casecmp?(city)), postal_code ].compact.join(", "),
       country_name
     ].compact_blank
   end

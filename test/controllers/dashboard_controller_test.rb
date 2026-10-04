@@ -28,7 +28,7 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
 
     assert_select "dt", "Revenue · All time"
     assert_select "dl > div", text: /No payments/
-    assert_select "dl > div", text: /Due soon\s+Nothing due\s+0 invoices/
+    assert_select "dl > div", text: /\A\s*Due soon\s+Nothing due\s*\z/
     assert_select "dl > div", text: /Overdue\s+\$2,150.00 USD\s+1 invoice/
     assert_select "dl dt svg[aria-hidden=true]", 3
   end
@@ -150,6 +150,15 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
 
     assert_select "section p", text: "No payments in this period.", count: 2
     assert_select "[data-controller=chart]", count: 0
+  end
+
+  test "should render the confirmation dialog in the app layout" do
+    get root_url
+
+    assert_select "dialog#confirm-dialog[aria-labelledby=confirm-dialog-title]" do
+      assert_select "form[method=dialog] button[value=cancel][autofocus]"
+      assert_select "form[method=dialog] button[value=confirm]"
+    end
   end
 
   test "should not preload Chart.js on every page" do

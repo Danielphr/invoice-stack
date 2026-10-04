@@ -16,7 +16,8 @@
     <%= link_to "Edit", edit_invoice_path(@invoice), class: "btn-secondary" %>
     <% if @invoice.draft? %>
       <%= button_to "Delete", @invoice, method: :delete, class: "btn-danger",
-            form: { data: { turbo_confirm: "Delete this draft? This cannot be undone." } } %>
+            form: { data: { turbo_confirm: "Delete this draft? This cannot be undone.", confirm_title: "Delete draft",
+              confirm_button: "Delete", confirm_destructive: true } } %>
     <% end %>
   </div>
 </div>

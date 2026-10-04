@@ -222,6 +222,18 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
     assert_select "select[name=?] option", "invoice[client_id]", text: "Wayne Enterprises", count: 0
   end
 
+  test "should preselect the client given in the link" do
+    get new_invoice_url(client_id: clients(:initech).id)
+
+    assert_select "select[name=?] option[selected][value=?]", "invoice[client_id]", clients(:initech).id.to_s
+  end
+
+  test "should ignore another company's client in the link" do
+    get new_invoice_url(client_id: @other_invoice.client_id)
+
+    assert_select "select[name=?] option[selected]", "invoice[client_id]", count: 0
+  end
+
   test "should default new invoices to the company's currency" do
     @user.company.update!(default_currency: "UYU")
 
@@ -392,7 +404,8 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
 
     draft = invoices(:globex_draft)
     get invoice_url(draft)
-    assert_select "form[action=?][data-turbo-confirm=?]", invoice_path(draft), "Delete this draft? This cannot be undone."
+    assert_select "form[action=?][data-turbo-confirm=?][data-confirm-title=?][data-confirm-button=Delete][data-confirm-destructive=true]",
+      invoice_path(draft), "Delete this draft? This cannot be undone.", "Delete draft"
   end
 
   test "should not update an invoice with invalid data" do
