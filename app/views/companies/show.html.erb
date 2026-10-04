@@ -81,35 +81,5 @@
         <% end %>
       </div>
     <% end %>
-
-    <%= render layout: "shared/settings_section", locals: { title: "Preferences", description: "Defaults used across the app." } do %>
-      <dl class="divide-y divide-gray-100 rounded-xl bg-white text-sm shadow-sm ring-1 ring-gray-900/5">
-        <div class="flex items-center justify-between gap-4 px-5 py-3">
-          <dt class="text-gray-500">Time zone</dt>
-          <dd class="text-gray-900"><%= @company.time_zone %></dd>
-        </div>
-        <div class="flex items-center justify-between gap-4 px-5 py-3">
-          <dt class="text-gray-500">Default currency</dt>
-          <dd class="text-gray-900"><%= @company.default_currency %> — <%= Currency.find(@company.default_currency)[:name] %></dd>
-        </div>
-      </dl>
-    <% end %>
-
-    <%= render layout: "shared/settings_section", locals: { title: "Invoice numbers", description: "How new invoices are numbered." } do %>
-      <dl class="rounded-xl bg-white text-sm shadow-sm ring-1 ring-gray-900/5">
-        <div class="flex items-center justify-between gap-4 rounded-t-xl bg-brand-50 px-5 py-4">
-          <dt class="font-medium text-brand-700">Next invoice</dt>
-          <dd class="font-display text-xl font-semibold tabular-nums text-brand-700"><%= @next_invoice_number %></dd>
-        </div>
-        <div class="flex items-center justify-between gap-4 border-t border-gray-100 px-5 py-3">
-          <dt class="text-gray-500">Pattern</dt>
-          <dd class="text-gray-900"><code><%= @company.invoice_number_pattern %></code></dd>
-        </div>
-        <div class="flex items-center justify-between gap-4 border-t border-gray-100 px-5 py-3">
-          <dt class="text-gray-500">Digits</dt>
-          <dd class="text-gray-900"><%= @company.invoice_number_digits %></dd>
-        </div>
-      </dl>
-    <% end %>
   </div>
 </div>

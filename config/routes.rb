@@ -9,6 +9,7 @@ Rails.application.routes.draw do
   resource :company, only: %i[ show edit update ] do
     resource :logo, only: :destroy, module: :companies
   end
+  resource :settings, only: %i[ show update ]
   resource :account, only: :show
   namespace :account do
     resource :profile, only: :update

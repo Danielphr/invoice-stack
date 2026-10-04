@@ -16,12 +16,18 @@
     </button>
   </div>
 
-  <nav aria-label="Main" class="flex-1 pb-4">
+  <nav aria-label="Main" class="flex-1">
     <ul role="list" class="-mx-2 space-y-1">
       <li><%= nav_link_to "Dashboard", root_path, icon: :home %></li>
       <li><%= nav_link_to "Company", company_path, icon: :building %></li>
       <li><%= nav_link_to "Clients", clients_path, icon: :users %></li>
       <li><%= nav_link_to "Invoices", invoices_path, icon: :banknotes %></li>
+    </ul>
+  </nav>
+
+  <nav aria-label="Secondary" class="pb-4">
+    <ul role="list" class="-mx-2 space-y-1">
+      <li><%= nav_link_to "Settings", settings_path, icon: :cog %></li>
     </ul>
   </nav>
 
