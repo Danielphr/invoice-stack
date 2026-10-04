@@ -3,13 +3,13 @@
     {
       "warning_type": "Cross-Site Scripting",
       "warning_code": 4,
-      "fingerprint": "b0b9abf06ea259b7be5823bb05d5ed2dfacc579be6ac580dfd4b272b81757ea7",
+      "fingerprint": "3b3560cc52f46a79528a41efb60a23d32949d6b8553bdc44af3e5ad06fe3763e",
       "check_name": "LinkToHref",
       "message": "Potentially unsafe model attribute in `link_to` href",
       "file": "app/views/clients/show.html.erb",
       "line": 22,
       "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
-      "code": "link_to(Current.user.company.clients.find(params.expect(:id)).website_host, Current.user.company.clients.find(params.expect(:id)).website, :target => \"_blank\", :rel => \"noopener\", :class => \"hover:text-brand-600\")",
+      "code": "link_to(Current.user.company.clients.find(params.expect(:id)).website_host, Current.user.company.clients.find(params.expect(:id)).website, :target => \"_blank\", :rel => \"noopener noreferrer\", :class => \"hover:text-brand-600\")",
       "render_path": [
         {
           "type": "controller",

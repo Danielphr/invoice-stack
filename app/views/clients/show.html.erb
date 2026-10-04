@@ -19,7 +19,7 @@
         <% end %>
         <% if @client.website %>
           <li class="flex items-center gap-1.5">
-            <%= heroicon(:globe, class: "size-4") %><%= link_to @client.website_host, @client.website, target: "_blank", rel: "noopener", class: "hover:text-brand-600" %>
+            <%= heroicon(:globe, class: "size-4") %><%= link_to @client.website_host, @client.website, target: "_blank", rel: "noopener noreferrer", class: "hover:text-brand-600" %>
           </li>
         <% end %>
       </ul>
