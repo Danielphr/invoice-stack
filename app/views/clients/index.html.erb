@@ -54,16 +54,9 @@
               <% end %>
             </td>
             <td class="px-4 py-3">
-              <div class="relative flex justify-end gap-4 whitespace-nowrap">
+              <div class="relative flex justify-end whitespace-nowrap">
                 <%= link_to edit_client_path(client), class: "link" do %>
                   Edit<span class="sr-only">, <%= client.name %></span>
-                <% end %>
-                <% if stats.invoices_count.zero? %>
-                  <%= button_to client, method: :delete, class: "cursor-pointer font-semibold text-red-600 hover:text-red-500",
-                        form: { data: { turbo_confirm: "Delete #{client.name}? This cannot be undone.", confirm_title: "Delete client",
-                          confirm_button: "Delete", confirm_destructive: true } } do %>
-                    Delete<span class="sr-only">, <%= client.name %></span>
-                  <% end %>
                 <% end %>
               </div>
             </td>

@@ -46,13 +46,12 @@ class ClientsControllerTest < ActionDispatch::IntegrationTest
     assert_select "tbody tr a[href=?]", "mailto:billing@globex.example"
   end
 
-  test "should offer edit for every client and delete only for clients without invoices" do
+  test "should offer to edit each client, leaving deletion to the client page" do
     get clients_url
 
     assert_select "tbody a[href=?]", edit_client_path(@client), /Edit/
     assert_select "tbody a[href=?]", edit_client_path(clients(:initech)), /Edit/
-    assert_select "tbody form[action=?]", client_path(@client), count: 0
-    assert_select "tbody form[action=?][data-confirm-destructive=true] button", client_path(clients(:initech)), /Delete/
+    assert_select "tbody form", count: 0
   end
 
   test "should sort clients by invoice count and link to the opposite direction" do
