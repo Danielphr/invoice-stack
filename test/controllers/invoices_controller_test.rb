@@ -222,6 +222,15 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
     assert_select "select[name=?] option", "invoice[client_id]", text: "Wayne Enterprises", count: 0
   end
 
+  test "should link back from the edit and new invoice pages" do
+    get edit_invoice_url(@invoice)
+    assert_select "a[href=?]", invoice_path(@invoice), "← Invoice INV-001"
+    assert_equal [ "Details", "Items", "Total", "Notes" ], css_select("section h2").map { it.text.strip }
+
+    get new_invoice_url
+    assert_select "a[href=?]", invoices_path, "← Invoices"
+  end
+
   test "should start a new invoice with the company's default notes" do
     users(:one).company.update!(default_invoice_notes: "Pay by bank transfer.")
 
