@@ -16,40 +16,33 @@ class CompaniesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should show the company's details with a link to edit them" do
-    @company.update!(email: "billing@acme.example", invoice_number_pattern: "YP-{NUMBER}", invoice_number_digits: 4,
-      next_invoice_number: 42)
+    @company.update!(email: "billing@acme.example")
 
     get company_url
 
     assert_response :success
     assert_select "h1", "Acme Inc."
     assert_select "a[href=?]", "mailto:billing@acme.example"
-    assert_select "dd", "YP-0042"
     assert_select "a[href=?]", edit_company_path, "Edit"
     assert_select "form[action=?]", company_path, count: 0
     assert_select "nav a[aria-current=page]", "Company"
   end
 
   test "should edit the company in a form with the logo drop zone" do
-    @company.update!(invoice_number_pattern: "YP-{NUMBER}", invoice_number_digits: 4, next_invoice_number: 42)
-
     get edit_company_url
 
     assert_response :success
     assert_select "input[name=?][value=?]", "company[name]", "Acme Inc."
-    assert_select "input[name=?][value=?]", "company[invoice_number_pattern]", "YP-{NUMBER}"
     assert_select "[data-controller=dropzone] input[type=file][name=?]", "company[logo]"
-    assert_select "input[name=?][min='2']", "company[next_invoice_number]"
-    assert_select "p", "Numbers below 2 are already used."
-    assert_select "p", /Next invoice will be YP-0042/
+    assert_select "[name=?]", "company[time_zone]", count: 0
+    assert_select "[name=?]", "company[invoice_number_pattern]", count: 0
     assert_select "nav a[aria-current=page]", "Company"
   end
 
-  test "should update the company's details, address and preferences" do
+  test "should update the company's details and address" do
     patch company_url, params: { company: {
       name: "Acme Studio", email: "billing@acme.example",
-      address_line1: "Av. 18 de Julio 1234", city: "Montevideo", postal_code: "11100", country: "UY",
-      time_zone: "Montevideo", default_currency: "UYU"
+      address_line1: "Av. 18 de Julio 1234", city: "Montevideo", postal_code: "11100", country: "UY"
     } }
 
     assert_redirected_to company_url
@@ -57,8 +50,6 @@ class CompaniesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Acme Studio", @company.name
     assert_equal "billing@acme.example", @company.email
     assert_equal [ "Av. 18 de Julio 1234", "Montevideo, 11100", "Uruguay" ], @company.address_lines
-    assert_equal "Montevideo", @company.time_zone
-    assert_equal "UYU", @company.default_currency
   end
 
   test "should preview the top of an invoice" do
@@ -142,38 +133,22 @@ class CompaniesControllerTest < ActionDispatch::IntegrationTest
     assert_select "[role=alert] li", "Company name can't be blank"
   end
 
-  test "should update the invoice number settings" do
-    patch company_url, params: { company: {
-      invoice_number_pattern: "YP-{YEAR}-{NUMBER}", invoice_number_digits: "3", next_invoice_number: "413"
-    } }
+  test "should leave settings to the settings page" do
+    patch company_url, params: { company: { name: "Acme Studio", time_zone: "Montevideo", invoice_number_pattern: "MINE-{NUMBER}" } }
 
     assert_redirected_to company_url
     @company.reload
-    assert_equal "YP-{YEAR}-{NUMBER}", @company.invoice_number_pattern
-    assert_equal 3, @company.invoice_number_digits
-    assert_equal 413, @company.next_invoice_number
-  end
-
-  test "should show errors for an invalid pattern" do
-    patch company_url, params: { company: { invoice_number_pattern: "INV-{YEAR}" } }
-
-    assert_response :unprocessable_entity
-    assert_select "[role=alert] li", "Number pattern must contain {NUMBER} exactly once"
-    assert_equal "INV-{NUMBER}", @company.reload.invoice_number_pattern
-  end
-
-  test "should reject a next number too large to store" do
-    patch company_url, params: { company: { next_invoice_number: "9999999999" } }
-
-    assert_response :unprocessable_entity
-    assert_select "[role=alert] li", "Next number must be less than 1000000000"
+    assert_equal "Acme Studio", @company.name
+    assert_equal "UTC", @company.time_zone
+    assert_equal "INV-{NUMBER}", @company.invoice_number_pattern
   end
 
   test "should only change the current user's company" do
     other_company = companies(:other)
 
-    patch company_url, params: { company: { invoice_number_pattern: "MINE-{NUMBER}" } }
+    patch company_url, params: { company: { name: "Mine" } }
 
-    assert_equal "INV-{NUMBER}", other_company.reload.invoice_number_pattern
+    assert_equal "Mine", @company.reload.name
+    assert_equal "Umbrella Corp", other_company.reload.name
   end
 end

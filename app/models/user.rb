@@ -13,4 +13,12 @@ class User < ApplicationRecord
     length: { maximum: 254 }
   # Only checked when a password is set, so existing passwords keep working.
   validates :password, length: { minimum: PASSWORD_MIN_LENGTH }, allow_nil: true
+
+  def full_name
+    "#{first_name} #{last_name}"
+  end
+
+  def initials
+    "#{first_name[0]}#{last_name[0]}".upcase
+  end
 end

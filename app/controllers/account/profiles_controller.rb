@@ -1,5 +1,5 @@
-class Settings::ProfilesController < ApplicationController
-  rate_limit to: 10, within: 3.minutes, only: :update, with: -> { redirect_to settings_path, alert: "Try again later." }
+class Account::ProfilesController < ApplicationController
+  rate_limit to: 10, within: 3.minutes, only: :update, with: -> { redirect_to account_path, alert: "Try again later." }
 
   def update
     # A copy of the signed-in user, so the sidebar keeps showing the saved name if validation fails.
@@ -9,10 +9,10 @@ class Settings::ProfilesController < ApplicationController
     @user.password_challenge = profile_params[:password_challenge].to_s if @user.email_address_changed?
 
     if @user.save
-      redirect_to settings_path, notice: "Profile updated."
+      redirect_to account_path, notice: "Profile updated."
     else
       @password_user = Current.user
-      render "settings/show", status: :unprocessable_entity
+      render "accounts/show", status: :unprocessable_entity
     end
   end
 

@@ -1,0 +1,67 @@
+<% content_for :title, "Account" %>
+
+<h1 class="text-2xl font-semibold text-gray-900">Account</h1>
+
+<div class="mt-8 space-y-10">
+  <%= render layout: "shared/settings_section", locals: { title: "Profile", description: "Your name and the email you sign in with." } do %>
+    <%= form_with model: @user, url: account_profile_path, method: :patch, class: "space-y-6" do |form| %>
+      <%= render "shared/form_errors", model: @user %>
+
+      <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        <div>
+          <%= form.label :first_name, class: "label" %>
+          <%= form.text_field :first_name, required: true, maxlength: 100, autocomplete: "given-name", class: "input mt-2" %>
+        </div>
+
+        <div>
+          <%= form.label :last_name, class: "label" %>
+          <%= form.text_field :last_name, required: true, maxlength: 100, autocomplete: "family-name", class: "input mt-2" %>
+        </div>
+      </div>
+
+      <div>
+        <%= form.label :email_address, class: "label" %>
+        <%= form.email_field :email_address, required: true, autocomplete: "email", class: "input mt-2" %>
+      </div>
+
+      <div>
+        <%= form.label :password_challenge, class: "label" %>
+        <%= render "shared/password_field", form: form, field: :password_challenge, required: false, autocomplete: "current-password",
+              aria: { describedby: "password-challenge-hint" } %>
+        <p id="password-challenge-hint" class="mt-2 text-xs text-gray-500">Only needed to change your email.</p>
+      </div>
+
+      <div class="flex justify-end">
+        <%= form.submit "Save profile", class: "btn-primary" %>
+      </div>
+    <% end %>
+  <% end %>
+
+  <%= render layout: "shared/settings_section",
+        locals: { title: "Password", description: "Changing your password signs you out on your other devices." } do %>
+    <%= form_with model: @password_user, url: account_password_path, method: :patch, namespace: "password", class: "space-y-6" do |form| %>
+      <%= render "shared/form_errors", model: @password_user %>
+
+      <div>
+        <%= form.label :password_challenge, class: "label" %>
+        <%= render "shared/password_field", form: form, field: :password_challenge, autocomplete: "current-password" %>
+      </div>
+
+      <div>
+        <%= form.label :password, "New password", class: "label" %>
+        <%= render "shared/password_field", form: form, field: :password, autocomplete: "new-password",
+              minlength: User::PASSWORD_MIN_LENGTH, aria: { describedby: "new-password-hint" } %>
+        <p id="new-password-hint" class="mt-2 text-xs text-gray-500">At least <%= User::PASSWORD_MIN_LENGTH %> characters.</p>
+      </div>
+
+      <div>
+        <%= form.label :password_confirmation, "Confirm new password", class: "label" %>
+        <%= render "shared/password_field", form: form, field: :password_confirmation, autocomplete: "new-password" %>
+      </div>
+
+      <div class="flex justify-end">
+        <%= form.submit "Change password", class: "btn-primary" %>
+      </div>
+    <% end %>
+  <% end %>
+</div>

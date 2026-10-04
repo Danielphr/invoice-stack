@@ -93,63 +93,6 @@
     </div>
   <% end %>
 
-  <%= render layout: "shared/settings_section", locals: { title: "Preferences", description: "Defaults used across the app." } do %>
-    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-      <div>
-        <%= form.label :time_zone, class: "label" %>
-        <%= form.time_zone_select :time_zone, nil, {}, class: "input mt-2" %>
-        <p class="mt-2 text-xs text-gray-500">Used for invoice dates and when invoices become overdue.</p>
-      </div>
-
-      <div>
-        <%= form.label :default_currency, class: "label" %>
-        <%= form.select :default_currency, Currency::ALL.map { |code, details| [ "#{code} — #{details[:name]}", code ] }, {},
-              class: "input mt-2" %>
-        <p class="mt-2 text-xs text-gray-500">Preselected on new invoices.</p>
-      </div>
-    </div>
-  <% end %>
-
-  <%= render layout: "shared/settings_section", locals: { title: "Invoice numbers", description: "How new invoices are numbered." } do %>
-    <div>
-      <%= form.label :invoice_number_pattern, class: "label" do %>
-        <%= Company.human_attribute_name(:invoice_number_pattern) %> <span class="text-red-500" aria-hidden="true">*</span>
-      <% end %>
-      <%= form.text_field :invoice_number_pattern, required: true, maxlength: 30, class: "input mt-2" %>
-      <p class="mt-2 text-xs text-gray-500">
-        Use <code>{NUMBER}</code> exactly once. You can also add <code>{YEAR}</code> and <code>{MONTH}</code>,
-        taken from each invoice's issue date. Example: <code>INV-{YEAR}-{NUMBER}</code>.
-      </p>
-    </div>
-
-    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-      <div>
-        <%= form.label :invoice_number_digits, class: "label" do %>
-          <%= Company.human_attribute_name(:invoice_number_digits) %> <span class="text-red-500" aria-hidden="true">*</span>
-        <% end %>
-        <%= form.number_field :invoice_number_digits, required: true, min: 1, max: 10, class: "input mt-2" %>
-        <p class="mt-2 text-xs text-gray-500">Pads with zeros, e.g. 4 digits gives 0042.</p>
-      </div>
-
-      <div>
-        <%= form.label :next_invoice_number, class: "label" do %>
-          <%= Company.human_attribute_name(:next_invoice_number) %> <span class="text-red-500" aria-hidden="true">*</span>
-        <% end %>
-        <% lowest = @company.lowest_next_invoice_number %>
-        <%= form.number_field :next_invoice_number, required: true, min: lowest, max: 999_999_999, class: "input mt-2" %>
-        <% if lowest > 1 %>
-          <p class="mt-2 text-xs text-gray-500">Numbers below <%= lowest %> are already used.</p>
-        <% end %>
-      </div>
-    </div>
-
-    <% if @next_invoice_number %>
-      <p class="rounded-md bg-gray-50 p-4 text-sm text-gray-700">
-        Next invoice will be <strong class="font-semibold text-gray-900"><%= @next_invoice_number %></strong>
-      </p>
-    <% end %>
-  <% end %>
-
   <div class="flex justify-end gap-3 border-t border-gray-200 pt-6">
     <%= link_to "Cancel", company_path, class: "btn-secondary" %>
     <%= form.submit "Save", class: "btn-primary" %>
