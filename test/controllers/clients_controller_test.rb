@@ -122,6 +122,15 @@ class ClientsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "should link back from the edit and new client pages" do
+    get edit_client_url(@client)
+    assert_select "a[href=?]", client_path(@client), "← Globex Corporation"
+    assert_equal [ "Client", "Address", "Contact person", "Notes" ], css_select("section h2").map { it.text.strip }
+
+    get new_client_url
+    assert_select "a[href=?]", clients_path, "← Clients"
+  end
+
   test "should get new" do
     get new_client_url
 
