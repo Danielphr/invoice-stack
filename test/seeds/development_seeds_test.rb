@@ -15,6 +15,15 @@ class DevelopmentSeedsTest < ActiveSupport::TestCase
     assert_operator invoices.count, :>, 20
   end
 
+  test "gives the demo company a logo" do
+    load SEEDS
+
+    logo = Company.find_by!(name: "Northwind Studio").logo
+    assert logo.attached?
+    assert_equal "image/png", logo.content_type
+    assert logo.blob.service.exist?(logo.key), "the logo file should be stored, not just its record"
+  end
+
   test "numbers issued invoices in date order" do
     load SEEDS
 
