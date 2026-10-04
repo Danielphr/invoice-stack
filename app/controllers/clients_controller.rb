@@ -11,6 +11,10 @@ class ClientsController < ApplicationController
   end
 
   def show
+    @summary = @client.invoice_summary
+    @pagy, @invoices = pagy(:offset, @client.invoices.includes(:items).sorted_by("number", "desc"), limit: 10, raise_range_error: true)
+  rescue Pagy::RangeError => error
+    redirect_to error.pagy.page_url(:last)
   end
 
   def new

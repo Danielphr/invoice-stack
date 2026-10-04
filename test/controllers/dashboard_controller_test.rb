@@ -28,7 +28,7 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
 
     assert_select "dt", "Revenue · All time"
     assert_select "dl > div", text: /No payments/
-    assert_select "dl > div", text: /Due soon\s+Nothing due\s+0 invoices/
+    assert_select "dl > div", text: /\A\s*Due soon\s+Nothing due\s*\z/
     assert_select "dl > div", text: /Overdue\s+\$2,150.00 USD\s+1 invoice/
     assert_select "dl dt svg[aria-hidden=true]", 3
   end

@@ -86,12 +86,33 @@ class ClientsControllerTest < ActionDispatch::IntegrationTest
     assert_select "h2", "No clients yet"
   end
 
-  test "should show a client" do
-    get client_url(@client)
+  test "should show a client with their totals and invoices" do
+    travel_to Date.new(2026, 10, 15) do
+      get client_url(@client)
+    end
 
     assert_response :success
     assert_select "h1", @client.name
-    assert_select "form[action=?][data-turbo-confirm][data-confirm-title=?][data-confirm-destructive=true]", client_path(@client), "Delete client"
+    assert_select "a[href=?]", "mailto:billing@globex.example"
+    assert_select "a[href=?][target=_blank]", "https://globex.example", "globex.example"
+    assert_select "dl > div", text: /Billed\s+\$2,150.00 USD\s+1 invoice issued/
+    assert_select "dl > div", text: /Paid\s+No payments yet/
+    assert_select "dl > div", text: /Outstanding\s+\$2,150.00 USD\s+1 awaiting payment/
+    assert_select "dl > div", text: /Overdue\s+\$2,150.00 USD\s+1 past due/
+    assert_select "#client-invoices-heading", /Invoices\s+· 2/
+    assert_select "section[aria-labelledby=client-invoices-heading] tbody tr", 2
+    assert_select "section[aria-labelledby=client-invoices-heading] tbody a[href=?]", invoice_path(invoices(:globex_website)), "INV-001"
+    assert_select "a[href=?]", new_invoice_path(client_id: @client.id), "New invoice"
+    assert_select "form[action=?]", client_path(@client), count: 0
+  end
+
+  test "should offer to delete a client without invoices" do
+    client = clients(:initech)
+
+    get client_url(client)
+
+    assert_select "p", "No invoices yet for this client."
+    assert_select "form[action=?][data-turbo-confirm][data-confirm-title=?][data-confirm-destructive=true]", client_path(client), "Delete client"
   end
 
   test "should highlight Clients in the navigation on client pages" do

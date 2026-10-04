@@ -5,6 +5,8 @@ class Client < ApplicationRecord
 
   SORTS = %w[ name location invoices ].freeze
   Stats = Data.define(:invoices_count, :overdue_count, :outstanding)
+  Summary = Data.define(:billed, :paid, :outstanding, :overdue)
+  Totals = Data.define(:count, :amounts)
 
   INVOICES_COUNT_SQL = Arel.sql("(SELECT COUNT(*) FROM invoices WHERE invoices.client_id = clients.id)")
   private_constant :INVOICES_COUNT_SQL
@@ -58,6 +60,26 @@ class Client < ApplicationRecord
       amounts = outstanding.filter_map { |(client_id, currency), amount| [ currency, amount ] if client_id == client.id }.to_h
       [ client.id, Stats.new(invoices_count: counts.fetch(client.id, 0), overdue_count: overdue.fetch(client.id, 0), outstanding: amounts) ]
     end
+  end
+
+  # How many invoices this client was billed, paid and owes, with the amounts per currency.
+  # Drafts and cancelled invoices aren't billed.
+  def invoice_summary
+    issued = invoices.where(status: %w[ sent paid ])
+    counts = issued.group(:status).count
+    sums = issued.group(:status, :currency).sum_of_totals
+    totals = ->(status) do
+      Totals.new(count: counts.fetch(status, 0), amounts: sums.filter_map { |(s, currency), amount| [ currency, amount ] if s == status }.sort.to_h)
+    end
+    paid, outstanding = totals.("paid"), totals.("sent")
+    billed = Totals.new(count: paid.count + outstanding.count, amounts: paid.amounts.merge(outstanding.amounts) { |_currency, a, b| a + b }.sort.to_h)
+    overdue = Totals.new(count: invoices.overdue.count, amounts: invoices.overdue.group(:currency).order(:currency).sum_of_totals)
+
+    Summary.new(billed:, paid:, outstanding:, overdue:)
+  end
+
+  def website_host
+    URI.parse(website).host&.delete_prefix("www.") if website
   end
 
   def initials

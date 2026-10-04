@@ -1,0 +1,17 @@
+<%# locals: (label:, icon:, tone:, amounts:, caption:, empty:) %>
+<div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-900/5 transition-shadow hover:shadow-md">
+  <dt class="flex items-center justify-between text-sm font-medium text-gray-500">
+    <%= label %>
+    <span class="<%= tone %> rounded-xl p-2"><%= heroicon(icon, class: "size-5") %></span>
+  </dt>
+  <dd class="mt-3">
+    <% if amounts.any? %>
+      <% amounts.each do |currency, amount| %>
+        <p class="text-2xl font-semibold tracking-tight tabular-nums text-gray-900"><%= format_money(amount, currency) %></p>
+      <% end %>
+      <p class="mt-1 text-sm text-gray-500"><%= caption %></p>
+    <% else %>
+      <p class="text-2xl font-semibold tracking-tight text-gray-400"><%= empty %></p>
+    <% end %>
+  </dd>
+</div>

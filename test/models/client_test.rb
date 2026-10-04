@@ -149,6 +149,28 @@ class ClientTest < ActiveSupport::TestCase
     assert_equal [ 0, 0, {} ], stats[clients(:initech).id].to_h.values
   end
 
+  test "summarizes what the client was billed, paid and owes, per currency" do
+    travel_to Date.new(2026, 10, 15)
+    client = clients(:globex)
+    client.company.invoices.create!(client:, currency: "EUR", status: "paid", issue_date: Date.current, paid_on: Date.current,
+      items_attributes: [ { description: "Work", quantity: 1, unit_price: 300 } ])
+    client.company.invoices.create!(client:, currency: "USD", status: "cancelled", issue_date: Date.current,
+      items_attributes: [ { description: "Work", quantity: 1, unit_price: 999 } ])
+
+    summary = client.invoice_summary
+
+    assert_equal [ 2, { "EUR" => 300, "USD" => 2150 } ], [ summary.billed.count, summary.billed.amounts ]
+    assert_equal [ 1, { "EUR" => 300 } ], [ summary.paid.count, summary.paid.amounts ]
+    assert_equal [ 1, { "USD" => 2150 } ], [ summary.outstanding.count, summary.outstanding.amounts ]
+    assert_equal [ 1, { "USD" => 2150 } ], [ summary.overdue.count, summary.overdue.amounts ]
+  end
+
+  test "shows the website's host without www" do
+    assert_equal "globex.example", clients(:globex).website_host
+    assert_equal "example.com", Client.new(website: "https://www.example.com/about").website_host
+    assert_nil Client.new.website_host
+  end
+
   test "builds initials from the first two words of the name, skipping symbols" do
     assert_equal "GC", clients(:globex).initials
     assert_equal "I", clients(:initech).initials
