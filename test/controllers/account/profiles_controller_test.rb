@@ -42,6 +42,7 @@ class Account::ProfilesControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :unprocessable_entity
     assert_select "form[action=?] [role=alert] li", account_profile_path, "First name can't be blank"
+    assert_select "#sidebar a[href=?][aria-current=page]", account_path
     assert_select "form[action=?] [role=alert]", account_password_path, count: 0
     assert_select "#sidebar", /John Doe/
   end

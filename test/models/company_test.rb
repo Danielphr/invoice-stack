@@ -231,6 +231,17 @@ class CompanyTest < ActiveSupport::TestCase
     assert company.valid?
   end
 
+  test "stores blank default notes as nil and limits them to 500 characters" do
+    company = companies(:one)
+
+    company.default_invoice_notes = "   "
+    assert_nil company.default_invoice_notes
+
+    company.default_invoice_notes = "a" * 501
+    assert_not company.valid?
+    assert_includes company.errors[:default_invoice_notes], "is too long (maximum is 500 characters)"
+  end
+
   test "database rejects a pattern without {NUMBER}" do
     assert_raises ActiveRecord::StatementInvalid do
       companies(:one).update_column(:invoice_number_pattern, "INV-{YEAR}")

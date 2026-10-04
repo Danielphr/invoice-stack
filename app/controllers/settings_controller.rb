@@ -19,6 +19,10 @@ class SettingsController < ApplicationController
     end
 
     def settings_params
-      params.expect(company: [ :time_zone, :default_currency, :invoice_number_pattern, :invoice_number_digits, :next_invoice_number ])
+      params.expect(company: [
+        :time_zone, :default_currency,
+        :invoice_number_pattern, :invoice_number_digits, :next_invoice_number,
+        :default_invoice_notes
+      ])
     end
 end

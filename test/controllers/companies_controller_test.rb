@@ -34,8 +34,8 @@ class CompaniesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "input[name=?][value=?]", "company[name]", "Acme Inc."
     assert_select "[data-controller=dropzone] input[type=file][name=?]", "company[logo]"
-    assert_select "input[name=?]", "company[time_zone]", count: 0
-    assert_select "input[name=?]", "company[invoice_number_pattern]", count: 0
+    assert_select "[name=?]", "company[time_zone]", count: 0
+    assert_select "[name=?]", "company[invoice_number_pattern]", count: 0
     assert_select "nav a[aria-current=page]", "Company"
   end
 

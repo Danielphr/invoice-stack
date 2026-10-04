@@ -222,6 +222,14 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
     assert_select "select[name=?] option", "invoice[client_id]", text: "Wayne Enterprises", count: 0
   end
 
+  test "should start a new invoice with the company's default notes" do
+    users(:one).company.update!(default_invoice_notes: "Pay by bank transfer.")
+
+    get new_invoice_url
+
+    assert_select "textarea[name=?]", "invoice[notes]", "Pay by bank transfer."
+  end
+
   test "should preselect the client given in the link" do
     get new_invoice_url(client_id: clients(:initech).id)
 

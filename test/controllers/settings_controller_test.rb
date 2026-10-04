@@ -69,6 +69,16 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[role=alert] li", "Next number must be less than 1000000000"
   end
 
+  test "should save the default notes for new invoices" do
+    patch settings_url, params: { company: { default_invoice_notes: "  Pay by bank transfer to account 123.  " } }
+
+    assert_redirected_to settings_url
+    assert_equal "Pay by bank transfer to account 123.", @company.reload.default_invoice_notes
+
+    get settings_url
+    assert_select "textarea[name=?]", "company[default_invoice_notes]", "Pay by bank transfer to account 123."
+  end
+
   test "should only change settings, not the company's details" do
     patch settings_url, params: { company: { name: "Renamed", time_zone: "Montevideo" } }
 
