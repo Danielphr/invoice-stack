@@ -23,7 +23,7 @@ class CompaniesControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "h1", "Acme Inc."
-    assert_select "dd", "billing@acme.example"
+    assert_select "a[href=?]", "mailto:billing@acme.example"
     assert_select "dd", "YP-0042"
     assert_select "a[href=?]", edit_company_path, "Edit"
     assert_select "form[action=?]", company_path, count: 0
@@ -61,6 +61,19 @@ class CompaniesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "UYU", @company.default_currency
   end
 
+  test "should preview the top of an invoice" do
+    @company.update!(email: "billing@acme.example", address_line1: "100 Example Street", city: "Springfield", country: "US")
+
+    get company_url
+
+    assert_select "figure" do
+      assert_select "p", "Acme Inc."
+      assert_select "p", "billing@acme.example"
+      assert_select "p", /100 Example Street/
+      assert_select "p", "INVOICE"
+    end
+  end
+
   test "should remind the user to add an address until it is complete" do
     get company_url
     assert_select "[role=note]", /Add your company's address/
@@ -76,6 +89,8 @@ class CompaniesControllerTest < ActionDispatch::IntegrationTest
 
     get company_url
     assert_select "dd code", "#4f46e5"
+    assert_select "[data-controller=accent-color][data-accent-color-color-value=?]", "#4f46e5"
+    assert_select "main [style]", count: 0
 
     get edit_company_url
     assert_select "input[type=color][name=?][value=?]", "company[accent_color]", "#4f46e5"
