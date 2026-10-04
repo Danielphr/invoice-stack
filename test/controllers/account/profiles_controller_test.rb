@@ -1,22 +1,22 @@
 require "test_helper"
 
-class Settings::ProfilesControllerTest < ActionDispatch::IntegrationTest
+class Account::ProfilesControllerTest < ActionDispatch::IntegrationTest
   setup do
     @user = users(:one)
     sign_in_as @user
   end
 
   test "should update the name without the current password" do
-    patch settings_profile_url, params: { user: { first_name: "Johnny", last_name: "Doe" } }
+    patch account_profile_url, params: { user: { first_name: "Johnny", last_name: "Doe" } }
 
-    assert_redirected_to settings_url
+    assert_redirected_to account_url
     assert_equal "Johnny", @user.reload.first_name
     follow_redirect!
     assert_select "[role=status]", "Profile updated."
   end
 
   test "should require the current password to change the email" do
-    patch settings_profile_url, params: { user: { email_address: "new@example.com" } }
+    patch account_profile_url, params: { user: { email_address: "new@example.com" } }
 
     assert_response :unprocessable_entity
     assert_select "[role=alert] li", "Current password is invalid"
@@ -24,32 +24,32 @@ class Settings::ProfilesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should reject a wrong current password" do
-    patch settings_profile_url, params: { user: { email_address: "new@example.com", password_challenge: "wrong" } }
+    patch account_profile_url, params: { user: { email_address: "new@example.com", password_challenge: "wrong" } }
 
     assert_response :unprocessable_entity
     assert_equal "one@example.com", @user.reload.email_address
   end
 
   test "should change the email with the current password" do
-    patch settings_profile_url, params: { user: { email_address: "new@example.com", password_challenge: "password" } }
+    patch account_profile_url, params: { user: { email_address: "new@example.com", password_challenge: "password" } }
 
-    assert_redirected_to settings_url
+    assert_redirected_to account_url
     assert_equal "new@example.com", @user.reload.email_address
   end
 
   test "should keep the saved name in the sidebar when the form has errors" do
-    patch settings_profile_url, params: { user: { first_name: "" } }
+    patch account_profile_url, params: { user: { first_name: "" } }
 
     assert_response :unprocessable_entity
-    assert_select "form[action=?] [role=alert] li", settings_profile_path, "First name can't be blank"
-    assert_select "form[action=?] [role=alert]", settings_password_path, count: 0
+    assert_select "form[action=?] [role=alert] li", account_profile_path, "First name can't be blank"
+    assert_select "form[action=?] [role=alert]", account_password_path, count: 0
     assert_select "#sidebar", /John Doe/
   end
 
   test "should only change the signed-in user" do
     other = users(:two)
 
-    patch settings_profile_url, params: { user: { first_name: "Hacked", id: other.id } }
+    patch account_profile_url, params: { user: { first_name: "Hacked", id: other.id } }
 
     assert_equal "Jane", other.reload.first_name
   end

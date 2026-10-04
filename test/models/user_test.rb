@@ -31,4 +31,11 @@ class UserTest < ActiveSupport::TestCase
     assert_not user.valid?
     assert_includes user.errors[:email_address], "is invalid"
   end
+
+  test "joins the full name and builds initials" do
+    user = User.new(first_name: "ada", last_name: "Lovelace")
+
+    assert_equal "ada Lovelace", user.full_name
+    assert_equal "AL", user.initials
+  end
 end

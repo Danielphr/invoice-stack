@@ -1,6 +1,6 @@
 require "test_helper"
 
-class Settings::PasswordsControllerTest < ActionDispatch::IntegrationTest
+class Account::PasswordsControllerTest < ActionDispatch::IntegrationTest
   setup do
     @user = users(:one)
     sign_in_as @user
@@ -9,11 +9,11 @@ class Settings::PasswordsControllerTest < ActionDispatch::IntegrationTest
   test "should change the password and sign out the other devices only" do
     other_device = @user.sessions.create!
 
-    patch settings_password_url, params: { user: {
+    patch account_password_url, params: { user: {
       password_challenge: "password", password: "a-new-long-password", password_confirmation: "a-new-long-password"
     } }
 
-    assert_redirected_to settings_url
+    assert_redirected_to account_url
     assert @user.reload.authenticate("a-new-long-password")
     assert_not Session.exists?(other_device.id)
     assert Session.exists?(Current.session.id)
@@ -23,16 +23,16 @@ class Settings::PasswordsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should require the current password" do
-    patch settings_password_url, params: { user: { password: "a-new-long-password", password_confirmation: "a-new-long-password" } }
+    patch account_password_url, params: { user: { password: "a-new-long-password", password_confirmation: "a-new-long-password" } }
 
     assert_response :unprocessable_entity
-    assert_select "form[action=?] [role=alert] li", settings_password_path, "Current password is invalid"
-    assert_select "form[action=?] [role=alert]", settings_profile_path, count: 0
+    assert_select "form[action=?] [role=alert] li", account_password_path, "Current password is invalid"
+    assert_select "form[action=?] [role=alert]", account_profile_path, count: 0
     assert @user.reload.authenticate("password")
   end
 
   test "should reject a short or unconfirmed new password" do
-    patch settings_password_url, params: { user: {
+    patch account_password_url, params: { user: {
       password_challenge: "password", password: "short", password_confirmation: "different"
     } }
 
@@ -43,7 +43,7 @@ class Settings::PasswordsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should give each form its own field ids" do
-    get settings_url
+    get account_url
 
     assert_select "#user_password_challenge", 1
     assert_select "#password_user_password_challenge", 1
