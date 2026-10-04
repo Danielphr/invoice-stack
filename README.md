@@ -4,6 +4,14 @@ Invoicing for freelancers and small studios: clients, fixed-price and hourly inv
 
 Built with Ruby on Rails 8.1, PostgreSQL, Hotwire and Tailwind CSS.
 
+![Dashboard with revenue, due soon and overdue totals and a chart of revenue over time](docs/screenshots/dashboard.png)
+
+| Invoices | Invoice |
+| --- | --- |
+| ![Invoice list sorted by number, with status badges and totals per currency](docs/screenshots/invoices.png) | ![An overdue invoice with its items and totals](docs/screenshots/invoice.png) |
+| **Client** | |
+| ![A client's billed, paid, outstanding and overdue totals with their invoices](docs/screenshots/client.png) | |
+
 ## Features
 
 - **Invoices** billed at a fixed price or by the hour, in any currency, with a discount and notes. They move from draft to sent to paid, or are cancelled.
