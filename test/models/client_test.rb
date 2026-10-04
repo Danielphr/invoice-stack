@@ -114,6 +114,12 @@ class ClientTest < ActiveSupport::TestCase
     assert_equal [ "Montevideo", "Uruguay" ], clients(:initech).address_lines
   end
 
+  test "leaves out a state that has the same name as the city" do
+    client = Client.new(city: "Montevideo", state: "montevideo", postal_code: "11000", country: "UY")
+
+    assert_equal [ "Montevideo, 11000", "Uruguay" ], client.address_lines
+  end
+
   test "joins the contact name" do
     assert_equal "Hank Scorpio", @client.contact_name
     assert_nil clients(:initech).contact_name
