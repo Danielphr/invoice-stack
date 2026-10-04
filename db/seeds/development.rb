@@ -3,7 +3,7 @@
 
 return if User.exists?(email_address: "demo@example.com")
 
-ActiveRecord::Base.transaction do
+company = ActiveRecord::Base.transaction do
   company = Company.create!(
     name: "Northwind Studio", email: "billing@northwind.example",
     address_line1: "1200 Market Street", city: "San Francisco", state: "California", postal_code: "94102", country: "US",
@@ -56,4 +56,10 @@ ActiveRecord::Base.transaction do
   end
 
   3.times { |index| build_invoice.(index, today - index, "draft").save! }
+
+  company
 end
+
+# Attached after the transaction: issuing an invoice locks and reloads the company,
+# which drops a logo upload that is still waiting for the commit.
+company.logo.attach(io: File.open(Rails.root.join("db/seeds/files/northwind-logo.png")), filename: "northwind-logo.png")

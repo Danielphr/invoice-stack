@@ -8,9 +8,9 @@ Built with Ruby on Rails 8.1, PostgreSQL, Hotwire and Tailwind CSS.
 
 | Invoices | Invoice |
 | --- | --- |
-| ![Invoice list sorted by number, with status badges and totals per currency](docs/screenshots/invoices.png) | ![An overdue invoice with its items and totals](docs/screenshots/invoice.png) |
-| **Client** | |
-| ![A client's billed, paid, outstanding and overdue totals with their invoices](docs/screenshots/client.png) | |
+| ![Invoice list sorted by number, with status badges and totals per currency](docs/screenshots/invoices.png) | ![An overdue hourly invoice with its items and totals](docs/screenshots/invoice.png) |
+| **Client** | **PDF** |
+| ![A client's billed, paid, outstanding and overdue totals with their invoices](docs/screenshots/client.png) | ![The invoice PDF with the company's logo, address and accent color](docs/screenshots/pdf.png) |
 
 ## Features
 
