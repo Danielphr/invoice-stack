@@ -2,6 +2,7 @@ class RegistrationsController < ApplicationController
   layout "auth"
 
   allow_unauthenticated_access
+  rate_limit to: 10, within: 1.hour, only: :create, with: -> { redirect_to new_registration_path, alert: "Try again later." }
 
   def new
     @user = User.new
