@@ -10,8 +10,11 @@ class Invoices::ArchivesController < ApplicationController
   end
 
   def destroy
-    @invoice.unarchive
-    redirect_to @invoice, notice: "Invoice #{@invoice.number} unarchived."
+    if @invoice.unarchive
+      redirect_to @invoice, notice: "Invoice #{@invoice.number} unarchived."
+    else
+      redirect_to @invoice, alert: @invoice.errors.full_messages.to_sentence
+    end
   end
 
   private

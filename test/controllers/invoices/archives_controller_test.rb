@@ -41,6 +41,19 @@ class Invoices::ArchivesControllerTest < ActionDispatch::IntegrationTest
     assert_not @invoice.reload.archived?
   end
 
+  test "should show why an invoice can't be unarchived" do
+    @invoice.update!(status: "paid")
+    @invoice.archive
+    @invoice.items.update_all(unit_price: 1)
+    @invoice.update_column(:discount, 1_000)
+
+    delete invoice_archive_url(@invoice)
+
+    assert_redirected_to invoice_url(@invoice)
+    assert_equal "Discount can't be greater than the subtotal", flash[:alert]
+    assert @invoice.reload.archived?
+  end
+
   test "should not archive another company's invoice" do
     other_invoice = invoices(:other_company_invoice)
     other_invoice.update!(status: "paid")

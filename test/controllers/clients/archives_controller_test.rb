@@ -22,6 +22,16 @@ class Clients::ArchivesControllerTest < ActionDispatch::IntegrationTest
     assert @client.reload.archived?
   end
 
+  test "should show why a client can't be archived" do
+    @client.update_column(:website, "not a web address")
+
+    post client_archive_url(@client)
+
+    assert_redirected_to client_url(@client)
+    assert_equal "Website is invalid", flash[:alert]
+    assert_not @client.reload.archived?
+  end
+
   test "should unarchive a client" do
     @client.archive
 

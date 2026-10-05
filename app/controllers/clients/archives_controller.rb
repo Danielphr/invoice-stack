@@ -2,13 +2,19 @@ class Clients::ArchivesController < ApplicationController
   before_action :set_client
 
   def create
-    @client.archive
-    redirect_to @client, notice: "#{@client.name} archived."
+    if @client.archive
+      redirect_to @client, notice: "#{@client.name} archived."
+    else
+      redirect_to @client, alert: @client.errors.full_messages.to_sentence
+    end
   end
 
   def destroy
-    @client.unarchive
-    redirect_to @client, notice: "#{@client.name} unarchived."
+    if @client.unarchive
+      redirect_to @client, notice: "#{@client.name} unarchived."
+    else
+      redirect_to @client, alert: @client.errors.full_messages.to_sentence
+    end
   end
 
   private

@@ -19,6 +19,7 @@ Built with Ruby on Rails 8.1, PostgreSQL, Hotwire and Tailwind CSS.
 - **Invoice numbers** built from a pattern such as `INV-{YEAR}-{NUMBER}`, assigned when an invoice is sent.
 - **Clients** with contact details, and what each one has been billed, has paid and still owes.
 - **Dashboard** with revenue, invoices due soon and overdue, and revenue charts, filtered by period and currency.
+- **Archive** clients and paid or cancelled invoices to keep lists tidy, without losing them from your totals.
 - **Company settings** for the time zone, default currency, invoice numbering and default invoice notes.
 
 ## Design decisions

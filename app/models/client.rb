@@ -85,11 +85,11 @@ class Client < ApplicationRecord
   end
 
   def archive
-    update!(archived_at: Time.current)
+    update(archived_at: Time.current)
   end
 
   def unarchive
-    update!(archived_at: nil)
+    update(archived_at: nil)
   end
 
   def website_host
