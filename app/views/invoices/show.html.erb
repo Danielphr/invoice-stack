@@ -2,18 +2,30 @@
 
 <div class="flex flex-wrap items-center justify-between gap-4">
   <div>
-    <%= link_to "← Invoices", invoices_path, class: "link text-sm" %>
+    <%= link_to "← Invoices", @invoice.archived? ? invoices_path(show: "archived") : invoices_path, class: "link text-sm" %>
     <div class="mt-2 flex items-center gap-3">
       <h1 class="text-2xl font-semibold text-gray-900"><%= invoice_title(@invoice) %></h1>
       <%= invoice_status_badge(@invoice) %>
+      <% if @invoice.archived? %>
+        <span class="rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600">Archived</span>
+      <% end %>
     </div>
   </div>
 
   <div class="flex flex-wrap gap-3">
-    <%= render "status_actions", invoice: @invoice %>
+    <% if @invoice.archived? %>
+      <%= button_to "Unarchive", invoice_archive_path(@invoice), method: :delete, class: "btn-primary" %>
+    <% else %>
+      <%= render "status_actions", invoice: @invoice %>
+    <% end %>
     <%= link_to "PDF", invoice_path(@invoice, format: :pdf), target: "_blank", rel: "noopener", class: "btn-secondary",
           data: { turbo: false } %>
-    <%= link_to "Edit", edit_invoice_path(@invoice), class: "btn-secondary" %>
+    <% unless @invoice.archived? %>
+      <%= link_to "Edit", edit_invoice_path(@invoice), class: "btn-secondary" %>
+      <% if @invoice.archivable? %>
+        <%= button_to "Archive", invoice_archive_path(@invoice), class: "btn-secondary" %>
+      <% end %>
+    <% end %>
     <% if @invoice.draft? %>
       <%= button_to "Delete", @invoice, method: :delete, class: "btn-danger",
             form: { data: { turbo_confirm: "Delete this draft? This cannot be undone.", confirm_title: "Delete draft",

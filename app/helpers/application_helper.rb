@@ -35,14 +35,21 @@ module ApplicationHelper
     end
   end
 
-  # A sortable column header for the current list; the controller provides sort_column and sort_direction.
-  def sort_header(label, column, align: :left)
+  def filter_link(label, url, current:)
+    link_to label, url, aria: { current: ("true" if current) },
+      class: [ "rounded-md px-3 py-1.5", current ? "bg-brand-600 text-white" : "text-gray-600 hover:bg-gray-100 hover:text-gray-900" ]
+  end
+
+  # A sortable column header; the controller provides sort_column and sort_direction.
+  # Sorting links only carry sort and direction, so pass any other list options
+  # (like show: "archived") to keep them when the user sorts.
+  def sort_header(label, column, align: :left, filters: {})
     active = column == sort_column
     ascending = active && sort_direction == "asc"
     aria_sort = (ascending ? "ascending" : "descending" if active)
 
     tag.th scope: "col", class: [ "px-4 py-3", ("text-right" if align == :right) ], aria: { sort: aria_sort } do
-      link_to url_for(sort: column, direction: ascending ? "desc" : "asc"), class: "inline-flex items-center gap-1 hover:text-brand-600" do
+      link_to url_for(**filters, sort: column, direction: ascending ? "desc" : "asc"), class: "inline-flex items-center gap-1 hover:text-brand-600" do
         safe_join([ label, (tag.span(ascending ? "▲" : "▼", aria: { hidden: true }) if active) ].compact)
       end
     end

@@ -1,10 +1,14 @@
 class InvoicesController < ApplicationController
   before_action :set_invoice, only: %i[ show edit update destroy ]
+  before_action :require_active_invoice, only: %i[ edit update ]
   before_action :set_clients, only: %i[ new create edit update ]
   helper_method :sort_column, :sort_direction
 
   def index
-    invoices = Current.user.company.invoices.includes(:client, :items).sorted_by(sort_column, sort_direction)
+    @archived = params[:show] == "archived"
+    invoices = Current.user.company.invoices
+    @any_archived = @archived || invoices.archived.exists?
+    invoices = (@archived ? invoices.archived : invoices.active).includes(:client, :items).sorted_by(sort_column, sort_direction)
     @pagy, @invoices = pagy(:offset, invoices, limit: 10, raise_range_error: true)
   rescue Pagy::RangeError => error
     redirect_to error.pagy.page_url(:last)
@@ -22,7 +26,7 @@ class InvoicesController < ApplicationController
 
   def new
     company = Current.user.company
-    client = company.clients.find_by(id: params[:client_id])
+    client = company.clients.active.find_by(id: params[:client_id])
     @invoice = company.invoices.new(client:, issue_date: Date.current, currency: company.default_currency, notes: company.default_invoice_notes)
     @invoice.items.build
   end
@@ -69,8 +73,14 @@ class InvoicesController < ApplicationController
       @invoice = Current.user.company.invoices.includes(:client, :items).find(params.expect(:id))
     end
 
+    def require_active_invoice
+      redirect_to @invoice, alert: "Unarchive this invoice to edit it." if @invoice.archived?
+    end
+
+    # Only active clients can be picked, plus the invoice's own client, which may be archived.
     def set_clients
-      @clients = Current.user.company.clients.by_name
+      clients = Current.user.company.clients
+      @clients = clients.active.or(clients.where(id: @invoice&.client_id)).by_name
     end
 
     def invoice_params

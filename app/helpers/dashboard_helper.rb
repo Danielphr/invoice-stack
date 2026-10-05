@@ -38,7 +38,6 @@ module DashboardHelper
     current = period == dashboard.period && currency == dashboard.currency
     params = { period: (period unless period == "all"), currency: (currency if dashboard.currencies.many?) }
 
-    link_to label, root_path(params), aria: { current: ("true" if current) },
-      class: [ "rounded-md px-3 py-1.5", current ? "bg-brand-600 text-white" : "text-gray-600 hover:bg-gray-100 hover:text-gray-900" ]
+    filter_link label, root_path(params), current:
   end
 end

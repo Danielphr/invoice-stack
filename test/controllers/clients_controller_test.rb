@@ -62,6 +62,57 @@ class ClientsControllerTest < ActionDispatch::IntegrationTest
     assert_select "th a[href=?]", clients_path(sort: "invoices", direction: "asc")
   end
 
+  test "should keep archived clients in their own list" do
+    clients(:initech).archive
+
+    get clients_url
+    assert_select "tbody a", text: "Globex Corporation"
+    assert_select "tbody a", text: "Initech", count: 0
+    assert_select "nav[aria-label=Clients] a[aria-current]", "Active"
+
+    get clients_url(show: "archived")
+    assert_select "tbody a", text: "Initech"
+    assert_select "tbody a", text: "Globex Corporation", count: 0
+    assert_select "nav[aria-label=Clients] a[aria-current]", "Archived"
+    assert_select "a[href=?]", edit_client_path(clients(:initech)), count: 0
+    assert_select "thead a[href*='show=archived'][href*='sort=location']"
+  end
+
+  test "should only offer the archived list once a client is archived" do
+    get clients_url
+
+    assert_select "nav[aria-label=Clients]", count: 0
+  end
+
+  test "should show an archived client with the option to unarchive it" do
+    @client.archive
+
+    get client_url(@client)
+
+    assert_select "h1 span", "Archived"
+    assert_select "form[action=?] input[name=_method][value=delete]", client_archive_path(@client)
+    assert_select "a[href=?]", new_invoice_path(client_id: @client.id), count: 0
+    assert_select "a[href=?]", edit_client_path(@client), count: 0
+    assert_select "a[href=?]", clients_path(show: "archived"), "← Clients"
+  end
+
+  test "should offer to archive an active client" do
+    get client_url(@client)
+
+    assert_select "form[action=?][data-turbo-confirm]", client_archive_path(@client)
+  end
+
+  test "should not edit an archived client" do
+    @client.archive
+
+    get edit_client_url(@client)
+    assert_redirected_to client_url(@client)
+
+    patch client_url(@client), params: { client: { name: "Renamed" } }
+    assert_redirected_to client_url(@client)
+    assert_equal "Globex Corporation", @client.reload.name
+  end
+
   test "should paginate clients, ten per page" do
     11.times { |index| @user.company.clients.create!(name: "Client #{index.to_s.rjust(2, "0")}", city: "Austin", country: "US") }
 

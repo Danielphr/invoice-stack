@@ -17,6 +17,8 @@ class Client < ApplicationRecord
   has_many :invoices, dependent: :restrict_with_error
 
   scope :by_name, -> { order(arel_table[:name].lower) }
+  scope :active, -> { where(archived_at: nil) }
+  scope :archived, -> { where.not(archived_at: nil) }
 
   normalizes :name, :contact_first_name, :contact_last_name, :phone, :contact_phone, :notes,
     with: ->(value) { value.strip.presence }
@@ -76,6 +78,18 @@ class Client < ApplicationRecord
     overdue = Totals.new(count: invoices.overdue.count, amounts: invoices.overdue.group(:currency).order(:currency).sum_of_totals)
 
     Summary.new(billed:, paid:, outstanding:, overdue:)
+  end
+
+  def archived?
+    archived_at.present?
+  end
+
+  def archive
+    update(archived_at: Time.current)
+  end
+
+  def unarchive
+    update(archived_at: nil)
   end
 
   def website_host

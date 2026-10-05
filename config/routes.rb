@@ -15,9 +15,12 @@ Rails.application.routes.draw do
     resource :profile, only: :update
     resource :password, only: :update
   end
-  resources :clients
+  resources :clients do
+    resource :archive, only: %i[ create destroy ], module: :clients
+  end
   resources :invoices do
     resource :status, only: :update, module: :invoices
+    resource :archive, only: %i[ create destroy ], module: :invoices
   end
 
   get "up" => "rails/health#show", as: :rails_health_check

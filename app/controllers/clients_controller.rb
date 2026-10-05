@@ -1,9 +1,13 @@
 class ClientsController < ApplicationController
   before_action :set_client, only: %i[ show edit update destroy ]
+  before_action :require_active_client, only: %i[ edit update ]
   helper_method :sort_column, :sort_direction
 
   def index
-    clients = Current.user.company.clients.sorted_by(sort_column, sort_direction)
+    @archived = params[:show] == "archived"
+    clients = Current.user.company.clients
+    @any_archived = @archived || clients.archived.exists?
+    clients = (@archived ? clients.archived : clients.active).sorted_by(sort_column, sort_direction)
     @pagy, @clients = pagy(:offset, clients, limit: 10, raise_range_error: true)
     @stats = Client.invoice_stats(@clients)
   rescue Pagy::RangeError => error
@@ -61,6 +65,10 @@ class ClientsController < ApplicationController
 
     def set_client
       @client = Current.user.company.clients.find(params.expect(:id))
+    end
+
+    def require_active_client
+      redirect_to @client, alert: "Unarchive this client to edit it." if @client.archived?
     end
 
     def client_params

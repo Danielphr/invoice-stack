@@ -239,6 +239,78 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
     assert_select "textarea[name=?]", "invoice[notes]", "Pay by bank transfer."
   end
 
+  test "should keep archived invoices in their own list" do
+    @invoice.update!(status: "paid")
+    @invoice.archive
+
+    get invoices_url
+    assert_select "tbody a", text: "INV-001", count: 0
+    assert_select "nav[aria-label=Invoices] a[aria-current]", "Active"
+
+    get invoices_url(show: "archived")
+    assert_select "tbody a", text: "INV-001"
+    assert_select "nav[aria-label=Invoices] a[aria-current]", "Archived"
+    assert_select "a[href=?]", edit_invoice_path(@invoice), count: 0
+    assert_select "thead a[href*='show=archived'][href*='sort=total']"
+  end
+
+  test "should only offer the archived list once an invoice is archived" do
+    get invoices_url
+
+    assert_select "nav[aria-label=Invoices]", count: 0
+  end
+
+  test "should offer to archive only paid or cancelled invoices" do
+    get invoice_url(@invoice)
+    assert_select "form[action=?]", invoice_archive_path(@invoice), count: 0
+
+    @invoice.update!(status: "paid")
+    get invoice_url(@invoice)
+    assert_select "form[action=?]", invoice_archive_path(@invoice)
+  end
+
+  test "should show an archived invoice with the option to unarchive it" do
+    @invoice.update!(status: "paid")
+    @invoice.archive
+
+    get invoice_url(@invoice)
+
+    assert_select "span", "Archived"
+    assert_select "form[action=?] input[name=_method][value=delete]", invoice_archive_path(@invoice)
+    assert_select "a[href=?]", edit_invoice_path(@invoice), count: 0
+    assert_select "form[action=?]", invoice_status_path(@invoice), count: 0
+    assert_select "a[href=?]", invoices_path(show: "archived"), "← Invoices"
+  end
+
+  test "should not edit an archived invoice" do
+    @invoice.update!(status: "paid")
+    @invoice.archive
+
+    get edit_invoice_url(@invoice)
+    assert_redirected_to invoice_url(@invoice)
+
+    patch invoice_url(@invoice), params: { invoice: { notes: "Changed" } }
+    assert_redirected_to invoice_url(@invoice)
+    assert_nil @invoice.reload.notes
+  end
+
+  test "should leave archived clients out of new invoices" do
+    clients(:initech).archive
+
+    get new_invoice_url(client_id: clients(:initech).id)
+
+    assert_select "select[name=?] option", "invoice[client_id]", text: "Initech", count: 0
+    assert_select "select[name=?] option[selected]", "invoice[client_id]", count: 0
+  end
+
+  test "should keep an invoice's archived client in its form" do
+    clients(:globex).archive
+
+    get edit_invoice_url(@invoice)
+
+    assert_select "select[name=?] option[selected]", "invoice[client_id]", "Globex Corporation"
+  end
+
   test "should preselect the client given in the link" do
     get new_invoice_url(client_id: clients(:initech).id)
 
