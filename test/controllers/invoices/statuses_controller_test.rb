@@ -77,6 +77,7 @@ class Invoices::StatusesControllerTest < ActionDispatch::IntegrationTest
     assert_equal [ "Mark as sent" ], css_select("form[action='#{invoice_status_path(draft)}'] button").map(&:text)
 
     { "sent" => [ "Mark as paid", "Cancel invoice" ], "paid" => [ "Reopen" ], "cancelled" => [ "Reopen" ] }.each do |status, actions|
+      @invoice.update!(status: "sent")
       @invoice.update!(status: status)
 
       get invoice_url(@invoice)

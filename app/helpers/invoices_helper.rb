@@ -38,6 +38,8 @@ module InvoicesHelper
   def invoice_status_options(invoice)
     statuses = Invoice.statuses.keys
     statuses -= [ "draft" ] if invoice.sequence_in_database
+    statuses -= [ "cancelled" ] if invoice.status_in_database == "paid"
+    statuses -= [ "paid" ] if invoice.status_in_database == "cancelled"
     statuses.map { [ it.humanize, it ] }
   end
 

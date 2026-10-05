@@ -63,4 +63,16 @@ class InvoicesHelperTest < ActionView::TestCase
     assert_equal "Hours", quantity_label(invoice)
     assert_equal "Rate", unit_price_label(invoice)
   end
+
+  test "offers only the statuses an invoice can move to" do
+    invoice = invoices(:globex_website)
+    assert_equal %w[ sent paid cancelled ], invoice_status_options(invoice).map(&:last)
+
+    invoice.update!(status: "paid")
+    assert_equal %w[ sent paid ], invoice_status_options(invoice).map(&:last)
+
+    invoice.update!(status: "sent")
+    invoice.update!(status: "cancelled")
+    assert_equal %w[ sent cancelled ], invoice_status_options(invoice).map(&:last)
+  end
 end

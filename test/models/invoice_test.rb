@@ -115,6 +115,18 @@ class InvoiceTest < ActiveSupport::TestCase
     assert_includes @invoice.errors[:status], "can't go back to draft once the invoice is issued"
   end
 
+  test "must be reopened before switching between paid and cancelled" do
+    @invoice.update!(status: "paid")
+
+    assert_not @invoice.update(status: "cancelled")
+    assert_includes @invoice.errors[:status], "can't change from paid to cancelled; reopen the invoice first"
+
+    @invoice.reload.update!(status: "sent")
+    @invoice.update!(status: "cancelled")
+    assert_not @invoice.update(status: "paid")
+    assert_includes @invoice.errors[:status], "can't change from cancelled to paid; reopen the invoice first"
+  end
+
   test "can delete a draft but not an issued invoice" do
     assert_not @invoice.destroy
     assert_includes @invoice.errors[:base], "Only drafts can be deleted. Cancel the invoice instead."

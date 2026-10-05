@@ -23,6 +23,7 @@ class Invoice < ApplicationRecord
   validate :client_must_belong_to_company
   validate :client_cannot_be_archived, if: :client_id_changed?
   validate :cannot_return_to_draft
+  validate :cannot_switch_between_paid_and_cancelled
   validate :due_date_cannot_be_before_issue_date
   validate :must_have_items
   validate :must_be_closed_while_archived
@@ -168,6 +169,13 @@ class Invoice < ApplicationRecord
 
     def client_must_belong_to_company
       errors.add(:client, :invalid) if client && client.company_id != company_id
+    end
+
+    # Reopen always goes back to "sent", so paid and cancelled must both be reached from sent.
+    def cannot_switch_between_paid_and_cancelled
+      return unless status_changed? && [ status_was, status ].sort == %w[ cancelled paid ]
+
+      errors.add(:status, "can't change from #{status_was} to #{status}; reopen the invoice first")
     end
 
     def due_date_cannot_be_before_issue_date
