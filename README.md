@@ -29,7 +29,7 @@ Built with Ruby on Rails 8.1, PostgreSQL, Hotwire and Tailwind CSS.
 - **Money is exact.** Amounts are stored as decimals, and each line is rounded before it's added up, with the same rule in Ruby and in the SQL used for totals and reports.
 - **The database guards the rules that matter.** Check constraints mirror the key validations, for example that only paid invoices have a payment date and that drafts have no number.
 - **No JavaScript build step.** Hotwire with import maps and the standalone Tailwind CLI. Chart.js is loaded only on the dashboard.
-- **Issued invoices can still be edited**, with a warning that the client may already have them. A history of status changes is planned.
+- **Issued invoices can still be edited**, with a warning, and every change is recorded in the invoice's history: who did what, and when.
 
 ## Running locally
 

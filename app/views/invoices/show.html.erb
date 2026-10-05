@@ -114,7 +114,7 @@
   </section>
 <% end %>
 
-<% events = @invoice.events.includes(:user) %>
+<% events = @invoice.events.includes(:user).to_a %>
 <% if events.any? %>
   <%= render "history", events: %>
 <% end %>
