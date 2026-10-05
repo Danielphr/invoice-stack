@@ -1,0 +1,18 @@
+<%# locals: (events:) %>
+<section aria-labelledby="invoice-history-heading" class="mt-6 rounded-lg bg-white p-6 shadow-sm ring-1 ring-gray-900/5">
+  <h2 id="invoice-history-heading" class="text-base font-semibold text-gray-900">History</h2>
+
+  <ol role="list" class="mt-4 space-y-4">
+    <% events.each do |event| %>
+      <li class="relative flex gap-3 text-sm">
+        <span class="mt-1.5 size-2 shrink-0 rounded-full bg-brand-500" aria-hidden="true"></span>
+        <div>
+          <p class="font-medium text-gray-900"><%= invoice_event_description(event) %></p>
+          <p class="text-gray-500">
+            <%= safe_join([ event.user&.full_name, tag.time(l(event.created_at, format: :medium), datetime: event.created_at.iso8601) ].compact, " · ") %>
+          </p>
+        </div>
+      </li>
+    <% end %>
+  </ol>
+</section>
