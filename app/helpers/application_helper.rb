@@ -42,7 +42,7 @@ module ApplicationHelper
 
   # A sortable column header; the controller provides sort_column and sort_direction.
   # Sorting links only carry sort and direction, so pass any other list options
-  # (like archived: 1) to keep them when the user sorts.
+  # (like show: "archived") to keep them when the user sorts.
   def sort_header(label, column, align: :left, filters: {})
     active = column == sort_column
     ascending = active && sort_direction == "asc"

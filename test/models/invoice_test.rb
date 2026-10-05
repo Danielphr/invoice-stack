@@ -197,6 +197,33 @@ class InvoiceTest < ActiveSupport::TestCase
     assert @invoice.reload.valid?
   end
 
+  test "archives only paid or cancelled invoices" do
+    assert_not @invoice.archive
+    assert_includes @invoice.errors[:base], "Only paid or cancelled invoices can be archived"
+
+    @invoice.reload.update!(status: "cancelled")
+    assert @invoice.archive
+    assert_includes Invoice.archived, @invoice
+    assert_not_includes Invoice.active, @invoice
+
+    assert @invoice.unarchive
+    assert_includes Invoice.active, @invoice
+  end
+
+  test "can't change status while archived" do
+    @invoice.update!(status: "paid")
+    @invoice.archive
+
+    assert_not @invoice.update(status: "sent")
+    assert_includes @invoice.errors[:status], "can't change while the invoice is archived"
+  end
+
+  test "database rejects an archived invoice that is still open" do
+    assert_raises ActiveRecord::StatementInvalid do
+      @invoice.update_column(:archived_at, Time.current)
+    end
+  end
+
   test "database rejects a client from another company" do
     assert_raises ActiveRecord::InvalidForeignKey do
       @invoice.update_column(:client_id, clients(:other_company_client).id)

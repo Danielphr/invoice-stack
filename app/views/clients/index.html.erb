@@ -13,12 +13,12 @@
 <% if @any_archived %>
   <nav aria-label="Clients" class="mt-6 inline-flex gap-1 rounded-lg bg-white p-1 text-sm font-medium shadow-sm ring-1 ring-gray-900/5">
     <%= filter_link "Active", clients_path, current: !@archived %>
-    <%= filter_link "Archived", clients_path(archived: 1), current: @archived %>
+    <%= filter_link "Archived", clients_path(show: "archived"), current: @archived %>
   </nav>
 <% end %>
 
 <% if @clients.any? %>
-  <% filters = { archived: (1 if @archived) } %>
+  <% filters = @archived ? { show: "archived" } : {} %>
   <div class="mt-6 overflow-x-auto rounded-2xl bg-white shadow-sm ring-1 ring-gray-900/5">
     <table class="min-w-full divide-y divide-gray-200 text-sm">
       <thead class="bg-gray-50 text-left font-semibold text-gray-900">

@@ -4,7 +4,7 @@ class ClientsController < ApplicationController
   helper_method :sort_column, :sort_direction
 
   def index
-    @archived = params[:archived].present?
+    @archived = params[:show] == "archived"
     clients = Current.user.company.clients
     @any_archived = @archived || clients.archived.exists?
     clients = (@archived ? clients.archived : clients.active).sorted_by(sort_column, sort_direction)

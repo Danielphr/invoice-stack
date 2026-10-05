@@ -25,12 +25,15 @@ class Invoice < ApplicationRecord
   validate :cannot_return_to_draft
   validate :due_date_cannot_be_before_issue_date
   validate :must_have_items
+  validate :must_be_closed_while_archived
   validate :discount_cannot_exceed_subtotal
 
   SORTS = %w[ number client issued due billing status total ].freeze
 
   DUE_SOON_DAYS = 14
 
+  scope :active, -> { where(archived_at: nil) }
+  scope :archived, -> { where.not(archived_at: nil) }
   scope :overdue, -> { where(overdue_condition) }
   scope :due_soon, -> { sent.where(due_date: Date.current..(Date.current + DUE_SOON_DAYS)) }
 
@@ -97,6 +100,22 @@ class Invoice < ApplicationRecord
     [ issue_date || Date.current, Date.current ].max
   end
 
+  def archived?
+    archived_at.present?
+  end
+
+  def archivable?
+    paid? || cancelled?
+  end
+
+  def archive
+    update(archived_at: Time.current)
+  end
+
+  def unarchive
+    update(archived_at: nil)
+  end
+
   def overdue?
     sent? && due_date.present? && due_date < Date.current
   end
@@ -155,6 +174,16 @@ class Invoice < ApplicationRecord
       return unless issue_date && due_date
 
       errors.add(:due_date, "can't be before the issue date") if due_date < issue_date
+    end
+
+    def must_be_closed_while_archived
+      return if !archived? || archivable?
+
+      if status_changed?
+        errors.add(:status, "can't change while the invoice is archived")
+      else
+        errors.add(:base, "Only paid or cancelled invoices can be archived")
+      end
     end
 
     def must_have_items

@@ -70,12 +70,12 @@ class ClientsControllerTest < ActionDispatch::IntegrationTest
     assert_select "tbody a", text: "Initech", count: 0
     assert_select "nav[aria-label=Clients] a[aria-current]", "Active"
 
-    get clients_url(archived: 1)
+    get clients_url(show: "archived")
     assert_select "tbody a", text: "Initech"
     assert_select "tbody a", text: "Globex Corporation", count: 0
     assert_select "nav[aria-label=Clients] a[aria-current]", "Archived"
     assert_select "a[href=?]", edit_client_path(clients(:initech)), count: 0
-    assert_select "thead a[href*='archived=1'][href*='sort=location']"
+    assert_select "thead a[href*='show=archived'][href*='sort=location']"
   end
 
   test "should only offer the archived list once a client is archived" do
@@ -93,7 +93,7 @@ class ClientsControllerTest < ActionDispatch::IntegrationTest
     assert_select "form[action=?] input[name=_method][value=delete]", client_archive_path(@client)
     assert_select "a[href=?]", new_invoice_path(client_id: @client.id), count: 0
     assert_select "a[href=?]", edit_client_path(@client), count: 0
-    assert_select "a[href=?]", clients_path(archived: 1), "← Clients"
+    assert_select "a[href=?]", clients_path(show: "archived"), "← Clients"
   end
 
   test "should offer to archive an active client" do
