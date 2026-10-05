@@ -239,6 +239,23 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
     assert_select "textarea[name=?]", "invoice[notes]", "Pay by bank transfer."
   end
 
+  test "should show an invoice's history with who made each change" do
+    patch invoice_status_url(invoices(:globex_draft)), params: { status: "sent" }
+
+    get invoice_url(invoices(:globex_draft))
+
+    assert_select "section[aria-labelledby=invoice-history-heading]" do
+      assert_select "li p", "Sent"
+      assert_select "li p", /John Doe/
+    end
+  end
+
+  test "should leave out the history when nothing has been recorded" do
+    get invoice_url(@invoice)
+
+    assert_select "#invoice-history-heading", count: 0
+  end
+
   test "should keep archived invoices in their own list" do
     @invoice.update!(status: "paid")
     @invoice.archive

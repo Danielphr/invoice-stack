@@ -63,4 +63,31 @@ class InvoicesHelperTest < ActionView::TestCase
     assert_equal "Hours", quantity_label(invoice)
     assert_equal "Rate", unit_price_label(invoice)
   end
+
+  test "offers only the statuses an invoice can move to" do
+    invoice = invoices(:globex_website)
+    assert_equal %w[ sent paid cancelled ], invoice_status_options(invoice).map(&:last)
+
+    invoice.update!(status: "paid")
+    assert_equal %w[ sent paid ], invoice_status_options(invoice).map(&:last)
+
+    invoice.update!(status: "sent")
+    invoice.update!(status: "cancelled")
+    assert_equal %w[ sent cancelled ], invoice_status_options(invoice).map(&:last)
+  end
+
+  test "describes each kind of invoice event" do
+    event = ->(action, **attributes) { InvoiceEvent.new(action:, **attributes) }
+
+    assert_equal "Created as a draft", invoice_event_description(event.("created", to_status: "draft"))
+    assert_equal "Created as paid", invoice_event_description(event.("created", to_status: "paid"))
+    assert_equal "Sent", invoice_event_description(event.("status_changed", from_status: "draft", to_status: "sent"))
+    assert_equal "Marked as paid", invoice_event_description(event.("status_changed", from_status: "sent", to_status: "paid"))
+    assert_equal "Cancelled", invoice_event_description(event.("status_changed", from_status: "sent", to_status: "cancelled"))
+    assert_equal "Reopened", invoice_event_description(event.("status_changed", from_status: "paid", to_status: "sent"))
+    assert_equal "Edited the due date, payment date, and items",
+      invoice_event_description(event.("edited", fields: %w[ due_date paid_on items ]))
+    assert_equal "Archived", invoice_event_description(event.("archived"))
+    assert_equal "Unarchived", invoice_event_description(event.("unarchived"))
+  end
 end

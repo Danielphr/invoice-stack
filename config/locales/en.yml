@@ -43,6 +43,8 @@ en:
         invoice_number_pattern: "Number pattern"
         invoice_number_digits: "Minimum digits"
         next_invoice_number: "Next number"
+      invoice:
+        paid_on: "Payment date"
       invoice/items:
         description: "Item description"
         quantity: "Item quantity"
@@ -51,3 +53,6 @@ en:
     formats:
       medium: "%b %-d, %Y"
       long: "%B %-d, %Y"
+  time:
+    formats:
+      medium: "%b %-d, %Y, %-I:%M %p"

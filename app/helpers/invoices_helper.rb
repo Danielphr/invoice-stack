@@ -38,7 +38,26 @@ module InvoicesHelper
   def invoice_status_options(invoice)
     statuses = Invoice.statuses.keys
     statuses -= [ "draft" ] if invoice.sequence_in_database
+    statuses -= [ "cancelled" ] if invoice.status_in_database == "paid"
+    statuses -= [ "paid" ] if invoice.status_in_database == "cancelled"
     statuses.map { [ it.humanize, it ] }
+  end
+
+  def invoice_event_description(event)
+    case event.action
+    when "created"
+      event.to_status == "draft" ? "Created as a draft" : "Created as #{event.to_status}"
+    when "status_changed"
+      case event.to_status
+      when "sent" then event.from_status == "draft" ? "Sent" : "Reopened"
+      when "paid" then "Marked as paid"
+      when "cancelled" then "Cancelled"
+      end
+    when "edited"
+      "Edited the #{event.fields.map { Invoice.human_attribute_name(it).downcase }.to_sentence}"
+    when "archived" then "Archived"
+    when "unarchived" then "Unarchived"
+    end
   end
 
   def invoice_status_badge(invoice)

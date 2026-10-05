@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_05_193103) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_05_210557) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -90,6 +90,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_05_193103) do
     t.check_constraint "next_invoice_number >= 1", name: "companies_next_invoice_number_check"
   end
 
+  create_table "invoice_events", force: :cascade do |t|
+    t.bigint "invoice_id", null: false
+    t.bigint "user_id"
+    t.string "action", null: false
+    t.string "from_status"
+    t.string "to_status"
+    t.string "fields", default: [], null: false, array: true
+    t.datetime "created_at", null: false
+    t.index ["invoice_id"], name: "index_invoice_events_on_invoice_id"
+    t.index ["user_id"], name: "index_invoice_events_on_user_id"
+    t.check_constraint "action::text = ANY (ARRAY['created'::character varying, 'status_changed'::character varying, 'edited'::character varying, 'archived'::character varying, 'unarchived'::character varying]::text[])", name: "invoice_events_action_check"
+  end
+
   create_table "invoice_items", force: :cascade do |t|
     t.bigint "invoice_id", null: false
     t.string "description", null: false
@@ -157,6 +170,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_05_193103) do
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "clients", "companies"
+  add_foreign_key "invoice_events", "invoices", on_delete: :cascade
+  add_foreign_key "invoice_events", "users", on_delete: :nullify
   add_foreign_key "invoice_items", "invoices", on_delete: :cascade
   add_foreign_key "invoices", "clients", column: ["company_id", "client_id"], primary_key: ["company_id", "id"]
   add_foreign_key "invoices", "companies"

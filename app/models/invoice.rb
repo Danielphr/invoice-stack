@@ -2,6 +2,7 @@ class Invoice < ApplicationRecord
   belongs_to :company
   belongs_to :client
   has_many :items, -> { order(:position) }, class_name: "InvoiceItem", dependent: :destroy, inverse_of: :invoice
+  has_many :events, -> { order(:created_at, :id) }, class_name: "InvoiceEvent", dependent: :delete_all
 
   accepts_nested_attributes_for :items, allow_destroy: true
 
@@ -13,6 +14,9 @@ class Invoice < ApplicationRecord
   before_validation :position_items
   before_validation :sync_paid_on
   before_save :issue, if: -> { sequence.nil? && !draft? }
+  before_save :collect_edited_fields
+  after_create :record_creation
+  after_update :record_changes
   # Issued invoices are cancelled instead, so their numbers are never lost or reused.
   before_destroy :ensure_draft, prepend: true, unless: :destroyed_by_association
 
@@ -23,6 +27,7 @@ class Invoice < ApplicationRecord
   validate :client_must_belong_to_company
   validate :client_cannot_be_archived, if: :client_id_changed?
   validate :cannot_return_to_draft
+  validate :cannot_switch_between_paid_and_cancelled
   validate :due_date_cannot_be_before_issue_date
   validate :must_have_items
   validate :must_be_closed_while_archived
@@ -150,6 +155,31 @@ class Invoice < ApplicationRecord
       self.due_date = date + term if term
     end
 
+    # Drafts are still being written, so only changes to issued invoices count as edits.
+    # Status, payment date and archiving get their own entries.
+    def collect_edited_fields
+      @edited_fields = []
+      return if sequence_was.nil?
+
+      @edited_fields = changed - %w[ status paid_on archived_at updated_at ]
+      @edited_fields << "paid_on" if paid_on_changed? && !status_changed?
+      @edited_fields << "items" if items.any? { it.new_record? || it.marked_for_destruction? || it.changed? }
+    end
+
+    def record_creation
+      record_event "created", to_status: status
+    end
+
+    def record_changes
+      record_event "status_changed", from_status: status_before_last_save, to_status: status if saved_change_to_status?
+      record_event "edited", fields: @edited_fields if @edited_fields.any?
+      record_event(archived? ? "archived" : "unarchived") if saved_change_to_archived_at?
+    end
+
+    def record_event(action, **attributes)
+      events.create!(action:, user: Current.user, **attributes)
+    end
+
     def ensure_draft
       return if draft?
 
@@ -168,6 +198,13 @@ class Invoice < ApplicationRecord
 
     def client_must_belong_to_company
       errors.add(:client, :invalid) if client && client.company_id != company_id
+    end
+
+    # Reopen always goes back to "sent", so paid and cancelled must both be reached from sent.
+    def cannot_switch_between_paid_and_cancelled
+      return unless status_changed? && [ status_was, status ].sort == %w[ cancelled paid ]
+
+      errors.add(:status, "can't change from #{status_was} to #{status}; reopen the invoice first")
     end
 
     def due_date_cannot_be_before_issue_date
