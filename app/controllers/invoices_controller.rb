@@ -22,7 +22,7 @@ class InvoicesController < ApplicationController
 
   def new
     company = Current.user.company
-    client = company.clients.find_by(id: params[:client_id])
+    client = company.clients.active.find_by(id: params[:client_id])
     @invoice = company.invoices.new(client:, issue_date: Date.current, currency: company.default_currency, notes: company.default_invoice_notes)
     @invoice.items.build
   end
@@ -69,8 +69,10 @@ class InvoicesController < ApplicationController
       @invoice = Current.user.company.invoices.includes(:client, :items).find(params.expect(:id))
     end
 
+    # Only active clients can be picked, plus the invoice's own client, which may be archived.
     def set_clients
-      @clients = Current.user.company.clients.by_name
+      clients = Current.user.company.clients
+      @clients = clients.active.or(clients.where(id: @invoice&.client_id)).by_name
     end
 
     def invoice_params

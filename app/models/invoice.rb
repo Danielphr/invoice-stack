@@ -21,6 +21,7 @@ class Invoice < ApplicationRecord
   validates :discount, numericality: { greater_than_or_equal_to: 0, less_than: 10_000_000_000 }
   validates :notes, length: { maximum: 500 }
   validate :client_must_belong_to_company
+  validate :client_cannot_be_archived, if: :client_id_changed?
   validate :cannot_return_to_draft
   validate :due_date_cannot_be_before_issue_date
   validate :must_have_items
@@ -135,6 +136,11 @@ class Invoice < ApplicationRecord
 
       errors.add(:base, "Only drafts can be deleted. Cancel the invoice instead.")
       throw :abort
+    end
+
+    # Only checked when the client is set or changed, so existing invoices stay valid after their client is archived.
+    def client_cannot_be_archived
+      errors.add(:client, "is archived") if client&.archived?
     end
 
     def cannot_return_to_draft

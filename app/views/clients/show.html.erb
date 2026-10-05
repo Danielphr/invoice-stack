@@ -1,6 +1,6 @@
 <% content_for :title, @client.name %>
 
-<%= link_to "← Clients", clients_path, class: "link text-sm" %>
+<%= link_to "← Clients", clients_path(archived: (1 if @client.archived?)), class: "link text-sm" %>
 
 <div class="mt-4 flex flex-wrap items-start justify-between gap-4">
   <div class="flex items-center gap-4">
@@ -8,7 +8,12 @@
       <%= @client.initials %>
     </span>
     <div class="min-w-0">
-      <h1 class="text-2xl font-semibold text-gray-900"><%= @client.name %></h1>
+      <h1 class="flex flex-wrap items-center gap-3 text-2xl font-semibold text-gray-900">
+        <%= @client.name %>
+        <% if @client.archived? %>
+          <span class="rounded-md bg-gray-100 px-2 py-1 font-sans text-xs font-medium text-gray-600">Archived</span>
+        <% end %>
+      </h1>
       <ul role="list" class="mt-1 flex flex-wrap gap-x-5 gap-y-1 text-sm text-gray-500">
         <li class="flex items-center gap-1.5"><%= heroicon(:map_pin, class: "size-4") %><%= @client.city %>, <%= @client.country_name %></li>
         <% if @client.email %>
@@ -27,8 +32,15 @@
   </div>
 
   <div class="flex flex-wrap gap-3">
-    <%= link_to "New invoice", new_invoice_path(client_id: @client.id), class: "btn-primary" %>
-    <%= link_to "Edit", edit_client_path(@client), class: "btn-secondary" %>
+    <% if @client.archived? %>
+      <%= button_to "Unarchive", client_archive_path(@client), method: :delete, class: "btn-primary" %>
+    <% else %>
+      <%= link_to "New invoice", new_invoice_path(client_id: @client.id), class: "btn-primary" %>
+      <%= link_to "Edit", edit_client_path(@client), class: "btn-secondary" %>
+      <%= button_to "Archive", client_archive_path(@client), class: "btn-secondary",
+            form: { data: { turbo_confirm: "#{@client.name} will be hidden from your clients and can't get new invoices until you unarchive it. " \
+              "Existing invoices aren't affected.", confirm_title: "Archive client", confirm_button: "Archive" } } %>
+    <% end %>
     <% if @pagy.count.zero? %>
       <%= button_to "Delete", @client, method: :delete, class: "btn-danger",
             form: { data: { turbo_confirm: "Delete #{@client.name}? This cannot be undone.", confirm_title: "Delete client",
@@ -89,7 +101,9 @@
     <% else %>
       <div class="px-6 pt-3 pb-6">
         <p class="text-sm text-gray-500">No invoices yet for this client.</p>
-        <%= link_to "Create the first one", new_invoice_path(client_id: @client.id), class: "link mt-2 inline-block text-sm" %>
+        <% unless @client.archived? %>
+          <%= link_to "Create the first one", new_invoice_path(client_id: @client.id), class: "link mt-2 inline-block text-sm" %>
+        <% end %>
       </div>
     <% end %>
   </section>

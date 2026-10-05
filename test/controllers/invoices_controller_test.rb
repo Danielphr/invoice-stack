@@ -239,6 +239,23 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
     assert_select "textarea[name=?]", "invoice[notes]", "Pay by bank transfer."
   end
 
+  test "should leave archived clients out of new invoices" do
+    clients(:initech).archive
+
+    get new_invoice_url(client_id: clients(:initech).id)
+
+    assert_select "select[name=?] option", "invoice[client_id]", text: "Initech", count: 0
+    assert_select "select[name=?] option[selected]", "invoice[client_id]", count: 0
+  end
+
+  test "should keep an invoice's archived client in its form" do
+    clients(:globex).archive
+
+    get edit_invoice_url(@invoice)
+
+    assert_select "select[name=?] option[selected]", "invoice[client_id]", "Globex Corporation"
+  end
+
   test "should preselect the client given in the link" do
     get new_invoice_url(client_id: clients(:initech).id)
 

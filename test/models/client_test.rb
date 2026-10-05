@@ -183,4 +183,17 @@ class ClientTest < ActiveSupport::TestCase
     assert_equal "HP", Client.new(name: "Harbor & Pine").initials
     assert_equal "ÉM", Client.new(name: "études Montaña").initials
   end
+
+  test "archives and unarchives" do
+    client = clients(:globex)
+
+    client.archive
+    assert client.archived?
+    assert_includes Client.archived, client
+    assert_not_includes Client.active, client
+
+    client.unarchive
+    assert_not client.archived?
+    assert_includes Client.active, client
+  end
 end

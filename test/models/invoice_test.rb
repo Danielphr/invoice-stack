@@ -181,6 +181,22 @@ class InvoiceTest < ActiveSupport::TestCase
     assert_includes @invoice.errors[:client], "is invalid"
   end
 
+  test "can't be created for an archived client" do
+    client = clients(:initech)
+    client.archive
+    invoice = companies(:one).invoices.new(client:, currency: "USD", issue_date: Date.current)
+    invoice.items.build(description: "Design", quantity: 1, unit_price: 100)
+
+    assert_not invoice.valid?
+    assert_includes invoice.errors[:client], "is archived"
+  end
+
+  test "stays valid after its client is archived" do
+    @invoice.client.archive
+
+    assert @invoice.reload.valid?
+  end
+
   test "database rejects a client from another company" do
     assert_raises ActiveRecord::InvalidForeignKey do
       @invoice.update_column(:client_id, clients(:other_company_client).id)

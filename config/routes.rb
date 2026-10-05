@@ -15,7 +15,9 @@ Rails.application.routes.draw do
     resource :profile, only: :update
     resource :password, only: :update
   end
-  resources :clients
+  resources :clients do
+    resource :archive, only: %i[ create destroy ], module: :clients
+  end
   resources :invoices do
     resource :status, only: :update, module: :invoices
   end
