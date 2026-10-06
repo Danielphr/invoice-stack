@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_05_210557) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_05_213135) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -84,6 +84,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_05_210557) do
     t.string "default_currency", default: "USD", null: false
     t.string "accent_color", default: "#000000", null: false
     t.text "default_invoice_notes"
+    t.boolean "tax_documents_enabled", default: false, null: false
+    t.string "tax_document_name"
     t.check_constraint "POSITION(('{NUMBER}'::text) IN (invoice_number_pattern)) > 0", name: "companies_invoice_number_pattern_check"
     t.check_constraint "accent_color::text ~ '^#[0-9a-f]{6}$'::text", name: "companies_accent_color_check"
     t.check_constraint "invoice_number_digits >= 1 AND invoice_number_digits <= 10", name: "companies_invoice_number_digits_check"
@@ -100,7 +102,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_05_210557) do
     t.datetime "created_at", null: false
     t.index ["invoice_id"], name: "index_invoice_events_on_invoice_id"
     t.index ["user_id"], name: "index_invoice_events_on_user_id"
-    t.check_constraint "action::text = ANY (ARRAY['created'::character varying, 'status_changed'::character varying, 'edited'::character varying, 'archived'::character varying, 'unarchived'::character varying]::text[])", name: "invoice_events_action_check"
+    t.check_constraint "action::text = ANY (ARRAY['created'::character varying::text, 'status_changed'::character varying::text, 'edited'::character varying::text, 'archived'::character varying::text, 'unarchived'::character varying::text])", name: "invoice_events_action_check"
   end
 
   create_table "invoice_items", force: :cascade do |t|
@@ -138,12 +140,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_05_210557) do
     t.check_constraint "(number IS NULL) = (sequence IS NULL)", name: "invoices_number_sequence_check"
     t.check_constraint "(status::text = 'draft'::text) = (number IS NULL)", name: "invoices_number_check"
     t.check_constraint "(status::text = 'paid'::text) = (paid_on IS NOT NULL)", name: "invoices_paid_on_check"
-    t.check_constraint "archived_at IS NULL OR (status::text = ANY (ARRAY['paid'::character varying, 'cancelled'::character varying]::text[]))", name: "invoices_archived_status_check"
-    t.check_constraint "billing_type::text = ANY (ARRAY['fixed'::character varying, 'hourly'::character varying]::text[])", name: "invoices_billing_type_check"
+    t.check_constraint "archived_at IS NULL OR (status::text = ANY (ARRAY['paid'::character varying::text, 'cancelled'::character varying::text]))", name: "invoices_archived_status_check"
+    t.check_constraint "billing_type::text = ANY (ARRAY['fixed'::character varying::text, 'hourly'::character varying::text])", name: "invoices_billing_type_check"
     t.check_constraint "discount >= 0::numeric", name: "invoices_discount_check"
     t.check_constraint "due_date IS NULL OR due_date >= issue_date", name: "invoices_due_date_check"
     t.check_constraint "sequence > 0", name: "invoices_sequence_check"
-    t.check_constraint "status::text = ANY (ARRAY['draft'::character varying, 'sent'::character varying, 'paid'::character varying, 'cancelled'::character varying]::text[])", name: "invoices_status_check"
+    t.check_constraint "status::text = ANY (ARRAY['draft'::character varying::text, 'sent'::character varying::text, 'paid'::character varying::text, 'cancelled'::character varying::text])", name: "invoices_status_check"
   end
 
   create_table "sessions", force: :cascade do |t|

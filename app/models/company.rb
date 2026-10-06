@@ -21,6 +21,7 @@ class Company < ApplicationRecord
   normalizes :email, with: ->(email) { email.strip.downcase.presence }
   normalizes :accent_color, with: ->(color) { color.strip.downcase }
   normalizes :default_invoice_notes, with: ->(notes) { notes.strip.presence }
+  normalizes :tax_document_name, with: ->(name) { name.strip.presence }
 
   validates :name, presence: true, on: :update
   validates :name, length: { maximum: 100 }
@@ -30,6 +31,7 @@ class Company < ApplicationRecord
   validates :accent_color, format: { with: /\A#\h{6}\z/, message: "must be a hex color like #4f46e5" }
   validates :invoice_number_pattern, presence: true, length: { maximum: 30 }
   validates :default_invoice_notes, length: { maximum: 500 }
+  validates :tax_document_name, length: { maximum: 30 }
   validates :invoice_number_digits, numericality: { only_integer: true, in: 1..10 }
   validates :next_invoice_number, numericality: { only_integer: true, greater_than_or_equal_to: :lowest_next_invoice_number, less_than: 1_000_000_000 }
   validate :invoice_number_pattern_must_be_valid
@@ -37,6 +39,11 @@ class Company < ApplicationRecord
 
   def onboarding_complete?
     name.present?
+  end
+
+  # The name set in Settings, or "Tax document" if none is set.
+  def tax_document_label
+    tax_document_name || "Tax document"
   end
 
   def address_complete?
