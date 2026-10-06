@@ -269,6 +269,21 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
     assert_select "#invoice-history-heading", count: 0
   end
 
+  test "should list each invoice's tax document number, or show it as pending" do
+    get invoices_url
+    assert_select "th", text: "Factura", count: 0
+
+    companies(:one).update!(tax_documents_enabled: true, tax_document_name: "Factura")
+    @invoice.update!(tax_document_number: "A-1")
+    invoices(:globex_draft).update!(status: "sent")
+
+    get invoices_url
+
+    assert_select "th", "Factura"
+    assert_select "tbody td", "A-1"
+    assert_select "tbody td span", "Pending"
+  end
+
   test "should keep archived invoices in their own list" do
     @invoice.update!(status: "paid")
     @invoice.archive
