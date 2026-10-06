@@ -236,6 +236,49 @@ class InvoiceTest < ActiveSupport::TestCase
     end
   end
 
+  test "takes a tax document only once sent, with a number unique to the company" do
+    companies(:one).update!(tax_document_name: "Factura")
+    draft = invoices(:globex_draft)
+
+    draft.tax_document_number = "A-1"
+    assert_not draft.valid?
+    assert_includes draft.errors[:base], "Factura can only be added once the invoice is sent"
+
+    @invoice.update!(tax_document_number: " A-1 ")
+    assert_equal "A-1", @invoice.tax_document_number
+
+    draft.tax_document_number = nil
+    draft.update!(status: "sent")
+    draft.tax_document_number = "A-1"
+    assert_not draft.valid?
+    assert_includes draft.errors[:base], "Factura number A-1 is already used by another invoice"
+
+    other_invoice = invoices(:other_company_invoice)
+    other_invoice.tax_document_number = "A-1"
+    assert other_invoice.valid?
+  end
+
+  test "needs a number when a PDF is attached" do
+    @invoice.tax_document.attach(io: file_fixture("tax-document.pdf").open, filename: "tax-document.pdf")
+
+    assert_not @invoice.valid?
+    assert_includes @invoice.errors[:base], "Tax document number is required"
+  end
+
+  test "is pending a tax document only when sent or paid, and only if the company tracks them" do
+    assert_not @invoice.tax_document_pending?
+
+    companies(:one).update!(tax_documents_enabled: true)
+    assert @invoice.reload.tax_document_pending?
+
+    @invoice.tax_document_number = "A-1"
+    assert_not @invoice.tax_document_pending?
+
+    @invoice.update!(tax_document_number: nil, status: "cancelled")
+    assert_not @invoice.tax_document_pending?
+    assert_not invoices(:globex_draft).tax_document_pending?
+  end
+
   test "database rejects a client from another company" do
     assert_raises ActiveRecord::InvalidForeignKey do
       @invoice.update_column(:client_id, clients(:other_company_client).id)

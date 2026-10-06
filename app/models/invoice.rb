@@ -3,6 +3,7 @@ class Invoice < ApplicationRecord
   belongs_to :client
   has_many :items, -> { order(:position) }, class_name: "InvoiceItem", dependent: :destroy, inverse_of: :invoice
   has_many :events, -> { order(:created_at, :id) }, class_name: "InvoiceEvent", dependent: :delete_all
+  has_one_attached :tax_document
 
   accepts_nested_attributes_for :items, allow_destroy: true
 
@@ -10,6 +11,7 @@ class Invoice < ApplicationRecord
   enum :billing_type, %w[ fixed hourly ].index_by(&:itself), default: "fixed", validate: true
 
   normalizes :notes, with: ->(notes) { notes.strip.presence }
+  normalizes :tax_document_number, with: ->(number) { number.strip.presence }
 
   before_validation :position_items
   before_validation :sync_paid_on
@@ -32,8 +34,10 @@ class Invoice < ApplicationRecord
   validate :must_have_items
   validate :must_be_closed_while_archived
   validate :discount_cannot_exceed_subtotal
+  validate :tax_document_must_be_valid
 
   SORTS = %w[ number client issued due billing status total ].freeze
+  TAX_DOCUMENT_MAX_SIZE = 10.megabytes
 
   DUE_SOON_DAYS = 14
 
@@ -121,6 +125,10 @@ class Invoice < ApplicationRecord
     update(archived_at: nil)
   end
 
+  def tax_document_pending?
+    company.tax_documents_enabled? && (sent? || paid?) && tax_document_number.nil?
+  end
+
   def overdue?
     sent? && due_date.present? && due_date < Date.current
   end
@@ -205,6 +213,25 @@ class Invoice < ApplicationRecord
       return unless status_changed? && [ status_was, status ].sort == %w[ cancelled paid ]
 
       errors.add(:status, "can't change from #{status_was} to #{status}; reopen the invoice first")
+    end
+
+    # Errors use the company's own name for the document, so they're added to base.
+    # Saving the tax document form uses the :tax_document context, which always needs a number.
+    def tax_document_must_be_valid
+      label = company.tax_document_label
+      return unless tax_document_number || tax_document.attached? || validation_context == :tax_document
+
+      errors.add(:base, "#{label} can only be added once the invoice is sent") if draft?
+      errors.add(:base, "#{label} number is required") unless tax_document_number
+      errors.add(:base, "#{label} number is too long (maximum is 50 characters)") if tax_document_number.to_s.length > 50
+      if tax_document_number_changed? && tax_document_number && company.invoices.where.not(id:).exists?(tax_document_number:)
+        errors.add(:base, "#{label} number #{tax_document_number} is already used by another invoice")
+      end
+
+      return unless tax_document.attached?
+
+      errors.add(:base, "#{label} must be a PDF") unless tax_document.content_type == "application/pdf"
+      errors.add(:base, "#{label} must be smaller than 10 MB") if tax_document.byte_size > TAX_DOCUMENT_MAX_SIZE
     end
 
     def due_date_cannot_be_before_issue_date

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_05_213135) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_06_182613) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -134,9 +134,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_05_213135) do
     t.date "paid_on"
     t.integer "sequence"
     t.datetime "archived_at"
+    t.string "tax_document_number"
     t.index ["company_id", "client_id"], name: "index_invoices_on_company_id_and_client_id"
     t.index ["company_id", "number"], name: "index_invoices_on_company_id_and_number", unique: true
     t.index ["company_id", "sequence"], name: "index_invoices_on_company_id_and_sequence", unique: true
+    t.index ["company_id", "tax_document_number"], name: "index_invoices_on_company_id_and_tax_document_number", unique: true, where: "(tax_document_number IS NOT NULL)"
     t.check_constraint "(number IS NULL) = (sequence IS NULL)", name: "invoices_number_sequence_check"
     t.check_constraint "(status::text = 'draft'::text) = (number IS NULL)", name: "invoices_number_check"
     t.check_constraint "(status::text = 'paid'::text) = (paid_on IS NOT NULL)", name: "invoices_paid_on_check"

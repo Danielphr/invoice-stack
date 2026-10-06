@@ -250,6 +250,19 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "should show the tax document card only for sent invoices when tax documents are tracked" do
+    get invoice_url(@invoice)
+    assert_select "#tax-document-heading", count: 0
+
+    companies(:one).update!(tax_documents_enabled: true, tax_document_name: "Factura")
+    get invoice_url(@invoice)
+    assert_select "#tax-document-heading", "Factura"
+    assert_select "section span", "Pending"
+
+    get invoice_url(invoices(:globex_draft))
+    assert_select "#tax-document-heading", count: 0
+  end
+
   test "should leave out the history when nothing has been recorded" do
     get invoice_url(@invoice)
 
