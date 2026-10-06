@@ -33,31 +33,5 @@
     <% end %>
   </div>
 
-  <dialog data-dialog-target="dialog" aria-labelledby="tax-document-dialog-title"
-          class="m-auto w-full max-w-md rounded-2xl bg-white p-6 shadow-xl backdrop:bg-navy-950/60">
-    <h2 id="tax-document-dialog-title" class="text-base font-semibold text-gray-900"><%= label %></h2>
-
-    <%= form_with model: invoice, url: invoice_tax_document_path(invoice), method: :patch, class: "mt-4 space-y-6" do |form| %>
-      <%= render "shared/form_errors", model: invoice %>
-
-      <div>
-        <%= form.label :tax_document_number, "Number", class: "label" %>
-        <%= form.text_field :tax_document_number, required: true, maxlength: 50, autofocus: true, class: "input mt-2" %>
-      </div>
-
-      <div>
-        <%= form.label :tax_document, "PDF", class: "label" %>
-        <%= form.file_field :tax_document, accept: "application/pdf", class: "mt-2 block w-full text-sm text-gray-600 file:mr-3 file:rounded-md file:border-0 file:bg-gray-100 file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-gray-900 hover:file:bg-gray-200",
-              aria: { describedby: "tax-document-file-hint" } %>
-        <p id="tax-document-file-hint" class="mt-2 text-xs text-gray-500">
-          Optional, up to 10 MB.<% if invoice.tax_document.attached? && invoice.tax_document.persisted? %> Choosing a new file replaces the current one.<% end %>
-        </p>
-      </div>
-
-      <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-        <button type="button" class="btn-secondary" data-action="dialog#close">Cancel</button>
-        <%= form.submit "Save", class: "btn-primary" %>
-      </div>
-    <% end %>
-  </dialog>
+  <%= render "invoices/tax_document_dialog", invoice: %>
 </section>

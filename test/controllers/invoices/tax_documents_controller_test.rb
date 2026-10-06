@@ -29,6 +29,13 @@ class Invoices::TaxDocumentsControllerTest < ActionDispatch::IntegrationTest
     assert @invoice.tax_document.attached?
   end
 
+  test "should return to the list it was saved from" do
+    patch invoice_tax_document_url(@invoice), params: { invoice: { tax_document_number: "A-1" } },
+      headers: { "Referer" => invoices_url(sort: "total", page: 1) }
+
+    assert_redirected_to invoices_url(sort: "total", page: 1)
+  end
+
   test "should reopen the form with the errors when the number is missing" do
     patch invoice_tax_document_url(@invoice), params: { invoice: { tax_document_number: "" } }
 

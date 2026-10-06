@@ -15,7 +15,7 @@ class Invoices::TaxDocumentsController < ApplicationController
     @invoice.assign_attributes(tax_document_params)
 
     if @invoice.save(context: :tax_document)
-      redirect_to @invoice, notice: "#{@invoice.company.tax_document_label} saved."
+      redirect_back_or_to @invoice, notice: "#{@invoice.company.tax_document_label} saved."
     else
       @tax_document_form_open = true
       render "invoices/show", status: :unprocessable_entity

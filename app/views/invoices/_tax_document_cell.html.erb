@@ -1,0 +1,33 @@
+<%# locals: (invoice:) %>
+<% label = invoice.company.tax_document_label %>
+<% editable = !invoice.draft? && !invoice.archived? %>
+<div class="flex items-center gap-2" data-controller="dialog">
+  <% if invoice.tax_document_number %>
+    <% if editable %>
+      <button type="button" class="link cursor-pointer" data-action="dialog#open">
+        <%= invoice.tax_document_number %><span class="sr-only">, edit <%= label %></span>
+      </button>
+    <% else %>
+      <span class="text-gray-900"><%= invoice.tax_document_number %></span>
+    <% end %>
+    <% if invoice.tax_document.attached? %>
+      <%= link_to invoice_tax_document_path(invoice), target: "_blank", rel: "noopener", class: "text-gray-400 hover:text-brand-600",
+            title: "View #{label} PDF", data: { turbo: false } do %>
+        <%= heroicon(:eye, class: "size-4") %><span class="sr-only">View <%= label %> PDF for invoice <%= invoice.number %></span>
+      <% end %>
+    <% end %>
+  <% elsif invoice.tax_document_pending? && editable %>
+    <button type="button" class="cursor-pointer rounded-md bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700 hover:bg-amber-100"
+            data-action="dialog#open">
+      Pending<span class="sr-only">, add <%= label %> for invoice <%= invoice.number %></span>
+    </button>
+  <% elsif invoice.tax_document_pending? %>
+    <span class="rounded-md bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700">Pending</span>
+  <% else %>
+    <span class="text-gray-400">—</span>
+  <% end %>
+
+  <% if editable %>
+    <%= render "invoices/tax_document_dialog", invoice: %>
+  <% end %>
+</div>

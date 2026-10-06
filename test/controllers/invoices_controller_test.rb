@@ -280,8 +280,20 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
     get invoices_url
 
     assert_select "th", "Factura"
-    assert_select "tbody td", "A-1"
-    assert_select "tbody td span", "Pending"
+    assert_select "tbody button[data-action='dialog#open']", /A-1/
+    assert_select "tbody button[data-action='dialog#open']", /Pending/
+    assert_select "tbody dialog form[action=?]", invoice_tax_document_path(@invoice)
+    assert_select "#invoice_#{@invoice.id}_invoice_tax_document_number"
+    assert_select "a[href=?]", invoice_tax_document_path(@invoice), count: 0
+  end
+
+  test "should link to an uploaded tax document's PDF from the list" do
+    companies(:one).update!(tax_documents_enabled: true)
+    @invoice.update!(tax_document_number: "A-1", tax_document: fixture_file_upload("tax-document.pdf", "application/pdf"))
+
+    get invoices_url
+
+    assert_select "tbody a[href=?] svg", invoice_tax_document_path(@invoice)
   end
 
   test "should keep archived invoices in their own list" do
