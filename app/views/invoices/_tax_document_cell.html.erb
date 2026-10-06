@@ -23,6 +23,10 @@
     </button>
   <% elsif invoice.tax_document_pending? %>
     <span class="rounded-md bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700">Pending</span>
+  <% elsif editable %>
+    <button type="button" class="cursor-pointer text-xs font-medium text-gray-500 hover:text-brand-600" data-action="dialog#open">
+      Add<span class="sr-only"> <%= label %> for invoice <%= invoice.number %></span>
+    </button>
   <% else %>
     <span class="text-gray-400">—</span>
   <% end %>

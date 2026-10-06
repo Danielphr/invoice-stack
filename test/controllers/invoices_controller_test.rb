@@ -287,6 +287,17 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href=?]", invoice_tax_document_path(@invoice), count: 0
   end
 
+  test "should let a cancelled invoice get a tax document from the list, without marking it pending" do
+    companies(:one).update!(tax_documents_enabled: true)
+    @invoice.update!(status: "cancelled")
+
+    get invoices_url
+
+    assert_select "tbody button[data-action='dialog#open']", /Add/
+    assert_select "tbody button", text: /Pending/, count: 0
+    assert_select "tbody dialog form[action=?]", invoice_tax_document_path(@invoice)
+  end
+
   test "should link to an uploaded tax document's PDF from the list" do
     companies(:one).update!(tax_documents_enabled: true)
     @invoice.update!(tax_document_number: "A-1", tax_document: fixture_file_upload("tax-document.pdf", "application/pdf"))
