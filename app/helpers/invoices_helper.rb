@@ -61,7 +61,11 @@ module InvoicesHelper
   end
 
   def invoice_field_name(field, company)
-    field == "tax_document_number" ? "#{company.tax_document_label} number" : Invoice.human_attribute_name(field).downcase
+    case field
+    when "tax_document_number" then "#{company.tax_document_label} number"
+    when "tax_document" then "#{company.tax_document_label} PDF"
+    else Invoice.human_attribute_name(field).downcase
+    end
   end
 
   def invoice_status_badge(invoice)

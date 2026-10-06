@@ -87,7 +87,8 @@ class InvoicesHelperTest < ActionView::TestCase
     assert_equal "Reopened", invoice_event_description(event.("status_changed", from_status: "paid", to_status: "sent"))
     assert_equal "Edited the due date, payment date, and items",
       invoice_event_description(event.("edited", fields: %w[ due_date paid_on items ]))
-    assert_equal "Edited the Tax document number", invoice_event_description(event.("edited", fields: %w[ tax_document_number ]))
+    assert_equal "Edited the Tax document number and Tax document PDF",
+      invoice_event_description(event.("edited", fields: %w[ tax_document_number tax_document ]))
     assert_equal "Archived", invoice_event_description(event.("archived"))
     assert_equal "Unarchived", invoice_event_description(event.("unarchived"))
   end

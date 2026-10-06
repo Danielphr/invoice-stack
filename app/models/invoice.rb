@@ -172,6 +172,7 @@ class Invoice < ApplicationRecord
       @edited_fields = changed - %w[ status paid_on archived_at updated_at ]
       @edited_fields << "paid_on" if paid_on_changed? && !status_changed?
       @edited_fields << "items" if items.any? { it.new_record? || it.marked_for_destruction? || it.changed? }
+      @edited_fields << "tax_document" if attachment_changes.key?("tax_document")
     end
 
     def record_creation

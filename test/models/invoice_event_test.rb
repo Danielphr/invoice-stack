@@ -32,6 +32,13 @@ class InvoiceEventTest < ActiveSupport::TestCase
     assert_equal %w[ due_date items ], event.fields
   end
 
+  test "records an uploaded tax document PDF as an edit" do
+    @invoice.update!(tax_document_number: "A-1")
+    @invoice.update!(tax_document: { io: file_fixture("tax-document.pdf").open, filename: "tax-document.pdf" })
+
+    assert_equal [ %w[ tax_document_number ], %w[ tax_document ] ], @invoice.events.map(&:fields)
+  end
+
   test "doesn't record edits to drafts" do
     @draft.update!(notes: "Updated scope")
 
