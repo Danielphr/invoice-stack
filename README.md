@@ -20,6 +20,7 @@ Built with Ruby on Rails 8.1, PostgreSQL, Hotwire and Tailwind CSS.
 - **Clients** with contact details, and what each one has been billed, has paid and still owes.
 - **Dashboard** with revenue, invoices due soon and overdue, and revenue charts, filtered by period and currency.
 - **Archive** clients and paid or cancelled invoices to keep lists tidy, without losing them from your totals.
+- **Tax documents** (optional) for countries where each invoice also needs an official document from the tax authority: add its number and PDF, and see which are still pending. The name can be changed to match your country's.
 - **Company settings** for the time zone, default currency, invoice numbering and default invoice notes.
 
 ## Design decisions

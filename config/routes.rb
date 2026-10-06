@@ -21,6 +21,7 @@ Rails.application.routes.draw do
   resources :invoices do
     resource :status, only: :update, module: :invoices
     resource :archive, only: %i[ create destroy ], module: :invoices
+    resource :tax_document, only: %i[ show update destroy ], module: :invoices
   end
 
   get "up" => "rails/health#show", as: :rails_health_check

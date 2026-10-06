@@ -1,0 +1,41 @@
+<%# locals: (invoice:) %>
+<% label = invoice.company.tax_document_label %>
+<% saved_file = invoice.tax_document.attached? && invoice.tax_document.persisted? %>
+<dialog data-dialog-target="dialog" aria-labelledby="tax-document-dialog-title-<%= invoice.id %>"
+        class="m-auto w-full max-w-md rounded-2xl bg-white p-6 text-left whitespace-normal shadow-xl backdrop:bg-navy-950/60">
+  <h2 id="tax-document-dialog-title-<%= invoice.id %>" class="text-base font-semibold text-gray-900"><%= label %></h2>
+  <p class="mt-1 text-sm text-gray-500">Invoice <%= invoice.number %></p>
+
+  <% if saved_file %>
+    <p class="mt-3 flex items-center gap-2 text-sm">
+      <span class="truncate text-gray-500"><%= invoice.tax_document.filename %></span>
+      <%= link_to "View PDF", invoice_tax_document_path(invoice), target: "_blank", rel: "noopener", class: "link shrink-0", data: { turbo: false } %>
+    </p>
+  <% end %>
+
+  <%# Each dialog on a page needs its own field ids. %>
+  <%= form_with model: invoice, url: invoice_tax_document_path(invoice), method: :patch, namespace: "invoice_#{invoice.id}",
+        class: "mt-5 space-y-6" do |form| %>
+    <%= render "shared/form_errors", model: invoice %>
+
+    <div>
+      <%= form.label :tax_document_number, "Number", class: "label" %>
+      <%= form.text_field :tax_document_number, required: true, maxlength: 50, autofocus: true, class: "input mt-2" %>
+    </div>
+
+    <div>
+      <%= form.label :tax_document, "PDF", class: "label" %>
+      <%= form.file_field :tax_document, accept: "application/pdf",
+            class: "mt-2 block w-full text-sm text-gray-600 file:mr-3 file:rounded-md file:border-0 file:bg-gray-100 file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-gray-900 hover:file:bg-gray-200",
+            aria: { describedby: "tax-document-file-hint-#{invoice.id}" } %>
+      <p id="tax-document-file-hint-<%= invoice.id %>" class="mt-2 text-xs text-gray-500">
+        Optional, up to 10 MB.<% if saved_file %> Choosing a new file replaces the current one.<% end %>
+      </p>
+    </div>
+
+    <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+      <button type="button" class="btn-secondary" data-action="dialog#close">Cancel</button>
+      <%= form.submit "Save", class: "btn-primary" %>
+    </div>
+  <% end %>
+</dialog>

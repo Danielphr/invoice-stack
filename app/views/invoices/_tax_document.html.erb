@@ -1,0 +1,37 @@
+<%# locals: (invoice:, form_open: false) %>
+<% label = invoice.company.tax_document_label %>
+<section aria-labelledby="tax-document-heading" class="mt-6 rounded-lg bg-white p-6 shadow-sm ring-1 ring-gray-900/5"
+         data-controller="dialog" data-dialog-open-value="<%= form_open %>">
+  <div class="flex flex-wrap items-center justify-between gap-4">
+    <div>
+      <h2 id="tax-document-heading" class="text-base font-semibold text-gray-900"><%= label %></h2>
+      <% if invoice.tax_document_number_in_database %>
+        <p class="mt-1 text-sm text-gray-900">
+          <%= invoice.tax_document_number_in_database %>
+          <% if invoice.tax_document.attached? && invoice.tax_document.persisted? %>
+            · <%= link_to "View PDF", invoice_tax_document_path(invoice), target: "_blank", rel: "noopener", class: "link", data: { turbo: false } %>
+          <% end %>
+        </p>
+      <% elsif invoice.tax_document_pending? %>
+        <p class="mt-1"><span class="rounded-md bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700">Pending</span></p>
+      <% else %>
+        <p class="mt-1 text-sm text-gray-500">None</p>
+      <% end %>
+    </div>
+
+    <% unless invoice.archived? %>
+      <div class="flex gap-3">
+        <button type="button" class="btn-secondary" data-action="dialog#open">
+          <%= invoice.tax_document_number_in_database ? "Edit" : "Add" %>
+        </button>
+        <% if invoice.tax_document_number_in_database %>
+          <%= button_to "Remove", invoice_tax_document_path(invoice), method: :delete, class: "btn-secondary",
+                form: { data: { turbo_confirm: "Remove the #{label} from this invoice? Its PDF is deleted too.",
+                  confirm_title: "Remove #{label}", confirm_button: "Remove", confirm_destructive: true } } %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+
+  <%= render "invoices/tax_document_dialog", invoice: %>
+</section>

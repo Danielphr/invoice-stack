@@ -250,10 +250,61 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "should show the tax document card only for sent invoices when tax documents are tracked" do
+    get invoice_url(@invoice)
+    assert_select "#tax-document-heading", count: 0
+
+    companies(:one).update!(tax_documents_enabled: true, tax_document_name: "Factura")
+    get invoice_url(@invoice)
+    assert_select "#tax-document-heading", "Factura"
+    assert_select "section span", "Pending"
+
+    get invoice_url(invoices(:globex_draft))
+    assert_select "#tax-document-heading", count: 0
+  end
+
   test "should leave out the history when nothing has been recorded" do
     get invoice_url(@invoice)
 
     assert_select "#invoice-history-heading", count: 0
+  end
+
+  test "should list each invoice's tax document number, or show it as pending" do
+    get invoices_url
+    assert_select "th", text: "Factura", count: 0
+
+    companies(:one).update!(tax_documents_enabled: true, tax_document_name: "Factura")
+    @invoice.update!(tax_document_number: "A-1")
+    invoices(:globex_draft).update!(status: "sent")
+
+    get invoices_url
+
+    assert_select "th", "Factura"
+    assert_select "tbody button[data-action='dialog#open']", /A-1/
+    assert_select "tbody button[data-action='dialog#open']", /Pending/
+    assert_select "tbody dialog form[action=?]", invoice_tax_document_path(@invoice)
+    assert_select "#invoice_#{@invoice.id}_invoice_tax_document_number"
+    assert_select "a[href=?]", invoice_tax_document_path(@invoice), count: 0
+  end
+
+  test "should let a cancelled invoice get a tax document from the list, without marking it pending" do
+    companies(:one).update!(tax_documents_enabled: true)
+    @invoice.update!(status: "cancelled")
+
+    get invoices_url
+
+    assert_select "tbody button[data-action='dialog#open']", /Add/
+    assert_select "tbody button", text: /Pending/, count: 0
+    assert_select "tbody dialog form[action=?]", invoice_tax_document_path(@invoice)
+  end
+
+  test "should link to an uploaded tax document's PDF from the list" do
+    companies(:one).update!(tax_documents_enabled: true)
+    @invoice.update!(tax_document_number: "A-1", tax_document: fixture_file_upload("tax-document.pdf", "application/pdf"))
+
+    get invoices_url
+
+    assert_select "tbody a[href=?] svg", invoice_tax_document_path(@invoice)
   end
 
   test "should keep archived invoices in their own list" do

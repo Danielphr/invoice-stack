@@ -14,6 +14,7 @@
 
 <% if @invoices.any? %>
   <% filters = @archived ? { show: "archived" } : {} %>
+  <% company = Current.user.company %>
   <div class="mt-6 overflow-x-auto rounded-lg bg-white shadow-sm ring-1 ring-gray-900/5">
     <table class="min-w-full divide-y divide-gray-200 text-sm">
       <thead class="bg-gray-50 text-left font-semibold text-gray-900">
@@ -24,6 +25,9 @@
           <%= sort_header "Due", "due", filters: %>
           <%= sort_header "Billing", "billing", filters: %>
           <%= sort_header "Status", "status", filters: %>
+          <% if company.tax_documents_enabled? %>
+            <th scope="col" class="px-4 py-3"><%= company.tax_document_label %></th>
+          <% end %>
           <%= sort_header "Total", "total", align: :right, filters: %>
           <th scope="col" class="px-4 py-3"><span class="sr-only">Actions</span></th>
         </tr>
@@ -40,6 +44,11 @@
             <td class="px-4 py-3 whitespace-nowrap"><%= invoice.due_date ? l(invoice.due_date, format: :medium) : "—" %></td>
             <td class="px-4 py-3"><%= invoice.billing_type.humanize %></td>
             <td class="px-4 py-3"><%= invoice_status_badge(invoice) %></td>
+            <% if company.tax_documents_enabled? %>
+              <td class="px-4 py-3 whitespace-nowrap">
+                <%= render "invoices/tax_document_cell", invoice: %>
+              </td>
+            <% end %>
             <td class="px-4 py-3 text-right whitespace-nowrap text-gray-900"><%= format_money(invoice.total, invoice.currency) %></td>
             <td class="px-4 py-3">
               <div class="flex justify-end gap-4 whitespace-nowrap">

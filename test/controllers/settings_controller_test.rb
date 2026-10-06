@@ -79,6 +79,15 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     assert_select "textarea[name=?]", "company[default_invoice_notes]", "Pay by bank transfer to account 123."
   end
 
+  test "should turn on tax documents with the country's name for them" do
+    patch settings_url, params: { company: { tax_documents_enabled: "1", tax_document_name: " Factura " } }
+
+    assert_redirected_to settings_url
+    @company.reload
+    assert @company.tax_documents_enabled?
+    assert_equal "Factura", @company.tax_document_label
+  end
+
   test "should only change settings, not the company's details" do
     patch settings_url, params: { company: { name: "Renamed", time_zone: "Montevideo" } }
 

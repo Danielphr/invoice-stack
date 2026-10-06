@@ -16,7 +16,7 @@
     <% if @invoice.archived? %>
       <%= button_to "Unarchive", invoice_archive_path(@invoice), method: :delete, class: "btn-primary" %>
     <% else %>
-      <%= render "status_actions", invoice: @invoice %>
+      <%= render "invoices/status_actions", invoice: @invoice %>
     <% end %>
     <%= link_to "PDF", invoice_path(@invoice, format: :pdf), target: "_blank", rel: "noopener", class: "btn-secondary",
           data: { turbo: false } %>
@@ -114,7 +114,11 @@
   </section>
 <% end %>
 
+<% if @invoice.company.tax_documents_enabled? && !@invoice.draft? %>
+  <%= render "invoices/tax_document", invoice: @invoice, form_open: @tax_document_form_open || false %>
+<% end %>
+
 <% events = @invoice.events.includes(:user).to_a %>
 <% if events.any? %>
-  <%= render "history", events: %>
+  <%= render "invoices/history", events: %>
 <% end %>

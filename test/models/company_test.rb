@@ -242,6 +242,20 @@ class CompanyTest < ActiveSupport::TestCase
     assert_includes company.errors[:default_invoice_notes], "is too long (maximum is 500 characters)"
   end
 
+  test "calls tax documents by the company's name for them" do
+    company = companies(:one)
+    assert_equal "Tax document", company.tax_document_label
+
+    company.tax_document_name = "  "
+    assert_equal "Tax document", company.tax_document_label
+
+    company.tax_document_name = "NF-e"
+    assert_equal "NF-e", company.tax_document_label
+
+    company.tax_document_name = "x" * 31
+    assert_not company.valid?
+  end
+
   test "database rejects a pattern without {NUMBER}" do
     assert_raises ActiveRecord::StatementInvalid do
       companies(:one).update_column(:invoice_number_pattern, "INV-{YEAR}")

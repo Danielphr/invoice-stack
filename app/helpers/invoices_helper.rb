@@ -54,9 +54,17 @@ module InvoicesHelper
       when "cancelled" then "Cancelled"
       end
     when "edited"
-      "Edited the #{event.fields.map { Invoice.human_attribute_name(it).downcase }.to_sentence}"
+      "Edited the #{event.fields.map { invoice_field_name(it, event.invoice.company) }.to_sentence}"
     when "archived" then "Archived"
     when "unarchived" then "Unarchived"
+    end
+  end
+
+  def invoice_field_name(field, company)
+    case field
+    when "tax_document_number" then "#{company.tax_document_label} number"
+    when "tax_document" then "#{company.tax_document_label} PDF"
+    else Invoice.human_attribute_name(field).downcase
     end
   end
 

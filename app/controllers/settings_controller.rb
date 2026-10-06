@@ -22,7 +22,8 @@ class SettingsController < ApplicationController
       params.expect(company: [
         :time_zone, :default_currency,
         :invoice_number_pattern, :invoice_number_digits, :next_invoice_number,
-        :default_invoice_notes
+        :default_invoice_notes,
+        :tax_documents_enabled, :tax_document_name
       ])
     end
 end
