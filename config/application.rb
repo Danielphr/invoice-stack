@@ -25,5 +25,8 @@ module InvoiceStack
 
     # Signed-in requests use the company's time zone; this applies everywhere else.
     config.time_zone = "UTC"
+
+    # Whether visitors can create accounts. On by default; production reads SIGN_UPS_ENABLED.
+    config.x.sign_ups_enabled = true
   end
 end
