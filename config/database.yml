@@ -87,6 +87,8 @@ test:
 production:
   primary: &primary_production
     <<: *default
+    # Postgres runs in its own container on the same server, reached by name.
+    host: <%= ENV["DB_HOST"] %>
     database: invoice_stack_production
     username: invoice_stack
     password: <%= ENV["INVOICE_STACK_DATABASE_PASSWORD"] %>
