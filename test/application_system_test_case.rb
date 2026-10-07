@@ -6,6 +6,19 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
   # The default 2 seconds is tight on slower CI machines, or right after assets were recompiled.
   Capybara.default_max_wait_time = 5
 
+  # The page's JavaScript loads a moment after its HTML, so clicking straight away can beat Stimulus
+  # to it. Waiting until every controller on the page is connected keeps the tests from flaking.
+  def visit(...)
+    super
+    page.document.synchronize do
+      raise Capybara::ExpectationNotMet, "Stimulus controllers didn't connect" unless evaluate_script(<<~JS)
+        Array.from(document.querySelectorAll("[data-controller]")).every(element =>
+          element.dataset.controller.split(/\s+/).every(identifier =>
+            window.Stimulus?.getControllerForElementAndIdentifier(element, identifier)))
+      JS
+    end
+  end
+
   private
     def sign_in_as(user)
       visit new_session_path
