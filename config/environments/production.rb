@@ -60,6 +60,9 @@ Rails.application.configure do
   # Set host to be used by links generated in mailer templates.
   config.action_mailer.default_url_options = { host: ENV["APP_HOST"], protocol: "https" }
 
+  # Closed unless turned on, so strangers can't create accounts on a private server.
+  config.x.sign_ups_enabled = ENV["SIGN_UPS_ENABLED"] == "true"
+
   # Emails go through Resend. The API key is a Kamal secret, like the master key.
   config.action_mailer.smtp_settings = {
     address: "smtp.resend.com",

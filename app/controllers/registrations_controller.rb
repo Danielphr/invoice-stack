@@ -2,6 +2,7 @@ class RegistrationsController < ApplicationController
   layout "auth"
 
   allow_unauthenticated_access
+  before_action :require_open_sign_ups
   rate_limit to: 10, within: 1.hour, only: :create, with: -> { redirect_to new_registration_path, alert: "Try again later." }
 
   def new
@@ -21,6 +22,10 @@ class RegistrationsController < ApplicationController
   end
 
   private
+    def require_open_sign_ups
+      redirect_to new_session_path, alert: "Sign-up is closed." unless Rails.configuration.x.sign_ups_enabled
+    end
+
     def user_params
       params.expect(user: [
         :first_name,
