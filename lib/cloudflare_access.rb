@@ -1,3 +1,5 @@
+require "net/http"
+
 # Answers only requests that came through Cloudflare Access, so the app can't be reached
 # by going around it. Cloudflare signs every request it lets in with a JWT, which is
 # checked against the team's public keys and the Access application's audience tag.
