@@ -93,3 +93,5 @@ production:
   database: invoice_stack_production
   username: invoice_stack
   password: <%= ENV["INVOICE_STACK_DATABASE_PASSWORD"] %>
+  # Puma and Solid Queue (in async mode) share this process and its connections.
+  max_connections: 10
