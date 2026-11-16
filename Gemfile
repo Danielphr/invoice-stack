@@ -45,6 +45,9 @@ gem "image_processing", "~> 2.2"
 # Active Storage requires it and tolerates a missing libvips; Bundler's require would fail the boot.
 gem "ruby-vips", "~> 2.3", require: false
 
+# Verify Cloudflare Access tokens [https://github.com/jwt/ruby-jwt]
+gem "jwt", "~> 3.3"
+
 # Paginate lists [https://github.com/ddnexus/pagy]
 gem "pagy", "~> 43.7"
 
