@@ -64,6 +64,7 @@ Rails.application.configure do
   config.x.sign_ups_enabled = ENV["SIGN_UPS_ENABLED"] == "true"
 
   # Emails go through Resend. The API key is a Kamal secret, like the master key.
+  config.x.email_enabled = ENV["RESEND_API_KEY"].present?
   config.action_mailer.smtp_settings = {
     address: "smtp.resend.com",
     port: 587,

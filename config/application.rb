@@ -28,5 +28,7 @@ module InvoiceStack
 
     # Whether visitors can create accounts. On by default; production reads SIGN_UPS_ENABLED.
     config.x.sign_ups_enabled = true
+    # Whether the app can send email, which password resets need. Production needs RESEND_API_KEY.
+    config.x.email_enabled = true
   end
 end

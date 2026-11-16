@@ -2,6 +2,7 @@ class PasswordsController < ApplicationController
   layout "auth"
 
   allow_unauthenticated_access
+  before_action :require_email, only: %i[ new create ]
   before_action :set_user_by_token, only: %i[ edit update ]
   rate_limit to: 10, within: 3.minutes, only: :create, with: -> { redirect_to new_password_path, alert: "Try again later." }
 
@@ -29,6 +30,11 @@ class PasswordsController < ApplicationController
   end
 
   private
+    # Without email there's no way to send the reset link, so don't pretend to.
+    def require_email
+      redirect_to new_session_path, alert: "Password resets aren't available on this server." unless Rails.configuration.x.email_enabled
+    end
+
     def set_user_by_token
       @user = User.find_by_password_reset_token!(params[:token])
     rescue ActiveSupport::MessageVerifier::InvalidSignature
