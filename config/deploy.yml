@@ -39,6 +39,9 @@ volumes:
 
 asset_path: /rails/public/assets
 
+# Booting takes about a minute on a small server: the entrypoint runs db:prepare, then starts Puma.
+deploy_timeout: 120
+
 logging:
   options:
     max-size: 10m
