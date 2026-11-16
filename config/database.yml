@@ -84,23 +84,12 @@ test:
 # Read https://guides.rubyonrails.org/configuring.html#configuring-a-database
 # for a full overview on how database connection configuration can be specified.
 #
+# One database holds everything, including the cache and job tables, so there's a single
+# database to back up.
 production:
-  primary: &primary_production
-    <<: *default
-    # Postgres runs in its own container on the same server, reached by name.
-    host: <%= ENV["DB_HOST"] %>
-    database: invoice_stack_production
-    username: invoice_stack
-    password: <%= ENV["INVOICE_STACK_DATABASE_PASSWORD"] %>
-  cache:
-    <<: *primary_production
-    database: invoice_stack_production_cache
-    migrations_paths: db/cache_migrate
-  queue:
-    <<: *primary_production
-    database: invoice_stack_production_queue
-    migrations_paths: db/queue_migrate
-  cable:
-    <<: *primary_production
-    database: invoice_stack_production_cable
-    migrations_paths: db/cable_migrate
+  <<: *default
+  # Postgres runs in its own container on the same server, reached by name.
+  host: <%= ENV["DB_HOST"] %>
+  database: invoice_stack_production
+  username: invoice_stack
+  password: <%= ENV["INVOICE_STACK_DATABASE_PASSWORD"] %>
