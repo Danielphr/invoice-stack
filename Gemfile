@@ -25,10 +25,9 @@ gem "bcrypt", "~> 3.1.7"
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem "tzinfo-data", platforms: %i[ windows jruby ]
 
-# Use the database-backed adapters for Rails.cache, Active Job, and Action Cable
+# Use the database-backed adapters for Rails.cache and Active Job
 gem "solid_cache"
 gem "solid_queue"
-gem "solid_cable"
 
 # Reduces boot times through caching; required in config/boot.rb
 gem "bootsnap", require: false
@@ -44,6 +43,9 @@ gem "image_processing", "~> 2.2"
 # image_processing 2.x no longer depends on an image library, so ruby-vips is listed explicitly.
 # Active Storage requires it and tolerates a missing libvips; Bundler's require would fail the boot.
 gem "ruby-vips", "~> 2.3", require: false
+
+# Verify Cloudflare Access tokens [https://github.com/jwt/ruby-jwt]
+gem "jwt", "~> 3.3"
 
 # Paginate lists [https://github.com/ddnexus/pagy]
 gem "pagy", "~> 43.7"

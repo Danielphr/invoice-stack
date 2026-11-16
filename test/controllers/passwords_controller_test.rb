@@ -74,4 +74,28 @@ class PasswordsControllerTest < ActionDispatch::IntegrationTest
     def assert_notice(text)
       assert_select "[role=status], [role=alert]", /#{Regexp.escape(text)}/
     end
+
+  test "should not offer password resets without email" do
+    with_email(false) do
+      get new_password_url
+      assert_redirected_to new_session_url
+      assert_equal "Password resets aren't available on this server.", flash[:alert]
+
+      assert_no_enqueued_emails do
+        post passwords_url, params: { email_address: @user.email_address }
+      end
+
+      get new_session_url
+      assert_select "a[href=?]", new_password_path, count: 0
+    end
+  end
+
+  private
+    def with_email(enabled)
+      previous = Rails.configuration.x.email_enabled
+      Rails.configuration.x.email_enabled = enabled
+      yield
+    ensure
+      Rails.configuration.x.email_enabled = previous
+    end
 end

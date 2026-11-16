@@ -51,7 +51,6 @@ Rails.application.configure do
 
   # Replace the default in-process and non-durable queuing backend for Active Job.
   config.active_job.queue_adapter = :solid_queue
-  config.solid_queue.connects_to = { database: { writing: :queue } }
 
   # Ignore bad email addresses and do not raise email delivery errors.
   # Set this to true and configure the email server for immediate delivery to raise delivery errors.
@@ -64,6 +63,7 @@ Rails.application.configure do
   config.x.sign_ups_enabled = ENV["SIGN_UPS_ENABLED"] == "true"
 
   # Emails go through Resend. The API key is a Kamal secret, like the master key.
+  config.x.email_enabled = ENV["RESEND_API_KEY"].present?
   config.action_mailer.smtp_settings = {
     address: "smtp.resend.com",
     port: 587,

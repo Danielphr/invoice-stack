@@ -10,7 +10,9 @@
   <div>
     <div class="flex items-center justify-between">
       <%= form.label :password, class: "label" %>
-      <%= link_to "Forgot password?", new_password_path, class: "link text-sm" %>
+      <% if Rails.configuration.x.email_enabled %>
+        <%= link_to "Forgot password?", new_password_path, class: "link text-sm" %>
+      <% end %>
     </div>
     <%= render "shared/password_field", form: form, field: :password, autocomplete: "current-password" %>
   </div>
